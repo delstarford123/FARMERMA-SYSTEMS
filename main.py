@@ -418,7 +418,7 @@ def about_us(): return render_template('about us.html')
 def impact_initiatives(): return render_template('impact&initiatives.html')
 
 @app.route('/pricing')
-def pricing_subscription(): return render_template('pricing.html')
+def pricing_subscription(): return render_template('pricing&subscription.html')
 
 @app.route('/contact', methods=['GET', 'POST'])
 def contact_us(): 
