@@ -1,0 +1,706 @@
+{
+  "en": {
+    "Maize (Mahindi)": {
+      "description": "Kenya's primary staple crop. Requires well-drained, fertile soils and deep root penetration.",
+      "seedbed_prep": "Clear the land of previous crop residues. Do not burn the residue; instead, incorporate it into the soil to improve organic matter.",
+      "primary_prep": "Deep Plowing (15-20cm deep) using a disc plow or ox-plow. This is critical to break the hardpan, allowing the deep taproots of maize to access moisture during dry spells.",
+      "secondary_prep": "Harrowing to achieve a medium tilth. Maize does not require a very fine seedbed, but clods should be broken down.",
+      "tertiary_prep": "Ridging and Furrowing. Create furrows 75cm apart. Plant seeds 30cm apart within the row. Apply DAP fertilizer."
+    },
+    "Beans (Maharagwe)": {
+      "description": "A crucial legume for food security and nitrogen fixation in the soil.",
+      "seedbed_prep": "Select a well-drained field. Beans are highly susceptible to root rot in waterlogged soils.",
+      "primary_prep": "Moderate Plowing (10-15cm). Turn the soil to bury weeds. Apply agricultural lime if soil is highly acidic.",
+      "secondary_prep": "Harrowing to a FINE tilth. Because bean seeds push out of the soil, a fine, loose seedbed is strictly required.",
+      "tertiary_prep": "Planting on flat seedbeds or shallow ridges. Spacing should be 45cm between rows and 15cm between plants."
+    },
+    "Potatoes (Viazi Mbatata)": {
+      "description": "A major cash and food crop in cooler regions like Nyandarua and Meru.",
+      "seedbed_prep": "Ensure the field has not been planted with tomatoes or capsicum in the last season to prevent bacterial wilt.",
+      "primary_prep": "Deep plowing (20cm) is essential to allow tuber expansion.",
+      "secondary_prep": "Harrow to a medium tilth. Avoid overly fine soil which can cause waterlogging.",
+      "tertiary_prep": "Create deep ridges. Plant sprouted tubers 30cm apart. Apply NPK fertilizer and cover with soil."
+    },
+    "Sorghum (Mtama)": {
+      "description": "A highly drought-resistant cereal, excellent for arid and semi-arid areas.",
+      "seedbed_prep": "Clear all grassy weeds completely as young sorghum struggles to compete.",
+      "primary_prep": "Plow early before the onset of rains to allow weeds to dry and die off.",
+      "secondary_prep": "Harrowing to an EXTRA FINE tilth. Sorghum seeds are very small; large clods will bury them too deep.",
+      "tertiary_prep": "Plant in shallow furrows (2.5cm deep). Spacing is 60cm by 20cm."
+    },
+    "Cassava (Muhogo)": {
+      "description": "A hardy root tuber known for its resilience in poor soils and dry conditions.",
+      "seedbed_prep": "Clear bushes and small tree stumps.",
+      "primary_prep": "Plow deeply to loosen the soil for root penetration.",
+      "secondary_prep": "Minimal harrowing needed. Soil can remain relatively cloddy.",
+      "tertiary_prep": "Create large mounds or ridges. Plant 30cm cuttings at a 45-degree angle, spacing them 1m by 1m."
+    },
+    "Tomatoes (Nyanya)": {
+      "description": "A high-value horticultural crop requiring intensive management.",
+      "seedbed_prep": "Start in a nursery bed. Sterilize nursery soil using solarization or heat.",
+      "primary_prep": "Main field requires deep plowing to incorporate well-rotted manure.",
+      "secondary_prep": "Harrow to a fine tilth. Construct raised beds if the area is prone to flooding.",
+      "tertiary_prep": "Transplant seedlings at 4 weeks. Spacing is 60cm by 45cm. Provide staking structures immediately."
+    },
+    "Cabbage (Hoho/Kabeji)": {
+      "description": "A popular leafy vegetable that thrives in cooler, moist conditions.",
+      "seedbed_prep": "Establish a nursery bed. Protect seedlings from heavy rain and direct sun.",
+      "primary_prep": "Plow and incorporate a heavy dose of organic farmyard manure.",
+      "secondary_prep": "Harrow to a medium tilth.",
+      "tertiary_prep": "Transplant seedlings. Spacing is 60cm by 60cm for large varieties. Keep the soil consistently moist."
+    },
+    "Onions (Vitunguu)": {
+      "description": "A profitable bulb crop requiring specific day-length and dry conditions for harvesting.",
+      "seedbed_prep": "Sow seeds in a fine-tilted nursery bed. Thin out weak seedlings.",
+      "primary_prep": "Plow to a moderate depth. Onions have shallow root systems.",
+      "secondary_prep": "Harrow to a very fine tilth to ensure good root establishment.",
+      "tertiary_prep": "Transplant at pencil-thickness. Space 30cm between rows and 10cm between plants. Do not plant too deep."
+    },
+    "Sweet Potatoes (Ngwaci)": {
+      "description": "A vital food security crop, high in Vitamin A, especially the orange-fleshed varieties.",
+      "seedbed_prep": "Clear existing vegetation. Avoid waterlogged areas.",
+      "primary_prep": "Deep plowing to turn the soil.",
+      "secondary_prep": "Harrowing is necessary to break down large clods.",
+      "tertiary_prep": "Construct very high ridges or mounds (30-40cm high). Plant disease-free vines horizontally."
+    },
+    "Green Grams (Ndengu)": {
+      "description": "A fast-maturing legume that performs well in drylands.",
+      "seedbed_prep": "Clear land and wait for the first rains.",
+      "primary_prep": "Shallow plowing is sufficient.",
+      "secondary_prep": "Harrow to a fine tilth for the small seeds.",
+      "tertiary_prep": "Plant 45cm between rows and 15cm between plants. Ensure soil is moist during planting."
+    },
+    "Cowpeas (Kunde)": {
+      "description": "Grown for both its nutritious leaves and seeds. Highly drought tolerant.",
+      "seedbed_prep": "Basic land clearing. Can be intercropped with maize.",
+      "primary_prep": "Moderate plowing.",
+      "secondary_prep": "Medium tilth is acceptable.",
+      "tertiary_prep": "Plant seeds 2-3cm deep. Spacing depends on whether it is grown for leaves (closer) or grain (wider)."
+    },
+    "Kales (Sukuma Wiki)": {
+      "description": "The most widely consumed vegetable in Kenya.",
+      "seedbed_prep": "Start in a shaded nursery.",
+      "primary_prep": "Plow and add massive amounts of manure/compost.",
+      "secondary_prep": "Harrow to a fine tilth.",
+      "tertiary_prep": "Transplant at 4 weeks. Spacing is 60cm by 60cm. Apply CAN fertilizer 3 weeks after transplanting."
+    },
+    "Groundnuts (Njugu Karanga)": {
+      "description": "A valuable cash crop requiring loose, sandy-loam soils for pegging.",
+      "seedbed_prep": "Select light soils. Heavy clays prevent the nuts from developing underground.",
+      "primary_prep": "Deep plowing.",
+      "secondary_prep": "Harrow to an extremely fine, loose tilth.",
+      "tertiary_prep": "Plant seeds 5cm deep. Spacing is 45cm by 15cm. Do not weed once the plants start flowering (pegging stage)."
+    },
+    "Bananas (Ndizi)": {
+      "description": "A perennial crop serving as both a fruit and a staple food.",
+      "seedbed_prep": "Select a site protected from strong winds.",
+      "primary_prep": "Plow the general area, though spot preparation is more common.",
+      "secondary_prep": "Not strictly necessary for the whole field.",
+      "tertiary_prep": "Dig large holes (60cm x 60cm x 60cm). Mix topsoil with manure. Plant healthy suckers or tissue-culture plantlets."
+    },
+    "Carrots (Karoti)": {
+      "description": "A root vegetable demanding deep, loose soil.",
+      "seedbed_prep": "Select a field free of stones and hardpans.",
+      "primary_prep": "Plow extremely deep. Do NOT use fresh manure as it causes root forking.",
+      "secondary_prep": "Harrow to an exceptionally fine tilth.",
+      "tertiary_prep": "Sow seeds directly into shallow drills 30cm apart. Thin out seedlings to 5cm apart to allow root growth."
+    },
+    "Wheat (Ngano)": {
+      "description": "A major cereal crop mostly grown in large scale in Rift Valley.",
+      "seedbed_prep": "Clear the land of any previous cereal stalks to prevent disease carryover.",
+      "primary_prep": "Deep plowing using a disc or chisel plow to bury weeds.",
+      "secondary_prep": "Harrow to a fine, firm tilth. A firm seedbed is crucial for uniform germination.",
+      "tertiary_prep": "Use a seed drill for planting at 3-5cm depth. Apply basal fertilizer containing Phosphorus during planting."
+    },
+    "Rice (Mchele)": {
+      "description": "A highly consumed grain, heavily reliant on irrigation like in Mwea.",
+      "seedbed_prep": "Establish a wet nursery bed. Soak seeds for 24 hours before broadcasting in the nursery.",
+      "primary_prep": "Puddling: Plow the field while flooded to create an impermeable hardpan that holds water.",
+      "secondary_prep": "Level the flooded field perfectly using a leveling board drawn by oxen or tractor.",
+      "tertiary_prep": "Transplant seedlings at 3-4 weeks old into the muddy field, spacing 20cm by 20cm."
+    },
+    "Sugarcane (Miwa)": {
+      "description": "A major cash crop in Western and Nyanza regions.",
+      "seedbed_prep": "Clear all vegetation. Ensure the field has good drainage as sugarcane dislikes waterlogging.",
+      "primary_prep": "Deep plowing (up to 30cm) to allow the massive root system to establish.",
+      "secondary_prep": "Harrow once or twice to break large clods.",
+      "tertiary_prep": "Dig deep furrows (trenches) 1.2m to 1.5m apart. Plant healthy cane 'setts' (cuttings) end-to-end inside the trench."
+    },
+    "Tea (Majani Chai)": {
+      "description": "Kenya's top foreign exchange earner, grown in high-altitude, acidic soils.",
+      "seedbed_prep": "Clear forest or old tea bushes. Do not burn vegetation as it raises soil pH (tea needs acidic soil).",
+      "primary_prep": "Deep plowing or ripping to break any hardpan.",
+      "secondary_prep": "Level the land and plant shade trees (like Grevillea) and windbreaks.",
+      "tertiary_prep": "Dig holes 45cm deep. Plant vegetatively propagated clones. Space 1.2m by 0.6m."
+    },
+    "Coffee (Kahawa)": {
+      "description": "A major export cash crop preferring volcanic soils and cool climates.",
+      "seedbed_prep": "Establish a shaded nursery for seedlings. Seeds take up to 2 months to germinate.",
+      "primary_prep": "Clear land and plow deeply.",
+      "secondary_prep": "Mark out the field. Construct terraces on steep slopes to prevent erosion.",
+      "tertiary_prep": "Dig planting holes 60cm wide and 60cm deep. Mix topsoil with phosphate fertilizer and well-rotted manure before planting."
+    },
+    "Cotton (Pamba)": {
+      "description": "A fiber cash crop thriving in warm, semi-arid regions.",
+      "seedbed_prep": "Clear land immediately after the previous harvest to destroy cotton stainers.",
+      "primary_prep": "Plow to a moderate depth to bury crop residues.",
+      "secondary_prep": "Harrow to a medium tilth.",
+      "tertiary_prep": "Plant 3-4 seeds per hole at 90cm by 30cm spacing. Thin to 2 plants per hole after emergence."
+    },
+    "Pyrethrum (Pireto)": {
+      "description": "A flower crop used to produce natural insecticides.",
+      "seedbed_prep": "Clear weeds entirely. Pyrethrum is highly sensitive to weed competition.",
+      "primary_prep": "Deep plowing (20cm).",
+      "secondary_prep": "Harrow to a fine, clean tilth.",
+      "tertiary_prep": "Plant vegetative splits (splits from mature, healthy plants) 60cm by 30cm apart on raised ridges."
+    },
+    "Macadamia Nuts": {
+      "description": "A high-value tree nut crop.",
+      "seedbed_prep": "Purchase grafted seedlings from certified nurseries only.",
+      "primary_prep": "Clear the field and mark planting spots.",
+      "secondary_prep": "Not required for tree crops.",
+      "tertiary_prep": "Dig large holes (60cm x 60cm). Space trees 7m by 7m to allow canopy expansion."
+    },
+    "Avocado (Parachichi)": {
+      "description": "A rapidly growing export fruit crop, notably the Hass variety.",
+      "seedbed_prep": "Select a well-drained site. Avocados are highly prone to root rot (Phytophthora).",
+      "primary_prep": "Clear land and rip the soil if a hardpan exists.",
+      "secondary_prep": "Not required.",
+      "tertiary_prep": "Dig holes 60cm deep. Space 5m by 5m. Mix topsoil with manure and plant grafted seedlings."
+    },
+    "Mangoes (Maembe)": {
+      "description": "A popular fruit crop, especially in Eastern and Coastal Kenya.",
+      "seedbed_prep": "Select deep, well-drained soils.",
+      "primary_prep": "Clear bushes and plow.",
+      "secondary_prep": "Not required.",
+      "tertiary_prep": "Dig large holes. Spacing varies from 8m x 8m to 10m x 10m depending on the variety."
+    },
+    "Passion Fruit (Matunda ya Mateso)": {
+      "description": "A climbing vine producing high-value fruits.",
+      "seedbed_prep": "Erect strong trellises (wire fences) for the vines to climb before planting.",
+      "primary_prep": "Plow the area between the intended trellis rows.",
+      "secondary_prep": "Harrow lightly.",
+      "tertiary_prep": "Plant grafted seedlings at the base of the trellis posts, spacing 3m apart."
+    },
+    "Pineapples (Matunda ya Mananasi)": {
+      "description": "A tropical fruit crop suited for warm, lower altitudes.",
+      "seedbed_prep": "Use suckers, slips, or crowns from healthy parent plants.",
+      "primary_prep": "Deep plowing. Excellent drainage is non-negotiable.",
+      "secondary_prep": "Harrow to a medium tilth.",
+      "tertiary_prep": "Plant in double rows. Space 30cm between plants and 60cm between double rows. Use black plastic mulch if possible."
+    },
+    "Pawpaw / Papaya (Papai)": {
+      "description": "A fast-growing, short-lived tropical fruit tree.",
+      "seedbed_prep": "Start seeds in polythene tubes in a nursery.",
+      "primary_prep": "Clear and plow the field.",
+      "secondary_prep": "Not required.",
+      "tertiary_prep": "Plant 3 seedlings per hole (to ensure at least one female/hermaphrodite plant later). Space 3m by 3m."
+    },
+    "Watermelon (Tikiti Maji)": {
+      "description": "A trailing vine crop that requires warm temperatures and lots of space.",
+      "seedbed_prep": "Clear land and wait for soils to warm up.",
+      "primary_prep": "Plow deeply to encourage deep rooting.",
+      "secondary_prep": "Harrow to a medium tilth.",
+      "tertiary_prep": "Plant 2-3 seeds per hole on raised beds or mounds. Space widely at 2m by 1m."
+    },
+    "Pumpkins (Maboga)": {
+      "description": "A resilient vine crop grown for fruit and nutritious leaves.",
+      "seedbed_prep": "Clear heavy weed infestations.",
+      "primary_prep": "Plow to turn the soil.",
+      "secondary_prep": "Harrowing.",
+      "tertiary_prep": "Plant on mounds. Incorporate heavy compost into the mound before planting seeds."
+    },
+    "French Beans (Mishiri)": {
+      "description": "A major export vegetable requiring intensive care.",
+      "seedbed_prep": "Ensure irrigation infrastructure is in place before planting.",
+      "primary_prep": "Plow to a depth of 20cm.",
+      "secondary_prep": "Harrow to a very fine tilth to ensure uniform germination.",
+      "tertiary_prep": "Sow seeds directly. Space 30cm between rows and 15cm between plants. Install supporting strings."
+    },
+    "Snow Peas (Njegere)": {
+      "description": "A high-value export crop thriving in cooler climates.",
+      "seedbed_prep": "Select well-drained soils.",
+      "primary_prep": "Deep plowing.",
+      "secondary_prep": "Harrow to a fine tilth.",
+      "tertiary_prep": "Sow seeds directly. Provide stakes or trellises immediately as they are climbing vines."
+    },
+    "Garden Peas (Minji)": {
+      "description": "A popular local vegetable grown in cooler highlands.",
+      "seedbed_prep": "Clear land of previous crop residues.",
+      "primary_prep": "Moderate plowing.",
+      "secondary_prep": "Harrow to a fine tilth.",
+      "tertiary_prep": "Sow seeds in shallow drills 45cm apart."
+    },
+    "Capsicum / Bell Peppers (Pilipili Hoho)": {
+      "description": "A widely used vegetable that performs well in greenhouses and open fields.",
+      "seedbed_prep": "Start seeds in a nursery tray or bed.",
+      "primary_prep": "Deep plow and apply well-rotted manure.",
+      "secondary_prep": "Harrow to a fine tilth.",
+      "tertiary_prep": "Transplant at 6 weeks. Space 60cm by 45cm."
+    },
+    "Chilies (Pilipili Kali)": {
+      "description": "A hot pepper crop, highly resistant to many pests.",
+      "seedbed_prep": "Start in a nursery bed.",
+      "primary_prep": "Plow to a medium depth.",
+      "secondary_prep": "Harrowing.",
+      "tertiary_prep": "Transplant seedlings. Spacing is 60cm by 60cm."
+    },
+    "Garlic (Kitunguu Saumu)": {
+      "description": "A high-value spice crop with long maturity time.",
+      "seedbed_prep": "Break bulbs into individual cloves for planting. Do not peel the cloves.",
+      "primary_prep": "Deep plow to loosen soil for bulb expansion.",
+      "secondary_prep": "Harrow to an extremely fine tilth.",
+      "tertiary_prep": "Plant cloves pointed-side up, 3cm deep. Space 30cm by 10cm."
+    },
+    "Ginger (Tangawizi)": {
+      "description": "A profitable rhizome spice crop.",
+      "seedbed_prep": "Use healthy rhizome pieces (setts) with at least one bud.",
+      "primary_prep": "Deep plow and apply heavy organic matter.",
+      "secondary_prep": "Harrow to a fine tilth.",
+      "tertiary_prep": "Plant setts 5cm deep on raised beds. Mulch heavily immediately after planting."
+    },
+    "Coriander (Dania)": {
+      "description": "A fast-growing herb used for garnishing.",
+      "seedbed_prep": "Split the round seeds into two halves before sowing to improve germination.",
+      "primary_prep": "Shallow plowing.",
+      "secondary_prep": "Harrow to a very fine tilth.",
+      "tertiary_prep": "Broadcast seeds or drill in shallow rows 30cm apart."
+    },
+    "Spinach (Mchicha)": {
+      "description": "A nutritious leafy green.",
+      "seedbed_prep": "Start in a nursery or sow directly.",
+      "primary_prep": "Plow and mix in compost.",
+      "secondary_prep": "Harrow to a fine tilth.",
+      "tertiary_prep": "If direct sowing, thin plants to 15cm apart."
+    },
+    "Amaranth (Terere)": {
+      "description": "A highly nutritious, drought-tolerant indigenous vegetable.",
+      "seedbed_prep": "Clear weeds completely.",
+      "primary_prep": "Shallow plowing.",
+      "secondary_prep": "Harrow to an extra-fine tilth because the seeds are microscopic.",
+      "tertiary_prep": "Mix seeds with dry sand before broadcasting to ensure even distribution."
+    },
+    "Spider Plant (Saga / Saget)": {
+      "description": "A popular bitter-tasting indigenous vegetable.",
+      "seedbed_prep": "Clear land.",
+      "primary_prep": "Moderate plowing.",
+      "secondary_prep": "Harrow to a fine tilth.",
+      "tertiary_prep": "Broadcast seeds or sow in drills 30cm apart."
+    },
+    "Nightshade (Managu)": {
+      "description": "A highly sought-after indigenous vegetable.",
+      "seedbed_prep": "Establish a nursery. Seeds take long to germinate.",
+      "primary_prep": "Plow and add manure.",
+      "secondary_prep": "Harrow to a fine tilth.",
+      "tertiary_prep": "Transplant seedlings at 4 weeks. Space 30cm by 30cm."
+    },
+    "Arrowroots (Nduma)": {
+      "description": "A traditional root tuber grown in wetlands or river valleys.",
+      "seedbed_prep": "Select swampy or highly moist areas.",
+      "primary_prep": "Deep digging using jembes. Avoid tractors in marshy areas.",
+      "secondary_prep": "Break large clods manually.",
+      "tertiary_prep": "Dig deep trenches. Plant suckers inside the trench and cover lightly."
+    },
+    "Yams (Viazi Vikuu)": {
+      "description": "A climbing tuber crop requiring deep soils.",
+      "seedbed_prep": "Cut mature tubers into setts and dip in ash to prevent rotting.",
+      "primary_prep": "Dig very deep holes (up to 1 meter) and fill with topsoil/manure.",
+      "secondary_prep": "Not required for the whole field.",
+      "tertiary_prep": "Plant setts in the holes. Immediately provide a strong, tall stake for the vine to climb."
+    },
+    "Sunflower (Alizeti)": {
+      "description": "An oilseed crop that is highly drought tolerant.",
+      "seedbed_prep": "Clear land.",
+      "primary_prep": "Deep plowing.",
+      "secondary_prep": "Harrow to a medium tilth.",
+      "tertiary_prep": "Sow seeds directly. Space 75cm by 30cm."
+    },
+    "Soya Beans": {
+      "description": "A high-protein legume used for human and animal feed.",
+      "seedbed_prep": "Inoculate seeds with Rhizobium bacteria before planting.",
+      "primary_prep": "Moderate plowing.",
+      "secondary_prep": "Harrow to a fine tilth.",
+      "tertiary_prep": "Plant 45cm by 10cm."
+    },
+    "Pigeon Peas (Mbaazi)": {
+      "description": "A perennial legume that acts as a windbreak and nitrogen fixer.",
+      "seedbed_prep": "Clear land.",
+      "primary_prep": "Plow deeply.",
+      "secondary_prep": "Harrow to a medium tilth.",
+      "tertiary_prep": "Plant 1m by 1m. Often intercropped with maize."
+    },
+    "Simsim (Sesame)": {
+      "description": "An oil crop grown in Western and Coastal regions.",
+      "seedbed_prep": "Clear land entirely of weeds.",
+      "primary_prep": "Shallow plowing.",
+      "secondary_prep": "Harrow to an extra fine tilth.",
+      "tertiary_prep": "Mix tiny seeds with sand and broadcast, or drill in shallow rows."
+    },
+    "Millet (Wimbi)": {
+      "description": "A highly nutritious, drought-escaping cereal.",
+      "seedbed_prep": "Clear all weeds.",
+      "primary_prep": "Plow early.",
+      "secondary_prep": "Harrow to a very fine tilth.",
+      "tertiary_prep": "Broadcast or drill seeds 2cm deep."
+    },
+    "Boma Rhodes Grass": {
+      "description": "The most common pasture grass for livestock farmers.",
+      "seedbed_prep": "Wait for the onset of rains.",
+      "primary_prep": "Plow to turn the soil.",
+      "secondary_prep": "Harrow to an extremely fine tilth.",
+      "tertiary_prep": "Broadcast seeds and pull a leafy tree branch over the field to cover the seeds very lightly."
+    }
+  },
+  "sw": {
+    "Mahindi (Maize)": {
+      "description": "Chakula kikuu cha Kenya. Inahitaji udongo wenye rutuba unaopitisha maji vizuri.",
+      "seedbed_prep": "Safisha shamba kwa kuondoa mabaki ya mazao yaliyopita. Usichome mabaki haya; badala yake, yafukie kwenye udongo ili kuongeza rutuba.",
+      "primary_prep": "Kulima kwa kina (sm 15-20) ukitumia jembe la ng'ombe au trekta. Hii husaidia mizizi kupenya kwa urahisi na kupata maji wakati wa kiangazi.",
+      "secondary_prep": "Kuvunja mabonge (Harrowing) ili kupata udongo wa kati. Mahindi hayahitaji udongo uliolainika sana, lakini mabonge makubwa yavunjwe.",
+      "tertiary_prep": "Kutengeneza matuta na mistari. Weka nafasi ya sm 75 kati ya mistari na sm 30 kati ya mashina. Weka mbolea ya DAP wakati wa kupanda."
+    },
+    "Maharagwe (Beans)": {
+      "description": "Zao muhimu la jamii ya mikunde kwa chakula na kuongeza naitrojeni kwenye udongo.",
+      "seedbed_prep": "Chagua shamba ambalo halituamishi maji. Maharagwe huoza mizizi haraka sana kwenye maji yaliyotuama.",
+      "primary_prep": "Kulima kwa kina cha kati (sm 10-15). Fudikiza magugu yote chini ya udongo. Weka chokaa ya kilimo (lime) kama udongo una asidi nyingi.",
+      "secondary_prep": "Kuvunja mabonge hadi udongo uwe LAINI SANA. Udongo laini unasaidia mbegu kuchipua kwa urahisi.",
+      "tertiary_prep": "Panda kwenye matuta madogo au ardhi tambarare. Nafasi iwe sm 45 kati ya mistari na sm 15 kati ya mimea."
+    },
+    "Viazi Mbatata (Potatoes)": {
+      "description": "Zao kuu la biashara na chakula katika maeneo yenye baridi.",
+      "seedbed_prep": "Hakikisha shamba halikupandwa nyanya au hoho msimu uliopita ili kuzuia ugonjwa wa kunyauka.",
+      "primary_prep": "Kulima kwa kina (sm 20) ni muhimu kuruhusu viazi kupanuka chini ya ardhi.",
+      "secondary_prep": "Vunja mabonge kiasi. Epuka udongo laini sana ambao unaweza kusababisha maji kutuama.",
+      "tertiary_prep": "Tengeneza matuta marefu. Panda mbegu zenye chipukizi sm 30 kutoka shina hadi shina. Weka mbolea ya NPK."
+    },
+    "Mtama (Sorghum)": {
+      "description": "Nafaka inayostahimili ukame sana, nzuri kwa maeneo kame.",
+      "seedbed_prep": "Ondoa magugu yote kabisa kwani mtama mchanga hushindwa kupambana na magugu.",
+      "primary_prep": "Lima mapema kabla ya mvua ili kuruhusu magugu kukauka na kufa.",
+      "secondary_prep": "Lainisha udongo UWE LAINI SANA. Mbegu za mtama ni ndogo sana; mabonge makubwa yatazifukia kina kirefu.",
+      "tertiary_prep": "Panda kwenye mistari yenye kina kifupi. Nafasi iwe sm 60 kwa sm 20."
+    },
+    "Muhogo (Cassava)": {
+      "description": "Zao la mizizi linalojulikana kwa uvumilivu wake katika udongo duni na ukame.",
+      "seedbed_prep": "Safisha vichaka na visiki vya miti.",
+      "primary_prep": "Lima kwa kina ili kulegeza udongo kwa mizizi kupenya.",
+      "secondary_prep": "Kuvunja mabonge kidogo inatosha.",
+      "tertiary_prep": "Tengeneza matuta makubwa. Panda vipande vya sm 30 kwa pembe ya digrii 45, nafasi ya mita 1 kwa mita 1."
+    },
+    "Nyanya (Tomatoes)": {
+      "description": "Zao la mboga lenye thamani kubwa linalohitaji uangalizi wa karibu.",
+      "seedbed_prep": "Anzia kitaluni. Punguza vijidudu kwenye udongo wa kitalu kwa kutumia joto la jua.",
+      "primary_prep": "Shamba kuu linahitaji kulimwa kwa kina na kuwekwa samadi iliyooza vizuri.",
+      "secondary_prep": "Lainisha udongo sana. Tengeneza matuta yaliyoinuka ikiwa eneo linatuama maji.",
+      "tertiary_prep": "Hamishia miche baada ya wiki 4. Nafasi sm 60 kwa sm 45. Weka miti ya kuegemeza mmea mara moja."
+    },
+    "Kabeji (Cabbage)": {
+      "description": "Mboga za majani zinazopendwa zinazostawi kwenye baridi na unyevu.",
+      "seedbed_prep": "Panda kitaluni. Kinga miche dhidi ya mvua kubwa na jua kali.",
+      "primary_prep": "Lima na uweke kiasi kikubwa cha mbolea ya samadi.",
+      "secondary_prep": "Vunja mabonge kiasi.",
+      "tertiary_prep": "Hamishia miche shambani. Nafasi sm 60 kwa sm 60. Hakikisha udongo una unyevu kila wakati."
+    },
+    "Vitunguu (Onions)": {
+      "description": "Zao la biashara linalohitaji hali ya ukame wakati wa kuvuna.",
+      "seedbed_prep": "Panda mbegu kitaluni kwenye udongo laini.",
+      "primary_prep": "Lima kwa kina cha wastani. Vitunguu vina mizizi mifupi.",
+      "secondary_prep": "Lainisha udongo sana ili mizizi ishikike vizuri.",
+      "tertiary_prep": "Hamishia miche ikiwa na unene wa penseli. Nafasi sm 30 kati ya mistari na sm 10 kati ya mimea. Usipande kina kirefu."
+    },
+    "Ngwaci (Sweet Potatoes)": {
+      "description": "Zao muhimu la chakula, lenye Vitamini A nyingi.",
+      "seedbed_prep": "Safisha uoto uliopo. Epuka maeneo yanayotuama maji.",
+      "primary_prep": "Lima kwa kina kugeuza udongo.",
+      "secondary_prep": "Vunja mabonge makubwa.",
+      "tertiary_prep": "Tengeneza matuta marefu sana (sm 30-40 juu). Panda marando (vines) yasiyo na magonjwa kwa kulaza."
+    },
+    "Ndengu (Green Grams)": {
+      "description": "Kunde zinazokomaa haraka na kufanya vizuri maeneo kavu.",
+      "seedbed_prep": "Safisha shamba na usubiri mvua za kwanza.",
+      "primary_prep": "Kulima kwa juu juu inatosha.",
+      "secondary_prep": "Lainisha udongo kwa ajili ya mbegu ndogo.",
+      "tertiary_prep": "Panda sm 45 kati ya mistari na sm 15 kati ya mimea."
+    },
+    "Kunde (Cowpeas)": {
+      "description": "Hulimwa kwa majani na mbegu zake. Huvumilia ukame sana.",
+      "seedbed_prep": "Kusafisha shamba kawaida. Inaweza kupandwa pamoja na mahindi.",
+      "primary_prep": "Kulima kwa wastani.",
+      "secondary_prep": "Udongo wa wastani unakubalika.",
+      "tertiary_prep": "Panda mbegu kina cha sm 2-3. Nafasi inategemea kama unataka majani au mbegu."
+    },
+    "Sukuma Wiki (Kales)": {
+      "description": "Mboga inayoliwa sana nchini Kenya.",
+      "seedbed_prep": "Anzia kitaluni chenye kivuli.",
+      "primary_prep": "Lima na weka mbolea nyingi ya samadi.",
+      "secondary_prep": "Lainisha udongo sana.",
+      "tertiary_prep": "Hamishia miche baada ya wiki 4. Nafasi sm 60 kwa sm 60. Weka mbolea ya kukuzia (CAN) baada ya wiki 3."
+    },
+    "Njugu Karanga (Groundnuts)": {
+      "description": "Zao la biashara linalohitaji udongo tifutifu kulegeza ili karanga ziingie chini.",
+      "seedbed_prep": "Chagua udongo mwepesi. Udongo wa mfinyanzi huzuia karanga kukua chini ya ardhi.",
+      "primary_prep": "Kulima kwa kina.",
+      "secondary_prep": "Lainisha udongo sana uwe mlegevu.",
+      "tertiary_prep": "Panda mbegu sm 5 chini. Nafasi sm 45 kwa sm 15. Usipalilie mmea unapoanza kutoa maua."
+    },
+    "Ndizi (Bananas)": {
+      "description": "Zao la kudumu linalotumika kama tunda na chakula.",
+      "seedbed_prep": "Chagua eneo lililokingwa na upepo mkali.",
+      "primary_prep": "Lima eneo lote, ingawa kuandaa mashimo tu ndio jambo la kawaida.",
+      "secondary_prep": "Sio lazima sana kwa shamba zima.",
+      "tertiary_prep": "Chimba mashimo makubwa (sm 60x60x60). Changanya udongo wa juu na samadi. Panda miche bora."
+    },
+    "Karoti (Carrots)": {
+      "description": "Mboga ya mzizi inayohitaji udongo mrefu na uliolegea.",
+      "seedbed_prep": "Chagua shamba lisilo na mawe.",
+      "primary_prep": "Lima kwa kina KIREFU SANA. USITUMIE samadi mbichi kwani husababisha karoti kupasuka mizizi.",
+      "secondary_prep": "Lainisha udongo uwe laini sana kama unga.",
+      "tertiary_prep": "Panda mbegu moja kwa moja kwenye mistari sm 30. Punguza miche ibaki nafasi ya sm 5 kuruhusu mzizi kukua."
+    },
+    "Ngano (Wheat)": {
+      "description": "Nafaka kuu inayolimwa kwa wingi katika Bonde la Ufa.",
+      "seedbed_prep": "Ondoa mabaki ya nafaka ya msimu uliopita kuzuia magonjwa.",
+      "primary_prep": "Lima kwa kina kufukia magugu.",
+      "secondary_prep": "Lainisha udongo uwe laini na mgumu kiasi. Udongo mgumu husaidia mbegu kuota vizuri.",
+      "tertiary_prep": "Panda kwa mashine (seed drill) kina cha sm 3-5. Weka mbolea ya kupandia yenye Fosforasi."
+    },
+    "Mchele / Mpunga (Rice)": {
+      "description": "Nafaka inayotegemea maji mengi kama vile Mwea.",
+      "seedbed_prep": "Tengeneza kitalu chenye maji. Loweka mbegu kwa saa 24 kabla ya kupanda kitaluni.",
+      "primary_prep": "Lima shamba likiwa limejaa maji kutengeneza tope zito linalozuia maji kupotea chini.",
+      "secondary_prep": "Sawazisha shamba sawasawa ukitumia ubao unaovutwa na ng'ombe au trekta.",
+      "tertiary_prep": "Hamishia miche ya wiki 3-4 kwenye shamba la tope. Nafasi sm 20 kwa sm 20."
+    },
+    "Miwa (Sugarcane)": {
+      "description": "Zao kuu la biashara Magharibi na Nyanza.",
+      "seedbed_prep": "Safisha uoto wote. Hakikisha shamba linapitisha maji vizuri kwani miwa huchukia maji kutuama.",
+      "primary_prep": "Lima kwa kina (hadi sm 30) kuruhusu mizizi mikubwa kushika chini.",
+      "secondary_prep": "Vunja mabonge mara moja au mbili.",
+      "tertiary_prep": "Chimba mitaro mirefu mita 1.2 hadi 1.5. Panda vipande vya miwa (setts) kwa kulaza ndani ya mtaro."
+    },
+    "Majani Chai (Tea)": {
+      "description": "Zao linaloingiza pesa nyingi za kigeni Kenya, hustawi nyanda za juu kwenye udongo wa asidi.",
+      "seedbed_prep": "Safisha misitu. Usichome majani kwani majivu hupunguza asidi ya udongo (chai inahitaji asidi).",
+      "primary_prep": "Lima kwa kina kuvunja udongo mgumu chini.",
+      "secondary_prep": "Sawazisha shamba na panda miti ya kivuli na kuzuia upepo.",
+      "tertiary_prep": "Chimba mashimo sm 45. Panda miche ya kisasa. Nafasi mita 1.2 kwa mita 0.6."
+    },
+    "Kahawa (Coffee)": {
+      "description": "Zao la biashara linalopenda udongo wa volkeno na hali ya hewa ya baridi kiasi.",
+      "seedbed_prep": "Tengeneza kitalu chenye kivuli. Mbegu huchukua hadi miezi 2 kuota.",
+      "primary_prep": "Safisha shamba na lima kwa kina.",
+      "secondary_prep": "Weka alama shambani. Tengeneza matuta kwenye miteremko kuzuia mmonyoko.",
+      "tertiary_prep": "Chimba mashimo sm 60 upana na kina. Changanya udongo na mbolea ya samadi kabla ya kupanda."
+    },
+    "Pamba (Cotton)": {
+      "description": "Zao la nyuzi linalostawi maeneo ya joto na kavu.",
+      "seedbed_prep": "Safisha shamba mara baada ya kuvuna msimu uliopita kuua wadudu (cotton stainers).",
+      "primary_prep": "Lima kwa kina cha wastani kufukia mabaki ya mimea.",
+      "secondary_prep": "Vunja mabonge kiasi.",
+      "tertiary_prep": "Panda mbegu 3-4 kwa shimo. Nafasi sm 90 kwa sm 30. Punguza ibaki mimea 2 ikishaota."
+    },
+    "Pireto (Pyrethrum)": {
+      "description": "Maua yanayotumika kutengeneza dawa asili za wadudu.",
+      "seedbed_prep": "Ondoa magugu yote. Pireto inashindwa kupambana na magugu.",
+      "primary_prep": "Lima kwa kina (sm 20).",
+      "secondary_prep": "Lainisha udongo uwe safi sana.",
+      "tertiary_prep": "Panda vipande (splits) kutoka kwenye mimea iliyokomaa. Nafasi sm 60 kwa sm 30 kwenye matuta."
+    },
+    "Makadamia (Macadamia Nuts)": {
+      "description": "Mti unaotoa njugu za thamani kubwa.",
+      "seedbed_prep": "Nunua miche iliyounganishwa (grafted) kutoka vitalu vilivyothibitishwa pekee.",
+      "primary_prep": "Safisha shamba na weka alama za mashimo.",
+      "secondary_prep": "Sio lazima kwa miti.",
+      "tertiary_prep": "Chimba mashimo makubwa (sm 60x60). Nafasi mita 7 kwa mita 7 kuruhusu mti kutanuka."
+    },
+    "Parachichi (Avocado)": {
+      "description": "Tunda linalouzwa nje kwa wingi, hasa aina ya Hass.",
+      "seedbed_prep": "Chagua eneo lisilotuama maji. Parachichi huoza mizizi haraka sana.",
+      "primary_prep": "Safisha shamba na lima kuvunja udongo mgumu.",
+      "secondary_prep": "Sio lazima.",
+      "tertiary_prep": "Chimba mashimo sm 60 kina. Nafasi mita 5 kwa mita 5. Changanya udongo na samadi na panda miche iliyounganishwa."
+    },
+    "Maembe (Mangoes)": {
+      "description": "Tunda linalopendwa sana, hasa maeneo ya Mashariki na Pwani.",
+      "seedbed_prep": "Chagua udongo wenye kina kirefu usiotuama maji.",
+      "primary_prep": "Safisha vichaka na lima.",
+      "secondary_prep": "Sio lazima.",
+      "tertiary_prep": "Chimba mashimo makubwa. Nafasi inatofautiana kati ya mita 8x8 hadi 10x10 kutegemea aina."
+    },
+    "Matunda ya Mateso (Passion Fruit)": {
+      "description": "Mmea unaotambaa na kutoa matunda yenye thamani kubwa.",
+      "seedbed_prep": "Jenga fensi za waya (trellises) za mmea kutambaa kabla ya kupanda.",
+      "primary_prep": "Lima eneo kati ya mistari ya fensi.",
+      "secondary_prep": "Vunja mabonge kidogo.",
+      "tertiary_prep": "Panda miche kwenye shina la nguzo za fensi, nafasi ya mita 3."
+    },
+    "Mananasi (Pineapples)": {
+      "description": "Tunda la kitropiki linalofaa kwa maeneo ya joto na chini.",
+      "seedbed_prep": "Tumia machipukizi (suckers au crowns) kutoka kwa mimea yenye afya.",
+      "primary_prep": "Lima kwa kina. Udongo lazima upitishe maji vizuri sana.",
+      "secondary_prep": "Vunja mabonge kiasi.",
+      "tertiary_prep": "Panda mistari miwili miwili. Nafasi sm 30 kati ya mimea na sm 60 kati ya mistari. Tumia karatasi nyeusi kufunika udongo (mulch) ikiwezekana."
+    },
+    "Papai (Pawpaw)": {
+      "description": "Mti wa matunda unaokua haraka na kuishi muda mfupi.",
+      "seedbed_prep": "Otesha mbegu kwenye viriba vya nailoni kitaluni.",
+      "primary_prep": "Safisha na lima shamba.",
+      "secondary_prep": "Sio lazima.",
+      "tertiary_prep": "Panda miche 3 kwa shimo (kuhakikisha unapata mmea dume na jike baadaye). Nafasi mita 3 kwa mita 3."
+    },
+    "Tikiti Maji (Watermelon)": {
+      "description": "Tunda linalotambaa, linahitaji joto na nafasi kubwa.",
+      "seedbed_prep": "Safisha shamba na subiri udongo upate joto.",
+      "primary_prep": "Lima kwa kina kuruhusu mizizi kwenda chini.",
+      "secondary_prep": "Vunja mabonge kiasi.",
+      "tertiary_prep": "Panda mbegu 2-3 kwa shimo kwenye matuta. Nafasi mita 2 kwa mita 1."
+    },
+    "Maboga (Pumpkins)": {
+      "description": "Mmea unaostahimili magonjwa, hulimwa kwa matunda na majani.",
+      "seedbed_prep": "Safisha magugu yote.",
+      "primary_prep": "Lima kugeuza udongo.",
+      "secondary_prep": "Vunja mabonge.",
+      "tertiary_prep": "Panda kwenye matuta. Weka mbolea nyingi ya asili kabla ya kupanda mbegu."
+    },
+    "Mishiri (French Beans)": {
+      "description": "Mboga inayouzwa nje, inahitaji uangalizi wa karibu sana.",
+      "seedbed_prep": "Hakikisha mifumo ya umwagiliaji ipo tayari kabla ya kupanda.",
+      "primary_prep": "Lima kina cha sm 20.",
+      "secondary_prep": "Lainisha udongo uwe laini sana ili mbegu ziote pamoja.",
+      "tertiary_prep": "Panda mbegu moja kwa moja. Nafasi sm 30 kwa sm 15. Weka kamba za kushikilia mmea."
+    },
+    "Njegere (Snow Peas)": {
+      "description": "Zao la kuuza nje linalostawi maeneo ya baridi.",
+      "seedbed_prep": "Chagua udongo unaopitisha maji vizuri.",
+      "primary_prep": "Lima kwa kina.",
+      "secondary_prep": "Lainisha udongo sana.",
+      "tertiary_prep": "Panda mbegu. Weka miti au kamba mara moja kwani ni mimea inayotambaa."
+    },
+    "Minji (Garden Peas)": {
+      "description": "Mboga inayopendwa inayolimwa nyanda za juu zenye baridi.",
+      "seedbed_prep": "Safisha shamba kuondoa mabaki ya mazao.",
+      "primary_prep": "Lima kwa wastani.",
+      "secondary_prep": "Lainisha udongo sana.",
+      "tertiary_prep": "Panda mbegu kwenye mistari yenye nafasi ya sm 45."
+    },
+    "Pilipili Hoho (Capsicum / Bell Peppers)": {
+      "description": "Mboga inayolimwa sana ndani ya kitalu (greenhouse) na nje.",
+      "seedbed_prep": "Anzia mbegu kitaluni.",
+      "primary_prep": "Lima kwa kina na weka samadi iliyooza vizuri.",
+      "secondary_prep": "Lainisha udongo sana.",
+      "tertiary_prep": "Hamishia miche baada ya wiki 6. Nafasi sm 60 kwa sm 45."
+    },
+    "Pilipili Kali (Chilies)": {
+      "description": "Zao la viungo linalostahimili wadudu wengi.",
+      "seedbed_prep": "Anzia kitaluni.",
+      "primary_prep": "Lima kina cha wastani.",
+      "secondary_prep": "Vunja mabonge.",
+      "tertiary_prep": "Hamishia miche. Nafasi sm 60 kwa sm 60."
+    },
+    "Kitunguu Saumu (Garlic)": {
+      "description": "Kiungo chenye thamani kubwa lakini huchukua muda mrefu kukomaa.",
+      "seedbed_prep": "Gawanya vitunguu kupata punje za kupanda. Usimenye maganda ya punje.",
+      "primary_prep": "Lima kwa kina kulegeza udongo kwa ajili ya vitunguu kupanuka.",
+      "secondary_prep": "Lainisha udongo uwe laini sana.",
+      "tertiary_prep": "Panda punje upande wenye ncha ukiangalia juu, sm 3 chini. Nafasi sm 30 kwa sm 10."
+    },
+    "Tangawizi (Ginger)": {
+      "description": "Zao la kiungo la mizizi lenye faida kubwa.",
+      "seedbed_prep": "Tumia vipande vya mizizi (setts) vyenye angalau jicho moja.",
+      "primary_prep": "Lima kwa kina na weka mbolea nyingi ya asili.",
+      "secondary_prep": "Lainisha udongo sana.",
+      "tertiary_prep": "Panda sm 5 chini kwenye matuta. Funika udongo na majani makavu (mulch) mara moja."
+    },
+    "Dania (Coriander)": {
+      "description": "Mboga ya kiungo inayokua haraka.",
+      "seedbed_prep": "Vunja mbegu za duara ziwe nusu mbili kabla ya kupanda ili ziote haraka.",
+      "primary_prep": "Lima kwa juu juu.",
+      "secondary_prep": "Lainisha udongo uwe laini sana kama unga.",
+      "tertiary_prep": "Nyunyiza mbegu au panda kwenye mistari sm 30."
+    },
+    "Mchicha (Spinach)": {
+      "description": "Mboga ya majani yenye virutubisho vingi.",
+      "seedbed_prep": "Anzia kitaluni au panda moja kwa moja.",
+      "primary_prep": "Lima na weka mbolea ya asili.",
+      "secondary_prep": "Lainisha udongo sana.",
+      "tertiary_prep": "Kama umepanda moja kwa moja, punguza mimea ibaki nafasi ya sm 15."
+    },
+    "Terere (Amaranth)": {
+      "description": "Mboga ya kienyeji inayo stahimili ukame na ina virutubisho vingi.",
+      "seedbed_prep": "Safisha magugu yote kabisa.",
+      "primary_prep": "Lima kwa juu juu.",
+      "secondary_prep": "Lainisha udongo uwe laini SANA kwani mbegu zake ni ndogo sana.",
+      "tertiary_prep": "Changanya mbegu na mchanga mkavu kabla ya kunyunyiza ili zisambae vizuri."
+    },
+    "Saga / Saget (Spider Plant)": {
+      "description": "Mboga ya kienyeji yenye uchungu unaopendwa na wengi.",
+      "seedbed_prep": "Safisha shamba.",
+      "primary_prep": "Lima kwa wastani.",
+      "secondary_prep": "Lainisha udongo sana.",
+      "tertiary_prep": "Nyunyiza mbegu au panda mistari sm 30."
+    },
+    "Managu (Nightshade)": {
+      "description": "Mboga ya kienyeji inayosakwa sana sokoni.",
+      "seedbed_prep": "Tengeneza kitalu. Mbegu huchukua muda mrefu kuota.",
+      "primary_prep": "Lima na weka samadi.",
+      "secondary_prep": "Lainisha udongo sana.",
+      "tertiary_prep": "Hamishia miche baada ya wiki 4. Nafasi sm 30 kwa sm 30."
+    },
+    "Nduma (Arrowroots)": {
+      "description": "Zao la mizizi la asili linalolimwa kwenye mabonde na maeneo ya maji.",
+      "seedbed_prep": "Chagua maeneo yenye majimaji au mabwawa.",
+      "primary_prep": "Chimba kwa kina ukitumia jembe la mkono. Epuka matrekta kwenye tope.",
+      "secondary_prep": "Vunja mabonge makubwa kwa mkono.",
+      "tertiary_prep": "Chimba mitaro mirefu. Panda machipukizi (suckers) ndani ya mtaro na kufunika kidogo."
+    },
+    "Viazi Vikuu (Yams)": {
+      "description": "Zao la mizizi linalotambaa na kuhitaji udongo mrefu.",
+      "seedbed_prep": "Kata viazi vilivyokomaa vipande vipande na chovya kwenye majivu kuzuia kuoza.",
+      "primary_prep": "Chimba mashimo marefu sana (hadi mita 1) na ujaze udongo wa juu na samadi.",
+      "secondary_prep": "Sio lazima kwa shamba zima.",
+      "tertiary_prep": "Panda vipande ndani ya shimo. Weka mti mrefu na imara mara moja ili mmea utambae."
+    },
+    "Alizeti (Sunflower)": {
+      "description": "Zao la mafuta linalostahimili ukame sana.",
+      "seedbed_prep": "Safisha shamba.",
+      "primary_prep": "Lima kwa kina.",
+      "secondary_prep": "Vunja mabonge kiasi.",
+      "tertiary_prep": "Panda mbegu moja kwa moja. Nafasi sm 75 kwa sm 30."
+    },
+    "Soya (Soya Beans)": {
+      "description": "Kunde yenye protini nyingi kwa chakula cha binadamu na wanyama.",
+      "seedbed_prep": "Changanya mbegu na bakteria wa Rhizobium kabla ya kupanda.",
+      "primary_prep": "Lima kwa wastani.",
+      "secondary_prep": "Lainisha udongo sana.",
+      "tertiary_prep": "Panda sm 45 kwa sm 10."
+    },
+    "Mbaazi (Pigeon Peas)": {
+      "description": "Kunde ya kudumu inayotumika kuzuia upepo na kuongeza naitrojeni.",
+      "seedbed_prep": "Safisha shamba.",
+      "primary_prep": "Lima kwa kina.",
+      "secondary_prep": "Vunja mabonge kiasi.",
+      "tertiary_prep": "Panda mita 1 kwa mita 1. Mara nyingi hupandwa pamoja na mahindi."
+    },
+    "Ufuta (Simsim / Sesame)": {
+      "description": "Zao la mafuta linalolimwa Magharibi na Pwani.",
+      "seedbed_prep": "Ondoa magugu yote shambani.",
+      "primary_prep": "Lima kwa juu juu.",
+      "secondary_prep": "Lainisha udongo uwe laini sana.",
+      "tertiary_prep": "Changanya mbegu ndogo na mchanga kisha nyunyiza, au panda mistari midogo."
+    },
+    "Wimbi (Millet)": {
+      "description": "Nafaka yenye virutubisho vingi inayokwepa ukame.",
+      "seedbed_prep": "Safisha magugu yote.",
+      "primary_prep": "Lima mapema.",
+      "secondary_prep": "Lainisha udongo uwe laini sana.",
+      "tertiary_prep": "Nyunyiza au panda mbegu sm 2 chini."
+    },
+    "Nyasi za Boma Rhodes (Boma Rhodes Grass)": {
+      "description": "Nyasi zinazopendwa sana na wafugaji kwa malisho.",
+      "seedbed_prep": "Subiri mvua zianze.",
+      "primary_prep": "Lima kugeuza udongo.",
+      "secondary_prep": "Lainisha udongo uwe LAINI SANA KABISA.",
+      "tertiary_prep": "Nyunyiza mbegu kisha vuta tawi la mti lenye majani juu ya shamba kufunika mbegu kidogo sana."
+    }
+  }
+}

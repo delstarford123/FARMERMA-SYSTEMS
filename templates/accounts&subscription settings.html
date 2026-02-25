@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid bg-light pb-5 min-vh-100 overflow-hidden">
+    <div class="container py-5">
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <h2 class="fw-bold mb-4 settings-title">Account Settings</h2>
+        
+        <div class="row g-4">
+            <div class="col-md-3 sidebar-nav">
+                <div class="list-group shadow-sm border-0">
+                    <a href="/dashboard" class="list-group-item list-group-item-action">Overview</a>
+                    <a href="/live-market-prices" class="list-group-item list-group-item-action">Live Market Prices</a>
+                    <a href="/trends-forecasts" class="list-group-item list-group-item-action">Trends & Forecasts</a>
+                    <a href="/billing" class="list-group-item list-group-item-action">Billing & Receipts</a>
+                    <a href="/settings" class="list-group-item list-group-item-action active" style="background-color: var(--primary-green); border-color: var(--primary-green);">Account Settings</a>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="card shadow-sm border-0 mb-4 settings-card">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-4">Profile Information</h5>
+                        <form action="{{ url_for('account_settings') }}" method="POST">
+                            <input type="hidden" name="form_type" value="profile_update">
+                            
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" name="full_name" class="form-control" value="{{ profile.get('full_name', '') }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" value="{{ session.get('user_email', '') }}" readonly>
+                                    <div class="form-text text-muted">Contact support to change your email.</div>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Organization / Farm Name</label>
+                                <input type="text" name="farm_name" class="form-control" value="{{ profile.get('farm_name', '') }}" placeholder="e.g. Kilimo Cooperative">
+                            </div>
+                            <button type="submit" class="btn btn-success px-4" style="background-color: #2E7D32; border-color: #2E7D32;">Save Profile</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4 settings-card">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-4">Security</h5>
+                        <form action="{{ url_for('account_settings') }}" method="POST">
+                            <input type="hidden" name="form_type" value="password_update">
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Current Password</label>
+                                <input type="password" name="current_password" class="form-control" required>
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">New Password</label>
+                                    <input type="password" name="new_password" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Confirm New Password</label>
+                                    <input type="password" name="confirm_password" class="form-control" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-outline-dark">Update Password</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 border-start border-danger border-4 settings-card">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="fw-bold text-danger mb-1">Delete Account</h5>
+                            <p class="text-muted mb-0 small">Permanently delete your account and cancel all active subscriptions. This action cannot be undone.</p>
+                        </div>
+                        <form action="/delete-account" method="POST" onsubmit="return confirm('Are you absolutely sure you want to delete your Farmerman account?');">
+                            <button type="submit" class="btn btn-danger">Delete Account</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+<script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // 1. Elastic Snap for the main title
+    gsap.from(".settings-title", {
+        x: -300, 
+        opacity: 0, 
+        duration: 1.5, 
+        ease: "elastic.out(1, 0.3)" 
+    });
+
+    // 2. Whip Slide for the sidebar navigation
+    gsap.from(".sidebar-nav", {
+        x: -600, 
+        rotation: -10,
+        duration: 0.8, 
+        delay: 0.2,
+        ease: "back.out(1.4)"
+    });
+
+    // 3. Cascade Reveal for the cards
+    gsap.from(".settings-card", {
+        y: 80, 
+        opacity: 0,
+        stagger: 0.2, 
+        duration: 0.6, 
+        ease: "power2.out",
+        delay: 0.4
+    });
+</script>
+{% endblock %}

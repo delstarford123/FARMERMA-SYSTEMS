@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --plant-green: #2E7D32;
+        --soil-brown: #5D4037;
+        --sky-blue: #0288D1;
+    }
+    .text-primary-green { color: var(--plant-green) !important; }
+    .btn-success { background-color: var(--plant-green); border-color: var(--plant-green); }
+    .btn-outline-success { color: var(--plant-green); border-color: var(--plant-green); }
+    .btn-outline-success:hover { background-color: var(--plant-green); color: white; }
+    .border-success { border-color: var(--plant-green) !important; }
+    .bg-success { background-color: var(--plant-green) !important; }
+
+    /* Prevent flickering before GSAP */
+    .pricing-lead, .pricing-card, .pricing-card-pro, .faq-title, .faq-text, .faq-btn {
+        opacity: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="bg-light py-5 text-center overflow-hidden">
+    <div class="container py-4">
+        <h1 class="fw-bold mb-3 pricing-header" style="color: var(--soil-brown);">Transparent, Value-Driven Pricing</h1>
+        <p class="lead text-muted max-w-75 mx-auto pricing-lead">Choose the market intelligence plan that fits your scale. Secure payments via M-Pesa, Stripe, PayPal, and Bank Transfer.</p>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4 justify-content-center">
+            
+            <div class="col-lg-4 col-md-6 pricing-card">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body p-5 text-center d-flex flex-column">
+                        <h4 class="fw-bold mb-3" style="color: var(--soil-brown);">Smallholder</h4>
+                        <h2 class="display-5 fw-bold text-dark mb-4">KES 700<span class="fs-5 text-muted fw-normal">/mo</span></h2>
+                        <p class="text-muted mb-4">Essential market data for individual farmers looking to optimize their harvest timing.</p>
+                        <ul class="list-unstyled text-start mb-4">
+                            <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> Daily Price Updates (Delayed 24h)</li>
+                            <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> 3 Core Commodities</li>
+                            <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> Weekly SMS Alerts</li>
+                            <li class="mb-2 text-muted"><i class="bi bi-x-lg me-2"></i> Predictive AI Trends</li>
+                        </ul>
+                        <a href="/register" class="btn btn-outline-success w-100 mt-auto magnetic-btn">Start Basic Plan</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6 pricing-card-pro">
+                <div class="card h-100 shadow-lg border-0 border-top border-success border-4 position-relative">
+                    <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-success px-3 py-2">Most Popular</span>
+                    <div class="card-body p-5 text-center d-flex flex-column">
+                        <h4 class="fw-bold mb-3 text-primary-green">Agribusiness Pro</h4>
+                        <h2 class="display-5 fw-bold text-dark mb-4">KES 3,500<span class="fs-5 text-muted fw-normal">/mo</span></h2>
+                        <p class="text-muted mb-4">Real-time intelligence and AI forecasts for cooperatives and commercial farmers.</p>
+                        <ul class="list-unstyled text-start mb-4">
+                            <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> Real-Time Live Dashboard</li>
+                            <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> Unlimited Commodities</li>
+                            <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> AI Predictive Trends</li>
+                            <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> Historical Reports</li>
+                        </ul>
+                        <a href="/checkout" class="btn btn-success w-100 mt-auto magnetic-btn py-2 fw-bold text-white">Subscribe Now</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6 pricing-card">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body p-5 text-center d-flex flex-column">
+                        <h4 class="fw-bold mb-3" style="color: var(--sky-blue);">Enterprise & NGO</h4>
+                        <h2 class="display-5 fw-bold text-dark mb-4">KES 20k<span class="fs-5 text-muted fw-normal">/mo</span></h2>
+                        <p class="text-muted mb-4">Comprehensive data systems and API integration for institutions and policymakers.</p>
+                        <ul class="list-unstyled text-start mb-4">
+                            <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> Everything in Pro</li>
+                            <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> Direct API Access</li>
+                            <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> Custom Data Collection</li>
+                            <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> Dedicated Manager</li>
+                        </ul>
+                        <a href="/contact" class="btn btn-dark w-100 mt-auto magnetic-btn" style="background-color: var(--soil-brown); border-color: var(--soil-brown);">Contact Sales</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-light overflow-hidden faq-section">
+    <div class="container text-center max-w-75">
+        <h3 class="fw-bold mb-4 faq-title" style="color: var(--soil-brown);">Have Questions?</h3>
+        <p class="text-muted mb-4 faq-text">Our data is sourced directly from field agents, vetted brokers, and integrated agricultural APIs. If you need a custom solution for your organization, we are ready to help.</p>
+        <a href="/contact" class="btn btn-outline-dark faq-btn">Read Full FAQ or Contact Us</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+<script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // 1. Elastic Snap for Header
+    gsap.from(".pricing-header", {
+        x: -300, 
+        opacity: 0, 
+        duration: 1.5, 
+        ease: "elastic.out(1, 0.3)" 
+    });
+    gsap.to(".pricing-lead", { opacity: 1, y: 0, startAt: {y: 20}, duration: 1, delay: 0.5 });
+
+    // 2. Cascade Reveal for Side Cards
+    gsap.to(".pricing-card", {
+        scrollTrigger: ".pricing-card",
+        opacity: 1,
+        y: 0,
+        startAt: { y: 30 },
+        stagger: 0.4,
+        duration: 0.8,
+        ease: "power2.out"
+    });
+
+    // 3. Perspective Fly for Pro Card
+    gsap.to(".pricing-card-pro", {
+        scrollTrigger: ".pricing-card-pro",
+        opacity: 1,
+        z: 0,
+        startAt: { z: -1000 },
+        transformPerspective: 1000,
+        duration: 1.2,
+        ease: "power3.out",
+        delay: 0.2
+    });
+
+    // 4. FAQ Section Animation
+    const faqTl = gsap.timeline({
+        scrollTrigger: { trigger: ".faq-section", start: "top 85%" }
+    });
+    faqTl.to(".faq-title", { opacity: 1, y: 0, startAt: {y: 30}, duration: 0.6 })
+         .to(".faq-text", { opacity: 1, duration: 0.6 }, "-=0.3")
+         .to(".faq-btn", { opacity: 1, scale: 1, startAt: {scale: 0.8}, duration: 0.4, ease: "back.out(1.7)" });
+
+    // 5. Magnetic Button Effect
+    const btns = document.querySelectorAll(".magnetic-btn");
+    btns.forEach(btn => {
+        btn.addEventListener("mousemove", (e) => {
+            const rect = btn.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            gsap.to(btn, { x: x * 0.3, y: y * 0.3, duration: 0.3 });
+        });
+        btn.addEventListener("mouseleave", () => {
+            gsap.to(btn, { x: 0, y: 0, duration: 0.3 });
+        });
+    });
+</script>
+{% endblock %}

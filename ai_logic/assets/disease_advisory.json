@@ -1,0 +1,118 @@
+{
+    "en": {
+        "ALL Present": {
+            "description": "CRITICAL ALERT: The AI has detected signs of multiple severe infections or pest infestations simultaneously on the same plant.",
+            "treatment": "Plants with multiple severe infections rarely recover. Uproot and burn affected plants away from the field. Consult an extension officer immediately.",
+            "chemical_control": "Apply a broad-spectrum cocktail only under expert guidance.",
+            "active_ingredient": "Requires Agronomist Consultation",
+            "preventive_measures": "Implement strict crop rotation next season and use certified treated seeds.",
+            "weather_warning": "High humidity accelerates infections. Do not spray if rain is expected within 3 hours."
+        },
+        "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+            "description": "Gray Leaf Spot is a fungal disease causing tan-to-gray rectangular lesions on the leaves, reducing grain yield.",
+            "treatment": "Remove crop residue from the previous season. Apply a foliar fungicide at the early tasseling stage.",
+            "chemical_control": "Use systemic fungicides to halt the fungal spread.",
+            "active_ingredient": "Azoxystrobin, Pyraclostrobin, or Propiconazole",
+            "preventive_measures": "Plant resistant hybrid varieties next season and practice deep plowing.",
+            "weather_warning": "Thrives in high humidity. Spray early in the morning when dew has dried."
+        },
+        "Corn___Common_Rust_early": {
+            "description": "Early stage Common Rust appears as small, reddish-brown pustules on the leaves.",
+            "treatment": "Because it is in the early stage, the crop can be saved easily. Apply a preventative and curative fungicide.",
+            "chemical_control": "Apply a preventative fungicide immediately.",
+            "active_ingredient": "Mancozeb (preventative) or Difenoconazole (curative)",
+            "preventive_measures": "Ensure plants have adequate spacing for airflow.",
+            "weather_warning": "Do not spray if temperature is above 30°C to avoid burning the leaves."
+        },
+        "Corn_(maize)___Common_rust_severe": {
+            "description": "Severe Common Rust. Leaves are heavily covered in brown, powdery spores, causing premature drying. Yield loss is highly likely.",
+            "treatment": "Immediate application of strong systemic fungicides is required. Strip off and destroy heavily infected bottom leaves.",
+            "chemical_control": "A mixture of systemic and contact fungicides is required.",
+            "active_ingredient": "Propiconazole + Azoxystrobin combination",
+            "preventive_measures": "Plant rust-resistant maize varieties next season.",
+            "weather_warning": "Spores spread rapidly in wind. Spray immediately on a calm, dry day."
+        },
+        "Corn___Northern_Leaf_Blight_early": {
+            "description": "Early stage Northern Leaf Blight (NLB) shows large, cigar-shaped, grayish-green or tan lesions.",
+            "treatment": "Fungicide application is highly effective at this early stage. Apply immediately.",
+            "chemical_control": "Use targeted fungicides before lesions reach the ear leaf.",
+            "active_ingredient": "Mancozeb or Chlorothalonil",
+            "preventive_measures": "Control weeds that may harbor the fungus.",
+            "weather_warning": "Spray on a dry morning."
+        },
+        "maize fall armyworm": {
+            "description": "Fall Armyworm (FAW) is a highly destructive caterpillar that feeds inside the maize funnel, causing ragged holes.",
+            "treatment": "Direct chemical sprays directly into the funnel (whorl). For organic, put fine sand/ash mixed with pepper into the funnel.",
+            "chemical_control": "Use localized systemic or contact insecticides. Rotate chemicals to prevent resistance.",
+            "active_ingredient": "Emamectin Benzoate, Spinetoram, or Indoxacarb",
+            "preventive_measures": "Practice 'Push-Pull' technology using Desmodium and Napier grass.",
+            "weather_warning": "Spray early morning (6 AM - 9 AM) or late evening when caterpillars feed."
+        },
+        "Corn___Healthy_": {
+            "description": "Your maize plant looks perfectly healthy! The leaves are green and free from pests.",
+            "treatment": "No disease treatment is required. Continue good agronomic practices.",
+            "chemical_control": "None",
+            "active_ingredient": "N/A - Top dress with CAN or Urea if required.",
+            "preventive_measures": "Continue regular scouting twice a week.",
+            "weather_warning": "Monitor weather for optimal fertilizer application."
+        }
+    },
+    "sw": {
+        "ALL Present": {
+            "description": "HATARI: Mtambo umegundua dalili za magonjwa mabaya au wadudu wengi kwa wakati mmoja kwenye mmea mmoja.",
+            "treatment": "Mimea iliyo na maambukizi haya mara chache hupona. Ng'oa na choma mimea iliyoathiriwa mbali na shamba. Wasiliana na afisa wa kilimo mara moja.",
+            "chemical_control": "Tumia mchanganyiko wa dawa chini ya ushauri wa mtaalamu pekee.",
+            "active_ingredient": "Inahitaji Ushauri wa Mtaalamu wa Kilimo",
+            "preventive_measures": "Fanya mzunguko wa mazao (crop rotation) msimu ujao na utumie mbegu zilizothibitishwa.",
+            "weather_warning": "Unyevu mwingi huharakisha maambukizi. Usipige dawa ikiwa mvua inatarajiwa ndani ya saa 3."
+        },
+        "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+            "description": "Ugonjwa wa Madoa ya Kijivu (Gray Leaf Spot) husababisha madoa ya kahawia kwenye majani na kupunguza mavuno.",
+            "treatment": "Ondoa mabaki ya mazao ya msimu uliopita. Piga dawa ya ukungu (fungicide) wakati mmea unaanza kutoa mbelewele.",
+            "chemical_control": "Tumia dawa zinazoingia ndani ya mmea kuzuia ukungu kusambaa.",
+            "active_ingredient": "Azoxystrobin, Pyraclostrobin, au Propiconazole",
+            "preventive_measures": "Panda mbegu zinazostahimili magonjwa msimu ujao.",
+            "weather_warning": "Hustawi kwenye unyevu mwingi. Piga dawa asubuhi umande ukikauka."
+        },
+        "Corn___Common_Rust_early": {
+            "description": "Hatua ya mapema ya Ugonjwa wa Kutu (Rust) huonekana kama vijidudu vidogo vya rangi ya kahawia/kutu kwenye majani.",
+            "treatment": "Kwa kuwa ni hatua ya mapema, mmea unaweza kuokolewa kwa urahisi. Piga dawa ya kuzuia na kutibu ukungu.",
+            "chemical_control": "Piga dawa ya kuzuia mara moja ili kulinda majani mengine.",
+            "active_ingredient": "Mancozeb (kuzuia) au Difenoconazole (kutibu)",
+            "preventive_measures": "Hakikisha mimea imeachana nafasi ya kutosha kuruhusu hewa kupita.",
+            "weather_warning": "Usipige dawa ikiwa joto linazidi 30°C ili kuepuka kuunguza majani."
+        },
+        "Corn_(maize)___Common_rust_severe": {
+            "description": "Ugonjwa wa Kutu uliozidi. Majani yamefunikwa na unga wa kahawia, na kusababisha majani kukauka haraka. Hasara ya mavuno ni kubwa.",
+            "treatment": "Dawa kali inayozunguka ndani ya mmea inahitajika haraka. Ondoa na uchome majani ya chini yaliyoathirika sana.",
+            "chemical_control": "Mchanganyiko wa dawa ya mguso na inayoingia ndani ya mmea inahitajika.",
+            "active_ingredient": "Mchanganyiko wa Propiconazole + Azoxystrobin",
+            "preventive_measures": "Panda mbegu zinazostahimili ugonjwa wa kutu msimu ujao.",
+            "weather_warning": "Vijidudu husambaa haraka kwa upepo. Piga dawa siku tulivu isiyo na upepo."
+        },
+        "Corn___Northern_Leaf_Blight_early": {
+            "description": "Hatua ya mapema ya Blight huonyesha madoa makubwa ya kijivu au kahawia yanayofanana na sigara.",
+            "treatment": "Kupiga dawa ya ukungu katika hatua hii ni muhimu sana. Piga dawa mara moja.",
+            "chemical_control": "Tumia dawa za ukungu kabla madoa hayajafika kwenye jani la mhindi.",
+            "active_ingredient": "Mancozeb au Chlorothalonil",
+            "preventive_measures": "Dhibiti magugu ambayo yanaweza kuficha ukungu.",
+            "weather_warning": "Piga dawa asubuhi isiyo na mvua."
+        },
+        "maize fall armyworm": {
+            "description": "Kiwavi Jeshi (Fall Armyworm) ni mdudu mharibifu sana anayekula ndani ya mrija wa mhindi na kutoboa matundu kwenye majani.",
+            "treatment": "Elekeza dawa moja kwa moja ndani ya mrija (funnel) wa mmea. Kwa kilimo hai, weka mchanga/majivu yaliyochanganywa na pilipili ndani ya mrija.",
+            "chemical_control": "Tumia dawa za wadudu. Badilisha aina za dawa ili wadudu wasizoee.",
+            "active_ingredient": "Emamectin Benzoate, Spinetoram, au Indoxacarb",
+            "preventive_measures": "Tumia mbinu ya 'Sukuma-Vuta' (Push-Pull) ukitumia Desmodium na nyasi za Napier.",
+            "weather_warning": "Piga dawa asubuhi na mapema (Saa 12 - Saa 3) au jioni wadudu wanapotoka kula."
+        },
+        "Corn___Healthy_": {
+            "description": "Mhindi wako unaonekana una afya nzuri sana! Majani ni ya kijani na hayana magonjwa wala wadudu.",
+            "treatment": "Hakuna matibabu yanayohitajika. Endelea na huduma nzuri za shambani.",
+            "chemical_control": "Hakuna",
+            "active_ingredient": "Weka mbolea ya kukuzia (CAN au Urea) ikiwa udongo unahitaji.",
+            "preventive_measures": "Endelea kukagua shamba lako mara mbili kwa wiki.",
+            "weather_warning": "Fuatilia hali ya hewa kabla ya kuweka mbolea (weka wakati udongo una unyevu)."
+        }
+    }
+}

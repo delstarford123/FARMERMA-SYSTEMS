@@ -1,0 +1,11 @@
+Flask
+Flask-SQLAlchemy
+gunicorn
+firebase-admin
+stripe
+requests
+pandas
+scikit-learn
+Pillow
+numpy
+werkzeug

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5 min-vh-100 d-flex align-items-center justify-content-center">
+    <div class="row w-100 justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show shadow-sm" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <div class="card shadow-lg border-0 border-top border-dark border-4">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <span class="badge bg-dark mb-2 px-3 py-2">Staff Only</span>
+                        <h3 class="fw-bold text-dark">Admin Portal</h3>
+                        <p class="text-muted small">Farmerman Systems internal network.</p>
+                    </div>
+                    
+                    <form action="{{ url_for('client_login') }}" method="POST">
+                        <div class="mb-3">
+                            <label for="adminEmail" class="form-label fw-bold">Admin Email</label>
+                            <input type="email" name="email" class="form-control" id="adminEmail" placeholder="admin@farmermansystems.com" required>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="adminPassword" class="form-label fw-bold">Password</label>
+                            <input type="password" name="password" class="form-control" id="adminPassword" required>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-dark btn-lg fw-bold">Authenticate</button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <a href="/" class="text-muted small text-decoration-none">
+                            <i class="bi bi-arrow-left"></i> Return to Main Site
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

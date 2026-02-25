@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --plant-green: #2E7D32;
+        --soil-brown: #5D4037;
+        --sky-blue: #0288D1;
+    }
+    .success-card { opacity: 0; transform: scale(0.8); }
+    .checkmark-circle {
+        width: 100px;
+        height: 100px;
+        background: var(--plant-green);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        color: white;
+        font-size: 3rem;
+        box-shadow: 0 10px 20px rgba(46, 125, 50, 0.3);
+    }
+    .text-success { color: var(--plant-green) !important; }
+    .btn-success { background-color: var(--plant-green); border-color: var(--plant-green); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container d-flex align-items-center justify-content-center min-vh-100 py-5">
+    <div class="card border-0 shadow-lg text-center p-5 success-card" style="max-width: 500px; border-radius: 20px;">
+        <div class="card-body">
+            <div class="checkmark-circle">
+                <i class="bi bi-check-lg"></i>
+            </div>
+            
+            <h2 class="fw-bold mb-2" style="color: var(--soil-brown);">Payment Successful!</h2>
+            <p class="text-muted mb-4">Your <strong>Agribusiness Pro</strong> subscription is now active for your account in Kakamega.</p>
+            
+            <div class="bg-light p-3 rounded-3 mb-4 text-start border-start border-4" style="border-color: var(--sky-blue) !important;">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Receipt Number:</span>
+                    <span class="fw-bold small text-dark">{{ receipt_no | default('MPESA_PENDING') }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted small">Amount Paid:</span>
+                    <span class="fw-bold small text-dark">KES {{ "{:,.2f}".format(amount | default(3500)) }}</span>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mb-3">
+                <a href="/dashboard" class="btn btn-success btn-lg fw-bold rounded-pill magnetic-btn text-white">Go to Dashboard</a>
+                <a href="/billing" class="btn btn-link text-decoration-none small" style="color: var(--sky-blue);">View Billing History</a>
+            </div>
+
+            <p class="small text-muted mb-0">
+                Redirecting to your dashboard in <span id="countdown-timer" class="fw-bold text-success">10</span> seconds...
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        
+        // --- 1. Auto-Redirect Logic ---
+        const dashboardUrl = "{{ url_for('dashboard') }}";
+        let secondsRemaining = 10;
+        const timerDisplay = document.getElementById('countdown-timer');
+
+        const countdownInterval = setInterval(() => {
+            secondsRemaining--;
+            timerDisplay.textContent = secondsRemaining;
+
+            if (secondsRemaining <= 0) {
+                clearInterval(countdownInterval);
+                window.location.href = dashboardUrl;
+            }
+        }, 1000);
+
+        // Cancel redirect if the user manually clicks
+        const manualBtn = document.querySelector(".magnetic-btn");
+        manualBtn.addEventListener("click", () => clearInterval(countdownInterval));
+
+
+        // --- 2. GSAP Entrance ---
+        gsap.to(".success-card", {
+            opacity: 1, scale: 1, duration: 1, ease: "back.out(1.7)"
+        });
+
+        // --- 3. Confetti (Using Brand Colors) ---
+        const duration = 3 * 1000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { 
+            startVelocity: 30, 
+            spread: 360, 
+            ticks: 60, 
+            zIndex: 0,
+            colors: ['#2E7D32', '#5D4037', '#0288D1'] // Plant Green, Soil Brown, Sky Blue
+        };
+
+        function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+
+        const interval = setInterval(function() {
+            const timeLeft = animationEnd - Date.now();
+            if (timeLeft <= 0) return clearInterval(interval);
+
+            const particleCount = 50 * (timeLeft / duration);
+            confetti(Object.assign({}, defaults, { 
+                particleCount, 
+                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } 
+            }));
+            confetti(Object.assign({}, defaults, { 
+                particleCount, 
+                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } 
+            }));
+        }, 250);
+
+        // --- 4. Magnetic Button Physics ---
+        manualBtn.addEventListener("mousemove", (e) => {
+            const rect = manualBtn.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            gsap.to(manualBtn, { x: x * 0.3, y: y * 0.3, duration: 0.3 });
+        });
+        manualBtn.addEventListener("mouseleave", () => {
+            gsap.to(manualBtn, { x: 0, y: 0, duration: 0.3 });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid bg-light pb-5 min-vh-100">
+    <div class="container py-5">
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-0">Admin Overview</h2>
+                <p class="text-muted">Welcome back. Here is what is happening with Farmerman Systems today.</p>
+            </div>
+            <a href="/" class="btn btn-outline-dark" target="_blank">View Live Site</a>
+        </div>
+        
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 border-start border-success border-4 h-100">
+                    <div class="card-body p-4">
+                        <p class="text-muted fw-bold mb-1 text-uppercase">Total Revenue</p>
+                        <h2 class="display-6 fw-bold text-dark">KES {{ "{:,.2f}".format(total_revenue) }}</h2>
+                        <p class="text-success small mb-0">Processed via M-Pesa</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 border-start border-primary border-4 h-100">
+                    <div class="card-body p-4">
+                        <p class="text-muted fw-bold mb-1 text-uppercase">Registered Users</p>
+                        <h2 class="display-6 fw-bold text-dark">{{ total_subscribers }}</h2>
+                        <p class="text-primary small mb-0">Total platform accounts</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 border-start border-warning border-4 h-100">
+                    <div class="card-body p-4">
+                        <p class="text-muted fw-bold mb-1 text-uppercase">Active Market Feeds</p>
+                        <h2 class="display-6 fw-bold text-dark">{{ active_feeds }}</h2>
+                        <p class="text-muted small mb-0">Live across the ecosystem</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-dark text-white fw-bold">
+                        Quick Actions
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="/admin/data-manager" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3">
+                            Update Market Prices
+                            <span class="badge bg-success rounded-pill">Data</span>
+                        </a>
+                        <a href="/admin/subscribers" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3">
+                            Manage Subscribers
+                            <span class="badge bg-primary rounded-pill">Users</span>
+                        </a>
+                        <a href="/admin/content" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3">
+                            Edit Website Content
+                            <span class="badge bg-secondary rounded-pill">CMS</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-4">Recent M-Pesa Subscriptions</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Plan</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if recent_transactions %}
+                                        {% for txn in recent_transactions %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ txn.name }}</strong><br>
+                                                <small class="text-muted">{{ txn.email }}</small>
+                                            </td>
+                                            <td>{{ txn.plan }}</td>
+                                            <td><span class="badge bg-success">Paid</span></td>
+                                            <td>{{ txn.date }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-4">No recent transactions found.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

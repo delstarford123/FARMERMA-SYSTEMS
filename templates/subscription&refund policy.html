@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5 min-vh-100 overflow-hidden">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-5 text-center policy-header">
+                <h1 class="fw-bold text-dark mb-2">Subscription & Refund Policy</h1>
+                <p class="text-muted">Understanding your billing cycle and cancellation rights.</p>
+            </div>
+
+            <div class="card shadow-sm border-0 border-top border-success border-4 policy-card">
+                <div class="card-body p-5 rounded">
+                    
+                    <div class="policy-section mb-4">
+                        <h5 class="fw-bold text-dark mb-3">1. Subscription Billing</h5>
+                        <p class="text-muted">Farmerman Systems offers tiered access to our Market Intelligence platform. By subscribing, you agree to pay the stated monthly or annual fees associated with your chosen plan. Payments are processed securely via our partners (Stripe, PayPal, M-Pesa, or direct Bank Transfer).</p>
+                        <ul class="text-muted">
+                            <li><strong>Auto-Renewal:</strong> Credit Card and PayPal subscriptions automatically renew at the end of each billing cycle unless cancelled.</li>
+                            <li><strong>M-Pesa & Bank Transfers:</strong> These are treated as manual payments. You will receive an invoice prompt before your account expires.</li>
+                        </ul>
+                    </div>
+
+                    <div class="policy-section mb-4">
+                        <h5 class="fw-bold text-dark mb-3 mt-4">2. Upgrading or Downgrading</h5>
+                        <p class="text-muted">You may upgrade or downgrade your tier at any time via your Account Settings. Upgrades take effect immediately, and you will be charged a prorated amount. Downgrades take effect at the start of your next billing cycle.</p>
+                    </div>
+
+                    <div class="policy-section mb-4">
+                        <h5 class="fw-bold text-dark mb-3 mt-4">3. Cancellation Policy</h5>
+                        <p class="text-muted">You can cancel your subscription at any time through the Client Dashboard under "Billing & Receipts". Upon cancellation, you will retain access to your premium data until the end of your current paid billing period.</p>
+                    </div>
+
+                    <div class="policy-section mb-4">
+                        <h5 class="fw-bold text-dark mb-3 mt-4">4. Refund Eligibility</h5>
+                        <p class="text-muted">Because Farmerman Systems provides immediate access to proprietary digital data and analytics, <strong>all subscription fees are generally non-refundable.</strong></p>
+                        <p class="text-muted">Exceptions may be made strictly under the following conditions:</p>
+                        <ul class="text-muted">
+                            <li>Technical faults on our platform preventing you from accessing the data for more than 72 consecutive hours.</li>
+                            <li>Fraudulent unauthorized charges (subject to investigation with our payment processors).</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-secondary mt-4 border-0 contact-alert">
+                        <strong>Need Help with Billing?</strong><br>
+                        <span id="policy-typewriter"></span><span class="typewriter-cursor">|</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Styling for typewriter and hidden states */
+    .policy-header, .policy-card, .policy-section, .contact-alert {
+        opacity: 0;
+    }
+    .typewriter-cursor {
+        display: inline-block;
+        width: 2px;
+        background-color: var(--primary-green);
+        margin-left: 5px;
+        animation: blink 0.8s infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+
+<script>
+    gsap.registerPlugin(TextPlugin);
+
+    // 1. Elastic Snap for Header
+    gsap.to(".policy-header", {
+        y: 0,
+        opacity: 1,
+        startAt: { y: -100 },
+        duration: 1.5,
+        ease: "elastic.out(1, 0.3)"
+    });
+
+    // 2. Perspective Fly for Card
+    gsap.to(".policy-card", {
+        z: 0,
+        opacity: 1,
+        startAt: { z: -1000 },
+        transformPerspective: 1000,
+        duration: 1.2,
+        ease: "power3.out",
+        delay: 0.3
+    });
+
+    // 3. Cascade Reveal for Sections
+    gsap.to(".policy-section", {
+        y: 0,
+        opacity: 1,
+        startAt: { y: 30 },
+        stagger: 0.2,
+        duration: 0.8,
+        ease: "power2.out",
+        delay: 0.8
+    });
+
+    // 4. Contact Alert Reveal & Typewriter
+    gsap.to(".contact-alert", {
+        opacity: 1,
+        duration: 1,
+        delay: 1.8,
+        onComplete: () => {
+            gsap.to("#policy-typewriter", {
+                text: "Reach out to our finance team at billing@farmermansystems.com and we will assist you within 24 business hours.",
+                duration: 3,
+                ease: "none"
+            });
+        }
+    });
+</script>
+{% endblock %}

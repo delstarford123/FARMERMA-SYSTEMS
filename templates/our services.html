@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="bg-light py-5">
+    <div class="container py-4 text-center">
+        <h1 class="fw-bold text-primary-green mb-3">Our Core Expertise</h1>
+        <p class="lead text-muted max-w-75 mx-auto">Comprehensive, data-driven solutions designed to empower communities, optimize value chains, and integrate emerging technologies into African agriculture.</p>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <h2 class="text-success display-6">📈</h2>
+                        </div>
+                        <h4 class="fw-bold mb-3">Market Intelligence & Research</h4>
+                        <p class="text-muted">Live data dashboards tracking agricultural price products and trends. We provide the market intelligence necessary to reduce risk for organizations and farmers, ensuring profitable decision-making.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <h2 class="text-success display-6"></h2>
+                        </div>
+                        <h4 class="fw-bold mb-3">Value Chain Analysis</h4>
+                        <p class="text-muted">In-depth market systems development to identify bottlenecks and opportunities within agricultural value chains, improving market access from farm to fork.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <h2 class="text-success display-6"></h2>
+                        </div>
+                        <h4 class="fw-bold mb-3">Community Mobilization</h4>
+                        <p class="text-muted">Designing and implementing capacity-building programs that mobilize rural communities, enhancing their technical skills and agricultural output.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <h2 class="text-success display-6"></h2>
+                        </div>
+                        <h4 class="fw-bold mb-3">Women & Youth Empowerment</h4>
+                        <p class="text-muted">Targeted initiatives designed to enhance the participation and leadership of women and youth in agribusiness, driving inclusive agricultural transformation.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <h2 class="text-success display-6"></h2>
+                        </div>
+                        <h4 class="fw-bold mb-3">Policy & Investment Advisory</h4>
+                        <p class="text-muted">Advising governments and financial institutions on evidence-based policies, sustainability practices, and impact-driven agricultural investments across Africa.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <h2 class="text-success display-6"></h2>
+                        </div>
+                        <h4 class="fw-bold mb-3">Digital Innovation & AI</h4>
+                        <p class="text-muted">Leveraging our deep expertise in AI and fullstack development to integrate emerging technologies into agriculture, creating smart, weather-aware, and predictive farming ecosystems.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-success text-white text-center">
+    <div class="container py-4">
+        <h2 class="fw-bold mb-3">Ready to Transform Your Agribusiness?</h2>
+        <p class="lead mb-4">Partner with us for project design, M&E support, and unparalleled market intelligence.</p>
+        <a href="/contact" class="btn btn-light btn-lg text-success fw-bold px-5">Get in Touch</a>
+    </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+<script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Cascade Reveal for Service Cards
+    gsap.from(".service-card", {
+        scrollTrigger: {
+            trigger: ".service-card",
+            start: "top 80%"
+        },
+        y: 100,
+        opacity: 0,
+        stagger: 0.2,
+        duration: 0.8,
+        ease: "power3.out"
+    });
+
+    // Elastic Snap for the Service Header
+    gsap.from(".services-header", {
+        x: -300,
+        opacity: 0,
+        duration: 1.5,
+        ease: "elastic.out(1, 0.3)"
+    });
+</script>
+{% endblock %}

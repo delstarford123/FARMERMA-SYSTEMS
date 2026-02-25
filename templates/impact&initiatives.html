@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="bg-light py-5 overflow-hidden">
+    <div class="container py-4 text-center">
+        <span class="text-success fw-bold text-uppercase tracking-wide d-block impact-badge">Our Mission in Action</span>
+        <h1 class="fw-bold text-primary-green mt-2 mb-3 impact-title"><span id="impact-typewriter"></span><span class="typewriter-cursor">|</span></h1>
+        <p class="lead text-muted max-w-75 mx-auto impact-lead" style="opacity: 0;">Farmerman Systems goes beyond consultancy. We actively design and implement sustainable programs that promote resilient rural livelihoods across Africa.</p>
+    </div>
+</section>
+
+<section class="py-5 overflow-hidden">
+    <div class="container py-4">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6 order-lg-2">
+                <div class="rounded shadow-lg bg-secondary impact-img-right" style="height: 400px; background: url('https://images.unsplash.com/photo-1530262929451-caf6b99b5136?auto=format&fit=crop&w=800&q=80') center/cover; opacity: 0;"></div>
+            </div>
+            <div class="col-lg-6 order-lg-1">
+                <h3 class="fw-bold mb-3 text-dark impact-sub-title">Women & Youth Agribusiness Empowerment</h3>
+                <p class="text-muted impact-text" style="opacity: 0;">The future of African agriculture relies on the inclusion of its most dynamic demographics. We bridge the gap by designing capacity-building programs that target women and youth.</p>
+                <ul class="list-unstyled mt-4">
+                    <li class="d-flex mb-3 impact-list-item" style="opacity: 0;">
+                        <i class="bi bi-check-circle-fill text-success fs-5 me-3"></i>
+                        <span><strong>Skills Transfer:</strong> Training in modern, climate-resilient farming techniques and agribusiness management.</span>
+                    </li>
+                    <li class="d-flex mb-3 impact-list-item" style="opacity: 0;">
+                        <i class="bi bi-check-circle-fill text-success fs-5 me-3"></i>
+                        <span><strong>Market Access:</strong> Connecting young and female farmers directly to profitable markets using our intelligence platforms.</span>
+                    </li>
+                    <li class="d-flex mb-3 impact-list-item" style="opacity: 0;">
+                        <i class="bi bi-check-circle-fill text-success fs-5 me-3"></i>
+                        <span><strong>Financial Inclusion:</strong> Advisory support to help marginalized groups access agricultural financing and development grants.</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+<section class="py-5 bg-light border-top overflow-hidden">
+    <div class="container py-4">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <div class="rounded shadow-lg bg-secondary impact-img-left" style="height: 400px; background: url('https://images.unsplash.com/photo-1592982537447-6f296cb31454?auto=format&fit=crop&w=800&q=80') center/cover; opacity: 0;"></div>
+            </div>
+            <div class="col-lg-6">
+                <h3 class="fw-bold mb-3 text-dark impact-sub-title-2">Community Mobilization & Value Chain Development</h3>
+                <p class="text-muted impact-text-2" style="opacity: 0;">By mobilizing farming communities into cooperative models and optimizing local value chains, we drastically reduce post-harvest losses and operational risks.</p>
+                <p class="text-muted mb-4 impact-text-2" style="opacity: 0;">Our project design, monitoring, and evaluation support ensures that development partner funds translate into measurable, ground-level impact.</p>
+                <a href="/contact" class="btn btn-success px-4 py-2 fw-bold magnetic-btn impact-btn" style="opacity: 0;">Partner With Us on a Project</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .typewriter-cursor {
+        display: inline-block;
+        width: 3px;
+        background-color: var(--primary-green);
+        margin-left: 5px;
+        animation: blink 0.8s infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+
+<script>
+    gsap.registerPlugin(ScrollTrigger, TextPlugin);
+
+    // 1. Header Animations
+    gsap.from(".impact-badge", { y: -50, opacity: 0, duration: 1, ease: "elastic.out(1, 0.3)" });
+    gsap.to("#impact-typewriter", { text: "Impact & Initiatives", duration: 1.5, delay: 0.5, ease: "none" });
+    gsap.to(".impact-lead", { opacity: 1, y: 0, duration: 1, delay: 1.5 });
+
+    // 2. Women & Youth Section (Scroll Triggered)
+    gsap.to(".impact-img-right", {
+        scrollTrigger: ".impact-img-right",
+        opacity: 1, z: 0, startAt: { z: -1000 },
+        transformPerspective: 1000, duration: 1.2, ease: "power3.out"
+    });
+
+    gsap.from(".impact-sub-title", {
+        scrollTrigger: ".impact-sub-title",
+        rotationX: 90, opacity: 0, transformPerspective: 800, duration: 1, ease: "power3.out"
+    });
+
+    gsap.to(".impact-text", { scrollTrigger: ".impact-text", opacity: 1, y: 0, startAt: { y: 30 }, duration: 0.8 });
+
+    gsap.to(".impact-list-item", {
+        scrollTrigger: ".impact-list-item",
+        opacity: 1, x: 0, startAt: { x: -50 },
+        stagger: 0.2, duration: 0.6, ease: "power2.out"
+    });
+
+    // 3. Community Mobilization Section
+    gsap.to(".impact-img-left", {
+        scrollTrigger: ".impact-img-left",
+        opacity: 1, x: 0, rotation: 0, startAt: { x: -600, rotation: -10 },
+        duration: 1, ease: "back.out(1.4)"
+    });
+
+    gsap.from(".impact-sub-title-2", {
+        scrollTrigger: ".impact-sub-title-2",
+        rotationX: 90, opacity: 0, transformPerspective: 800, duration: 1, ease: "power3.out"
+    });
+
+    gsap.to(".impact-text-2", {
+        scrollTrigger: ".impact-text-2",
+        opacity: 1, stagger: 0.2, y: 0, startAt: { y: 30 }, duration: 0.8
+    });
+
+    gsap.to(".impact-btn", {
+        scrollTrigger: ".impact-btn",
+        opacity: 1, scale: 1, startAt: { scale: 0.5 },
+        duration: 0.5, ease: "back.out(1.7)"
+    });
+
+    // 4. Magnetic Pull for Button
+    const btn = document.querySelector(".magnetic-btn");
+    btn.addEventListener("mousemove", (e) => {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        gsap.to(btn, { x: x * 0.3, y: y * 0.3, duration: 0.3 });
+    });
+    btn.addEventListener("mouseleave", () => {
+        gsap.to(btn, { x: 0, y: 0, duration: 0.3 });
+    });
+</script>
+{% endblock %}

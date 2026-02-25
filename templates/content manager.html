@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* Prevent pre-animation flicker */
+    .cms-header, .back-btn-area, .main-editor, .edit-item {
+        opacity: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5 min-vh-100 overflow-hidden">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-success alert-dismissible fade show mb-4 shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="row mb-4 align-items-center">
+        <div class="col cms-header">
+            <h2 class="fw-bold decode-cms">Content Manager (CMS)</h2>
+            <p class="text-muted">Update website copy and publish new initiatives for Delstarford Works.</p>
+        </div>
+        <div class="col-auto back-btn-area">
+            <a href="/admin/dashboard" class="btn btn-outline-secondary shadow-sm">
+                <i class="bi bi-arrow-left me-2"></i>Back to Admin Hub
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8 main-editor">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-dark text-white fw-bold d-flex align-items-center">
+                    <i class="bi bi-pencil-square me-2"></i> Edit Page Content
+                </div>
+                <div class="card-body bg-light">
+                    <form action="{{ url_for('content_manager') }}" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Select Page to Edit</label>
+                            <select name="page_selection" class="form-select border-0 shadow-sm">
+                                <option value="home_hero">Home - Hero Section</option>
+                                <option value="about_mission">About Us - Mission Statement</option>
+                                <option value="impact_latest">Impact & Initiatives - Latest Project</option>
+                                <option value="announcement_banner">Platform Announcement Banner</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Content Title / Heading</label>
+                            <input type="text" name="content_title" class="form-control border-0 shadow-sm" value="Transforming African Agribusiness">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Body Text (HTML Supported)</label>
+                            <textarea name="body_text" class="form-control border-0 shadow-sm" rows="8">We deliver data-driven solutions and market intelligence to build profitable agricultural ecosystems.</textarea>
+                            <div class="form-text">Updates will go live across the platform immediately upon saving.</div>
+                        </div>
+                        <button type="submit" class="btn btn-success px-4 fw-bold save-btn">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 side-history">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>Recent Edits</h5>
+                    <ul class="list-group list-group-flush">
+                        {% for edit in recent_edits %}
+                        <li class="list-group-item px-0 edit-item">
+                            <div class="d-flex justify-content-between w-100">
+                                <h6 class="mb-1 fw-bold">{{ edit.page.replace('_', ' ').title() }}</h6>
+                                <small class="text-muted">{{ edit.timestamp }}</small>
+                            </div>
+                            <p class="mb-1 small text-muted">{{ edit.summary }}</p>
+                        </li>
+                        {% else %}
+                        <li class="text-muted small">No recent synchronization history found.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+
+<script>
+    gsap.registerPlugin(TextPlugin);
+
+    // 1. Decoded Effect for Header
+    gsap.to(".cms-header", { opacity: 1, duration: 0.1 });
+    gsap.from(".decode-cms", {
+        text: { value: "▓▒░█▓▒░█▓▒░█▓▒", chars: "XO!#" },
+        duration: 1.5,
+        ease: "none"
+    });
+
+    // 2. Whip Slide for Back Button
+    gsap.to(".back-btn-area", {
+        opacity: 1,
+        x: 0,
+        startAt: { x: 400 },
+        rotation: 15,
+        duration: 0.8,
+        ease: "back.out(1.4)",
+        delay: 0.5
+    });
+
+    // 3. Perspective Fly for Main Editor
+    gsap.to(".main-editor", {
+        opacity: 1,
+        z: 0,
+        startAt: { z: -1500 },
+        transformPerspective: 1000,
+        duration: 1.2,
+        ease: "power3.out",
+        delay: 0.3
+    });
+
+    // 4. Cascade Reveal for Sidebar Items
+    gsap.to(".edit-item", {
+        opacity: 1,
+        x: 0,
+        startAt: { x: 50 },
+        stagger: 0.15,
+        duration: 0.6,
+        ease: "power2.out",
+        delay: 0.8
+    });
+
+    // 5. Magnetic Pull for Save Button
+    const saveBtn = document.querySelector(".save-btn");
+    saveBtn.addEventListener("mousemove", (e) => {
+        const rect = saveBtn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        gsap.to(saveBtn, { x: x * 0.3, y: y * 0.3, duration: 0.3 });
+    });
+    saveBtn.addEventListener("mouseleave", () => {
+        gsap.to(saveBtn, { x: 0, y: 0, duration: 0.3 });
+    });
+</script>
+{% endblock %}

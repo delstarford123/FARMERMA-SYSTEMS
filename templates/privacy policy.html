@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5 mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="mb-5 text-center privacy-header">
+                <div class="badge bg-soft-success text-success px-3 py-2 rounded-pill mb-3">Legal & Transparency</div>
+                <h1 class="display-4 fw-bold mb-3" style="color: var(--soil-brown);">Privacy Policy</h1>
+                <p class="text-muted lead">Last Updated: February 2026</p>
+                <hr class="mx-auto" style="width: 50px; height: 3px; background: var(--plant-green);">
+            </div>
+
+            <div class="card shadow-lg border-0 overflow-hidden" data-aos="fade-up" data-aos-duration="1000">
+                <div class="card-body p-4 p-md-5 bg-white">
+                    
+                    <section class="mb-5" data-aos="fade-left" data-aos-delay="200">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-box bg-light me-3 rounded-3 p-2">
+                                <i class="bi bi-shield-lock-fill text-success fs-4"></i>
+                            </div>
+                            <h4 class="fw-bold m-0">1. Introduction</h4>
+                        </div>
+                        <p class="text-secondary leading-relaxed">
+                            At <strong>Farmerman Systems Pvt Ltd</strong>, we respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website, subscribe to our market intelligence platform, or use our consultancy services in Kakamega and beyond.
+                        </p>
+                    </section>
+
+                    <section class="mb-5" data-aos="fade-left" data-aos-delay="300">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-box bg-light me-3 rounded-3 p-2">
+                                <i class="bi bi-database-fill-check text-success fs-4"></i>
+                            </div>
+                            <h4 class="fw-bold m-0">2. Information We Collect</h4>
+                        </div>
+                        <p class="text-secondary">We may collect, use, and store different kinds of personal data about you, categorized as follows:</p>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded shadow-sm hover-lift h-100">
+                                    <h6 class="fw-bold text-success"><i class="bi bi-person-badge me-2"></i>Identity & Contact</h6>
+                                    <small class="text-muted">Full name, organization name, email, and telephone numbers.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded shadow-sm hover-lift h-100">
+                                    <h6 class="fw-bold text-success"><i class="bi bi-credit-card-2-back me-2"></i>Financial & Payment</h6>
+                                    <small class="text-muted">Processed via Stripe, PayPal, or M-Pesa. We do not store raw card details.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="mb-5" data-aos="fade-left" data-aos-delay="400">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-box bg-light me-3 rounded-3 p-2">
+                                <i class="bi bi-gear-wide-connected text-success fs-4"></i>
+                            </div>
+                            <h4 class="fw-bold m-0">3. How We Use Your Data</h4>
+                        </div>
+                        <ul class="list-group list-group-flush text-secondary">
+                            <li class="list-group-item bg-transparent border-0 ps-0"><i class="bi bi-check2-circle text-success me-2"></i> Register you as a new subscriber.</li>
+                            <li class="list-group-item bg-transparent border-0 ps-0"><i class="bi bi-check2-circle text-success me-2"></i> Manage payments and process agricultural alerts.</li>
+                            <li class="list-group-item bg-transparent border-0 ps-0"><i class="bi bi-check2-circle text-success me-2"></i> Personalize your AI price forecasts.</li>
+                        </ul>
+                    </section>
+
+                    <div class="mt-5 p-4 rounded-4 bg-light border-start border-4 border-success" data-aos="zoom-in">
+                        <h4 class="fw-bold mb-3">5. Contact Us</h4>
+                        <p class="mb-2">If you have any questions, please reach out:</p>
+                        <div class="d-flex flex-column gap-2">
+                            <a href="mailto:privacy@farmermansystems.com" class="text-decoration-none text-success fw-bold">
+                                <i class="bi bi-envelope-at me-2"></i>privacy@farmermansystems.com
+                            </a>
+                            <span class="text-muted"><i class="bi bi-geo-alt-fill me-2"></i>Nairobi & Kakamega, Kenya</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <button class="btn btn-outline-secondary btn-sm rounded-pill px-4" onclick="window.print()">
+                    <i class="bi bi-printer me-2"></i>Download PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-soft-success { background-color: rgba(46, 125, 50, 0.1); }
+    .hover-lift { transition: transform 0.3s ease; }
+    .hover-lift:hover { transform: translateY(-5px); border-color: var(--plant-green) !important; }
+    .leading-relaxed { line-height: 1.8; }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // GSAP Header Animation
+        gsap.from(".privacy-header", {
+            opacity: 0,
+            y: -50,
+            duration: 1,
+            ease: "power3.out"
+        });
+    });
+</script>
+{% endblock %}

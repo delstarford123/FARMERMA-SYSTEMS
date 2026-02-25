@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<style>
+    /* Prevent flickering before GSAP kicks in */
+    .market-header, .sidebar-nav, .market-alert, .filter-card, .table-row, .risk-footer {
+        opacity: 0;
+    }
+    .ghost-copy {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: -1;
+    }
+    :root {
+        --plant-green: #2E7D32;
+        --soil-brown: #5D4037;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-light pb-5 min-vh-100 overflow-hidden">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4 market-header" style="position: relative;">
+            <div>
+                <div class="ghost-container" style="position: relative;">
+                    <h2 class="fw-bold mb-0 main-title" style="color: var(--soil-brown);">Live Market Intelligence</h2>
+                    <h2 class="fw-bold mb-0 ghost-copy ghost-1" style="color: var(--plant-green);">Live Market Intelligence</h2>
+                    <h2 class="fw-bold mb-0 ghost-copy ghost-2" style="color: var(--plant-green);">Live Market Intelligence</h2>
+                </div>
+                <p class="text-muted">Real-time commodity pricing across Kakamega and Kenyan markets.</p>
+            </div>
+            <div class="text-end">
+                <span class="badge px-3 py-2" style="background-color: var(--plant-green);">Verified Real-Time</span>
+                <p class="small text-muted mt-1 mb-0">Last updated: Just now</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-3 sidebar-nav">
+                <div class="list-group shadow-sm border-0">
+                    <a href="/dashboard" class="list-group-item list-group-item-action"><i class="bi bi-grid me-2"></i> Overview</a>
+                    <a href="/live-market-prices" class="list-group-item list-group-item-action active fw-bold" style="background-color: var(--plant-green); border-color: var(--plant-green);"><i class="bi bi-graph-up-arrow me-2"></i> Live Market Prices</a>
+                    <a href="/trends-forecasts" class="list-group-item list-group-item-action"><i class="bi bi-bar-chart me-2"></i> Trends & Forecasts</a>
+                    <a href="/billing" class="list-group-item list-group-item-action"><i class="bi bi-receipt me-2"></i> Billing & Receipts</a>
+                    <a href="/settings" class="list-group-item list-group-item-action"><i class="bi bi-gear me-2"></i> Account Settings</a>
+                </div>
+
+                <div class="card mt-4 border-0 shadow-sm text-white market-alert" style="background-color: #0288D1;">
+                    <div class="card-body">
+                        <h6 class="fw-bold"><i class="bi bi-info-circle me-2"></i> Market Alert</h6>
+                        <p class="small mb-0">Western region legumes show price stabilization. AI forecasts updated.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="card shadow-sm border-0 mb-4 filter-card">
+                    <div class="card-body d-flex flex-wrap gap-3 justify-content-between align-items-center">
+                        <div class="input-group" style="max-width: 300px;">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                            <input type="text" id="marketSearch" class="form-control border-start-0" placeholder="Filter by crop or region...">
+                        </div>
+                        <div class="d-flex gap-2">
+                            <select class="form-select form-select-sm w-auto" id="regionFilter">
+                                <option value="all">All Regions</option>
+                                <option value="Kakamega">Kakamega</option>
+                                <option value="Western">Western</option>
+                                <option value="Rift Valley">Rift Valley</option>
+                            </select>
+                            <button class="btn btn-sm text-white magnetic-btn" style="background-color: var(--soil-brown);"><i class="bi bi-download me-1"></i> Export PDF</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 market-table-card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead style="background-color: var(--soil-brown); color: white;">
+                                    <tr>
+                                        <th class="ps-4">Commodity</th>
+                                        <th>Market / Region</th>
+                                        <th>Current Price</th>
+                                        <th>Daily Trend</th>
+                                        <th class="pe-4 text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if market_items %}
+                                        {% for item in market_items %}
+                                        <tr class="table-row">
+                                            <td class="ps-4 fw-bold" style="color: var(--soil-brown);">{{ item.commodity }}</td>
+                                            <td>{{ item.region }}</td>
+                                            <td class="fw-bold" style="color: var(--plant-green);">KES {{ "{:,.2f}".format(item.price) }}</td>
+                                            <td>
+                                                {% if item.trend == 'up' %}
+                                                    <span class="text-success fw-bold"><i class="bi bi-caret-up-fill"></i> Rising</span>
+                                                {% elif item.trend == 'down' %}
+                                                    <span class="text-danger fw-bold"><i class="bi bi-caret-down-fill"></i> Falling</span>
+                                                {% else %}
+                                                    <span class="text-muted fw-bold"><i class="bi bi-dash"></i> Stable</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="pe-4 text-end">
+                                                <a href="/trends-forecasts" class="btn btn-sm btn-outline-success">Forecast</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center py-5 text-muted">
+                                                <i class="bi bi-database-exclamation display-4 d-block mb-2"></i>
+                                                No live market data available.
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 bg-white rounded border border-warning risk-footer">
+                    <p class="small text-muted mb-0">
+                        <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                        <strong>Risk Disclosure:</strong> Data is aggregated from field agents in Kakamega and beyond to minimize market risk.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+    // JS Filter Logic
+    document.getElementById('marketSearch').addEventListener('input', function(e) {
+        let term = e.target.value.toLowerCase();
+        document.querySelectorAll('.table-row').forEach(row => {
+            let text = row.innerText.toLowerCase();
+            row.style.display = text.includes(term) ? '' : 'none';
+        });
+    });
+
+    // GSAP Animations (Restored from your snippet)
+    const tl = gsap.timeline();
+    tl.to(".market-header", { opacity: 1, duration: 0.1 })
+      .from(".ghost-1", { x: -100, opacity: 0.5, duration: 0.6 })
+      .from(".ghost-2", { x: -200, opacity: 0.2, duration: 0.7 }, "<0.1")
+      .from(".main-title", { x: -50, opacity: 0, duration: 0.8 }, "<0.1")
+      .to(".ghost-1", { opacity: 0, filter: "blur(4px)", duration: 0.5 })
+      .to(".ghost-2", { opacity: 0, filter: "blur(8px)", duration: 0.5 }, "<");
+
+    gsap.to(".sidebar-nav", { opacity: 1, x: 0, startAt: { x: -400 }, duration: 0.8, ease: "back.out(1.4)", delay: 0.3 });
+    gsap.to(".market-alert", { opacity: 1, scale: 1, startAt: { scale: 0.8 }, duration: 1, ease: "elastic.out(1, 0.3)", delay: 0.6 });
+    gsap.to(".filter-card", { opacity: 1, z: 0, startAt: { z: -1000 }, transformPerspective: 1000, duration: 1.2, ease: "power3.out", delay: 0.5 });
+    gsap.to(".table-row", { opacity: 1, y: 0, startAt: { y: 30 }, stagger: 0.05, duration: 0.6, ease: "power2.out", delay: 1 });
+    gsap.to(".risk-footer", { opacity: 1, y: 0, startAt: { y: -100 }, duration: 1, ease: "bounce.out", delay: 1.5 });
+</script>
+{% endblock %}

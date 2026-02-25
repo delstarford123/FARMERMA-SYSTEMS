@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .upload-zone {
+        border: 2px dashed var(--primary-green);
+        background-color: rgba(46, 125, 50, 0.05);
+        transition: 0.3s;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+        background-color: rgba(46, 125, 50, 0.15);
+    }
+    
+    /* Image Preview & Scanner Animation */
+    .image-preview-container {
+        display: none;
+        position: relative;
+        max-width: 100%;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 0 auto;
+    }
+    .preview-img {
+        width: 100%;
+        display: block;
+    }
+    .scanner-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: #00ff00;
+        box-shadow: 0 0 15px 5px rgba(0, 255, 0, 0.5);
+        opacity: 0;
+    }
+    .results-card { display: none; opacity: 0; transform: translateY(20px); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5 min-vh-100">
+    <div class="text-center mb-5 gsap-reveal">
+        <h2 class="fw-bold text-dark"><i class="bi bi-cpu text-success me-2"></i>AI Crop Diagnostics</h2>
+        <p class="text-muted">Upload a photo of a diseased leaf. Our neural network will identify the pathology and provide an integrated treatment advisory.</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0 gsap-reveal">
+                <div class="card-body p-4 text-center">
+                    
+                    <div class="upload-zone p-5 rounded-3 mb-3" id="dropzone">
+                        <i class="bi bi-cloud-arrow-up display-1 text-success mb-3"></i>
+                        <h5 class="fw-bold">Drag & Drop Leaf Image</h5>
+                        <p class="text-muted small mb-0">or click to browse files</p>
+                        <input type="file" id="fileInput" class="d-none" accept="image/*">
+                    </div>
+
+                    <div class="image-preview-container shadow-sm mb-4" id="previewContainer">
+                        <img id="imagePreview" class="preview-img" src="" alt="Uploaded Leaf">
+                        <div class="scanner-line" id="scannerLine"></div>
+                    </div>
+
+                    <button class="btn btn-success w-100 fw-bold magnetic-btn" id="analyzeBtn" style="display: none;">
+                        Run Diagnostic Analysis
+                    </button>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mt-4 results-card border-top border-success border-4" id="resultsCard">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3 border-bottom pb-2">Diagnostic Report</h5>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Detected Pathology:</span>
+                        <span class="fw-bold text-danger" id="resDisease">--</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="text-muted">AI Confidence:</span>
+                        <span class="fw-bold text-success" id="resConfidence">--%</span>
+                    </div>
+                    
+                    <h6 class="fw-bold text-dark">Treatment Advisory</h6>
+                    <div class="p-3 bg-light rounded text-muted small" id="resAdvisory">
+                        --
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const scannerLine = document.getElementById('scannerLine');
+        const resultsCard = document.getElementById('resultsCard');
+        
+        let selectedFile = null;
+        let scannerAnim = null;
+
+        // 1. Initial Page Entrance Animation
+        gsap.from(".gsap-reveal", { y: 30, opacity: 0, stagger: 0.2, duration: 1, ease: "power3.out" });
+
+        // 2. File Upload Handlers
+        dropzone.addEventListener('click', () => fileInput.click());
+        
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if(e.target.files.length) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                dropzone.style.display = 'none';
+                previewContainer.style.display = 'block';
+                analyzeBtn.style.display = 'block';
+                resultsCard.style.display = 'none'; // Hide old results
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 3. Form Submission & GSAP Radar Animation
+        analyzeBtn.addEventListener('click', () => {
+            if(!selectedFile) return;
+
+            // Start Radar Animation
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing Neural Network...';
+            
+            gsap.set(scannerLine, { opacity: 1 });
+            scannerAnim = gsap.to(scannerLine, {
+                y: previewContainer.offsetHeight - 4,
+                duration: 1.5,
+                repeat: -1,
+                yoyo: true,
+                ease: "linear"
+            });
+
+            // Prepare Form Data
+            const formData = new FormData();
+            formData.append('leaf_image', selectedFile);
+
+            // Send to Flask Backend
+            fetch("{{ url_for('crop_diagnostics') }}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Stop Animation
+                scannerAnim.kill();
+                gsap.to(scannerLine, { opacity: 0, duration: 0.3 });
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = 'Run Another Analysis';
+                analyzeBtn.classList.replace('btn-success', 'btn-outline-dark');
+                
+                // Show Results
+                if(data.success) {
+                    document.getElementById('resDisease').textContent = data.disease;
+                    document.getElementById('resConfidence').textContent = data.confidence + '%';
+                    document.getElementById('resAdvisory').innerHTML = data.advisory;
+                    
+                    resultsCard.style.display = 'block';
+                    gsap.to(resultsCard, { opacity: 1, y: 0, duration: 0.8, ease: "back.out(1.5)" });
+                } else {
+                    alert("Analysis Failed: " + data.error);
+                }
+            })
+            .catch(error => {
+                scannerAnim.kill();
+                gsap.to(scannerLine, { opacity: 0 });
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = 'Run Diagnostic Analysis';
+                alert('Network Error. Please try again.');
+            });
+        });
+
+        // 4. Magnetic Button Physics
+        analyzeBtn.addEventListener("mousemove", (e) => {
+            const rect = analyzeBtn.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            gsap.to(analyzeBtn, { x: x * 0.1, y: y * 0.1, duration: 0.3 });
+        });
+        analyzeBtn.addEventListener("mouseleave", () => {
+            gsap.to(analyzeBtn, { x: 0, y: 0, duration: 0.3 });
+        });
+    });
+</script>
+{% endblock %}

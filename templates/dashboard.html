@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid bg-light pb-5 min-vh-100 overflow-hidden">
+    <div class="container py-5">
+        <h2 class="fw-bold mb-4" style="color: #5D4037;"> <span id="welcome-text"></span><span class="typewriter-cursor">|</span>
+        </h2>
+        
+        <div class="row g-4">
+            <div class="col-md-3 sidebar-nav">
+                <div class="list-group shadow-sm border-0">
+                    <a href="/dashboard" class="list-group-item list-group-item-action active fw-bold" 
+                       style="background-color: #2E7D32; border-color: #2E7D32;"> <i class="bi bi-grid me-2"></i> Overview
+                    </a>
+                    <a href="/live-market-prices" class="list-group-item list-group-item-action"><i class="bi bi-graph-up-arrow me-2"></i> Live Market Prices</a>
+                    <a href="/trends-forecasts" class="list-group-item list-group-item-action"><i class="bi bi-bar-chart me-2"></i> Trends & Forecasts</a>
+                    <a href="/billing" class="list-group-item list-group-item-action"><i class="bi bi-receipt me-2"></i> Billing & Receipts</a>
+                    <a href="/settings" class="list-group-item list-group-item-action"><i class="bi bi-gear me-2"></i> Account Settings</a>
+                </div>
+                
+                {% if profile.get('subscription_tier') != 'pro' %}
+                <div class="card mt-4 border-0 shadow-sm text-white" style="background-color: #0288D1;"> <div class="card-body p-3 text-center">
+                        <i class="bi bi-rocket-takeoff fs-2"></i>
+                        <h6 class="fw-bold mt-2">Go Pro!</h6>
+                        <p class="small mb-2">Unlock AI Diagnostics & Trends.</p>
+                        <a href="/pricing" class="btn btn-sm btn-light fw-bold w-100">Upgrade Now</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-9">
+                {% if profile.get('subscription_tier') == 'pro' %}
+                <div class="alert alert-success border-0 shadow-sm d-flex align-items-center status-alert" role="alert" style="border-left: 5px solid #2E7D32 !important;">
+                    <i class="bi bi-check-circle-fill fs-4 me-3" style="color: #2E7D32;"></i>
+                    <div>
+                        <strong style="color: #1B5E20;">Your Agribusiness Pro subscription is active.</strong> You have full access to real-time market data and AI predictive trends.
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center status-alert" role="alert" style="border-left: 5px solid #0288D1 !important;">
+                    <i class="bi bi-info-circle-fill fs-4 me-3" style="color: #0288D1;"></i>
+                    <div>
+                        <strong>Free Tier Active.</strong> <a href="/pricing" class="alert-link" style="color: #0288D1;">Upgrade to Pro</a> to unlock AI-driven diagnostics.
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="card shadow-sm border-0 mb-4 market-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="fw-bold m-0" style="color: #5D4037;">Live Market Snapshot</h4>
+                            <span class="badge" style="background-color: #E8F5E9; color: #2E7D32;">Live Feeds</span>
+                        </div>
+                        <p class="text-muted">Direct data feeds from regional Kakamega and nationwide markets.</p>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover mt-3 align-middle">
+                                <thead style="background-color: #f8f9fa;">
+                                    <tr>
+                                        <th>Commodity</th>
+                                        <th>Region</th>
+                                        <th>Price (KES)</th>
+                                        <th>Trend</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if market_items %}
+                                        {% for item in market_items[:5] %} 
+                                        <tr class="market-row">
+                                            <td class="fw-bold" style="color: #2E7D32;">{{ item.commodity }}</td>
+                                            <td>{{ item.region }}</td>
+                                            <td class="fw-bold">KES {{ "{:,.0f}".format(item.price) }}</td>
+                                            <td>
+                                                {% if item.trend == 'up' %}
+                                                    <span class="text-success fw-bold"><i class="bi bi-arrow-up-right-circle-fill"></i> Rising</span>
+                                                {% elif item.trend == 'down' %}
+                                                    <span class="text-danger fw-bold"><i class="bi bi-arrow-down-right-circle-fill"></i> Falling</span>
+                                                {% else %}
+                                                    <span class="text-muted"><i class="bi bi-dash-circle-fill"></i> Stable</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4" class="text-center py-4 text-muted">No market data currently available.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <a href="/live-market-prices" class="btn btn-outline-success mt-2 view-all-btn" style="color: #2E7D32; border-color: #2E7D32;">View All Commodities</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary-green: #2E7D32;
+        --soil-brown: #5D4037;
+        --sky-blue: #0288D1;
+    }
+    .typewriter-cursor {
+        display: inline-block;
+        width: 3px;
+        background-color: var(--primary-green);
+        margin-left: 5px;
+        animation: blink 0.8s infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    .sidebar-nav, .status-alert, .market-card, .market-row { opacity: 0; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+
+<script>
+    gsap.registerPlugin(TextPlugin);
+
+    // 1. Personalized Typewriter Welcome
+    gsap.to("#welcome-text", {
+        text: "Welcome back, {{ profile.get('full_name', 'Farmer') }}",
+        duration: 2,
+        ease: "none"
+    });
+
+    // 2. Animations (rest remains the same)
+    gsap.to(".sidebar-nav", { x: 0, opacity: 1, duration: 0.8, delay: 0.5, ease: "back.out(1.4)" });
+    gsap.to(".status-alert", { y: 0, opacity: 1, duration: 1.2, delay: 0.8, ease: "elastic.out(1, 0.3)" });
+    gsap.to(".market-card", { z: 0, opacity: 1, duration: 1, delay: 1, ease: "power3.out" });
+    gsap.from(".market-row", { x: -30, opacity: 0, stagger: 0.1, duration: 0.5, delay: 1.5 });
+</script>
+{% endblock %}

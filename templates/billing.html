@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid bg-light pb-5 min-vh-100 overflow-hidden">
+    <div class="container py-5">
+        <div class="ghost-trail-container mb-4" style="position: relative;">
+            <h2 class="fw-bold ghost-main" style="position: relative; z-index: 3;">Billing & Invoices</h2>
+            <h2 class="fw-bold ghost-copy ghost-1" style="position: absolute; top: 0; left: 0; opacity: 0; color: #2E7D32;">Billing & Invoices</h2>
+            <h2 class="fw-bold ghost-copy ghost-2" style="position: absolute; top: 0; left: 0; opacity: 0; color: #2E7D32;">Billing & Invoices</h2>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-3 sidebar-nav">
+                <div class="list-group shadow-sm border-0">
+                    <a href="/dashboard" class="list-group-item list-group-item-action"><i class="bi bi-grid me-2"></i> Overview</a>
+                    <a href="/live-market-prices" class="list-group-item list-group-item-action"><i class="bi bi-graph-up-arrow me-2"></i> Live Market Prices</a>
+                    <a href="/trends-forecasts" class="list-group-item list-group-item-action"><i class="bi bi-bar-chart me-2"></i> Trends & Forecasts</a>
+                    <a href="/billing" class="list-group-item list-group-item-action active fw-bold" style="background-color: #2E7D32; border-color: #2E7D32;"><i class="bi bi-receipt me-2"></i> Billing & Receipts</a>
+                    <a href="/settings" class="list-group-item list-group-item-action"><i class="bi bi-gear me-2"></i> Account Settings</a>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="card shadow-sm border-0 mb-4 border-start border-success border-4 billing-card-fly">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="fw-bold text-dark mb-1">
+                                {{ "Agribusiness Pro" if profile.get('subscription_tier') == 'pro' else "Free Tier" }}
+                            </h5>
+                            <p class="text-muted mb-0">
+                                {% if profile.get('subscription_tier') == 'pro' %}
+                                    Plan Status: Active (Premium AI Enabled)
+                                {% else %}
+                                    Upgrade to access AI Diagnostics and Trends.
+                                {% endif %}
+                            </p>
+                        </div>
+                        <a href="/pricing" class="btn btn-outline-dark">Change Plan</a>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4 billing-card-reveal">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3 fw-bold">Payment Method</h5>
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-secondary me-3 px-3 py-2 fs-6" style="background-color: #2E7D32 !important;">M-Pesa</span>
+                            <span class="text-muted">Managed via Safaricom Daraja</span>
+                        </div>
+                        <p class="small text-muted">Subscriptions are managed through STK Push on your mobile device.</p>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 billing-card-reveal">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3 fw-bold">Billing History</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                        <th>Receipt #</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if transactions %}
+                                        {% for txn in transactions %}
+                                        <tr class="history-row">
+                                            <td>{{ txn.date }}</td>
+                                            <td>{{ txn.plan }}</td>
+                                            <td>KES {{ txn.amount }}</td>
+                                            <td class="text-muted">{{ txn.receipt_number }}</td>
+                                            <td><span class="badge bg-success">Paid</span></td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4 text-muted">No transaction history found. Start your first M-Pesa payment at checkout!</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<script>
+    // 1. Ghost Trail for the main Header
+    const ghostTL = gsap.timeline();
+    ghostTL.from(".ghost-1", { x: -100, opacity: 0.5, duration: 0.6 })
+            .from(".ghost-2", { x: -150, opacity: 0.3, duration: 0.7 }, "<0.1")
+            .from(".ghost-main", { x: -50, opacity: 0, duration: 0.8 }, "<0.1")
+            .to(".ghost-1", { opacity: 0, filter: "blur(4px)", duration: 0.5 })
+            .to(".ghost-2", { opacity: 0, filter: "blur(8px)", duration: 0.5 }, "<");
+
+    // 2. Whip Slide for Sidebar
+    gsap.from(".sidebar-nav", {
+        x: -600, 
+        rotation: -10,
+        duration: 0.8, 
+        ease: "back.out(1.4)",
+        delay: 0.5
+    });
+
+    // 3. Perspective Fly for Current Plan
+    gsap.from(".billing-card-fly", {
+        z: -2000, 
+        opacity: 0,
+        transformPerspective: 1000,
+        duration: 1.2, 
+        ease: "power3.out",
+        delay: 0.2
+    });
+
+    // 4. Cascade Reveal for remaining cards and table rows
+    gsap.from(".billing-card-reveal", {
+        y: 50,
+        opacity: 0,
+        stagger: 0.2,
+        duration: 0.8,
+        ease: "power2.out",
+        delay: 0.6
+    });
+
+    gsap.from(".history-row", {
+        opacity: 0,
+        x: -20,
+        stagger: 0.1,
+        duration: 0.5,
+        ease: "power1.out",
+        delay: 1.2
+    });
+</script>
+{% endblock %}

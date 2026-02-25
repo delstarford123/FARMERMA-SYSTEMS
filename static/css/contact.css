@@ -1,0 +1,66 @@
+/* =========================================
+   FARMERMAN SYSTEMS: CONTACT PAGE STYLES
+   ========================================= */
+
+/* Root Palette Sync */
+:root {
+    --plant-green: #2E7D32;  /* Healthy crop green */
+    --soil-brown: #5D4037;   /* Rich earth brown */
+    --sky-blue: #0288D1;     /* Clear water blue */
+}
+
+/* Contact Form Input Focus States */
+.form-control:focus, .form-select:focus {
+    /* Uses Plant Green for focus indicators */
+    border-color: var(--plant-green);
+    box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
+}
+
+/* Contact Info Icon Containers */
+.contact-icon-box {
+    width: 50px;
+    height: 50px;
+    background-color: var(--plant-green);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.contact-icon-box:hover {
+    /* Transitions to Soil Brown on hover for an organic feel */
+    transform: scale(1.1) rotate(5deg);
+    background-color: var(--soil-brown);
+}
+
+/* Social Proof / Collaboration Box Styling */
+.social-proof-box {
+    /* Light wash of Plant Green for the background */
+    background-color: #f1f8e9; 
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    /* Sky Blue accent border to highlight partnership stability */
+    border-left: 4px solid var(--sky-blue);
+}
+
+/* Form Heading Accents */
+.contact-form-title {
+    color: var(--soil-brown);
+    font-weight: 700;
+}
+
+/* Submit Button Customization */
+.btn-contact-submit {
+    background-color: var(--plant-green);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-contact-submit:hover {
+    background-color: var(--dark-green);
+    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+}

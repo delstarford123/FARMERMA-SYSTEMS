@@ -1,0 +1,95 @@
+/* =========================================
+   FARMERMAN SYSTEMS - GLOBAL STYLES
+   ========================================= */
+
+:root {
+    /* Brand Palette */
+    --plant-green: #2E7D32;  /* Healthy crop growth */
+    --soil-brown: #5D4037;   /* Grounded, organic earth */
+    --sky-blue: #0288D1;     /* Clear water and technology */
+    --earth-light: #8D6E63;  /* Secondary soil tone */
+    
+    /* Backgrounds and Text */
+    --dark-bg: #1a1a1a;
+    --light-bg: #f8f9fa;
+    --text-muted: #6c757d;
+}
+
+/* Base Body Adjustments */
+body {
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--light-bg);
+    -webkit-font-smoothing: antialiased;
+    color: #333;
+}
+
+/* Custom Brand Utilities */
+.bg-plant-green { background-color: var(--plant-green) !important; }
+.text-plant-green { color: var(--plant-green) !important; }
+.bg-soil-brown { background-color: var(--soil-brown) !important; }
+.text-sky-blue { color: var(--sky-blue) !important; }
+
+/* Custom Brand Buttons */
+.btn-primary {
+    background-color: var(--plant-green);
+    border-color: var(--plant-green);
+    color: #fff;
+    transition: all 0.3s ease;
+}
+.btn-primary:hover, .btn-primary:focus {
+    background-color: var(--dark-green); /* Darker shade for contrast */
+    border-color: var(--dark-green);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
+}
+
+/* Secondary Sky Blue Button */
+.btn-info {
+    background-color: var(--sky-blue);
+    border-color: var(--sky-blue);
+    color: #fff;
+    transition: all 0.3s ease;
+}
+.btn-info:hover {
+    background-color: #01579b;
+    transform: translateY(-2px);
+    color: #fff;
+}
+
+/* Card Hover Effects */
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+    /* Optional: subtle border highlight using soil brown */
+    border-color: var(--earth-light);
+}
+
+/* Dashboard Sidebar Styling */
+.list-group-item-action {
+    transition: all 0.2s ease;
+    border-left: 4px solid transparent;
+}
+.list-group-item-action:hover {
+    background-color: #e8f5e9;
+    color: var(--plant-green);
+    border-left: 4px solid var(--plant-green);
+}
+.list-group-item.active {
+    background-color: var(--plant-green) !important;
+    border-color: var(--plant-green) !important;
+    /* Dark soil brown accent for active items */
+    border-left: 4px solid var(--soil-brown) !important;
+}
+
+/* Smooth Fade-In Animation for Page Load */
+.fade-in {
+    animation: fadeIn 0.8s ease-in;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

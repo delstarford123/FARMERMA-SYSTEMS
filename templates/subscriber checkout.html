@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5 overflow-hidden">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show shadow-sm" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <div class="card shadow-lg border-0 payment-card border-top border-4" style="border-color: #2E7D32 !important;">
+                <div class="card-body p-5 text-center">
+                    <h2 class="fw-bold mb-4 checkout-title" style="color: #5D4037;">Complete Your Subscription</h2>
+                    <p class="text-muted mb-5 checkout-lead">Gain full access to AI-driven market forecasts and live pricing dashboards for Kakamega and beyond.</p>
+                    
+                    <form action="/process-mpesa" method="POST" class="mb-4 mpesa-form">
+                        <div class="mb-3 text-start">
+                            <label class="form-label small fw-bold" style="color: #5D4037;">M-Pesa Phone Number</label>
+                            <input type="text" name="phone_number" class="form-control form-control-lg border-0 bg-light shadow-sm" placeholder="2547XXXXXXXX" required>
+                            <div class="form-text">Ensure your phone is unlocked to receive the PIN prompt.</div>
+                        </div>
+                        <button type="submit" class="btn btn-lg w-100 fw-bold magnetic-btn text-white" style="background-color: #2E7D32; border-color: #2E7D32;">
+                            <i class="bi bi-phone me-2"></i>Pay with M-Pesa (KES 3,500)
+                        </button>
+                    </form>
+
+                    <div class="hr-text text-muted mb-4 checkout-divider" style="position: relative;">
+                        <hr><span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 0 10px;">OR</span>
+                    </div>
+
+                    <form action="/process-stripe" method="POST" class="stripe-form">
+                        <button type="submit" class="btn btn-outline-primary btn-lg w-100 fw-bold magnetic-btn" style="color: #0288D1; border-color: #0288D1;">
+                            <i class="bi bi-credit-card me-2"></i>Pay with Card ($25.00)
+                        </button>
+                    </form>
+                    
+                    <p class="small text-muted mt-4">
+                        <i class="bi bi-shield-lock-fill me-1" style="color: #2E7D32;"></i> Secure Encrypted Transaction
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hr-text hr { margin: 0; }
+    /* Initial state for GSAP */
+    .payment-card, .mpesa-form, .stripe-form, .checkout-divider { opacity: 0; }
+    .btn-outline-primary:hover {
+        background-color: #0288D1;
+        color: white !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+    // Animations (Preserved from your snippet)
+    gsap.to(".payment-card", {
+        rotationX: 0, opacity: 1, 
+        startAt: { rotationX: 90 },
+        transformPerspective: 800, 
+        duration: 1.2, ease: "power3.out"
+    });
+
+    gsap.to(".mpesa-form", {
+        z: 0, opacity: 1,
+        startAt: { z: -500 },
+        transformPerspective: 1000,
+        duration: 1, delay: 0.5, ease: "power2.out"
+    });
+
+    gsap.to(".checkout-divider", { opacity: 1, duration: 0.5, delay: 0.8 });
+
+    gsap.to(".stripe-form", {
+        z: 0, opacity: 1,
+        startAt: { z: -500 },
+        transformPerspective: 1000,
+        duration: 1, delay: 1, ease: "power2.out"
+    });
+
+    const btns = document.querySelectorAll(".magnetic-btn");
+    btns.forEach(btn => {
+        btn.addEventListener("mousemove", (e) => {
+            const rect = btn.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            gsap.to(btn, { x: x * 0.3, y: y * 0.3, duration: 0.3 });
+        });
+        btn.addEventListener("mouseleave", () => {
+            gsap.to(btn, { x: 0, y: 0, duration: 0.3 });
+        });
+    });
+</script>
+{% endblock %}

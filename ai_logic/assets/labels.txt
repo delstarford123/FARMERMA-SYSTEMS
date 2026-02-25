@@ -1,0 +1,12 @@
+ALL Present
+Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot
+Corn_(maize)___Common_rust_severe
+Corn_(maize)___Northern_Leaf_Blight_severe
+Corn_(maize)___healthy
+Corn___Common_Rust_early
+Corn___Gray_Leaf_Spot
+Corn___Healthy_
+Corn___Northern_Leaf_Blight_early
+maize ear rot
+maize fall armyworm
+maize stem borer

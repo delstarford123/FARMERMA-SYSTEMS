@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmerman Systems | Pan-African Agribusiness</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <style>
+        /* --- Agricultural Brand Palette --- */
+        :root { 
+            --plant-green: #2E7D32;  /* Healthy crop green */
+            --soil-brown: #5D4037;   /* Rich earth brown */
+            --sky-blue: #0288D1;     /* Clear sky/water blue */
+            --light-soil: #8D6E63;
+        }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            overflow-x: hidden; 
+            color: #333;
+            letter-spacing: -0.01em; 
+        }
+        
+        /* Utility Classes for your new theme */
+        .bg-plant-green { background-color: var(--plant-green) !important; }
+        .bg-soil-brown { background-color: var(--soil-brown) !important; }
+        .text-sky-blue { color: var(--sky-blue) !important; }
+        .text-plant-green { color: var(--plant-green) !important; }
+        
+        /* Navbar Styling */
+        .navbar { background-color: var(--plant-green) !important; }
+        .navbar-brand { letter-spacing: 0.05em; font-weight: 700 !important; }
+        .nav-link { font-weight: 500; font-size: 0.95rem; }
+        
+        /* Dropdown Styling */
+        .dropdown-menu { border-top: 4px solid var(--soil-brown) !important; }
+        .dropdown-item:hover { background-color: rgba(46, 125, 50, 0.05); color: var(--plant-green); }
+        
+        /* Fix FOUC (Flash of Unstyled Content) */
+        .gsap-reveal, [style*="opacity: 0"] { visibility: hidden; }
+
+        /* Banner styling using Sky Blue for prominence */
+        #live-banner {
+            position: relative;
+            z-index: 1050; 
+            font-size: 0.9rem;
+            background-color: var(--sky-blue) !important;
+        }
+
+        .small-edit-btn:hover { background: rgba(255,255,255,0.2); transition: 0.3s; }
+        
+        /* Footer styling using Soil Brown */
+        footer { background-color: var(--soil-brown) !important; }
+        
+        main { position: relative; z-index: 1; }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+
+    {% set banner = get_site_content('announcement_banner') %}
+    {% if banner %}
+    <div class="text-white py-2 text-center" id="live-banner">
+        <div class="container d-flex justify-content-center align-items-center">
+            <span class="badge bg-white text-info me-2 fw-bold" style="color: var(--sky-blue) !important;">UPDATE</span>
+            <strong class="me-2">{{ banner.title }}:</strong> {{ banner.body | safe }}
+            
+            {% if session.get('role') == 'admin' %}
+            <a href="/admin/content" class="ms-3 badge border border-white text-white text-decoration-none small-edit-btn">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm py-3">
+        <div class="container">
+            <a class="navbar-brand" href="/">FARMERMAN SYSTEMS</a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="companyDropdown" data-bs-toggle="dropdown">Company</a>
+                        <ul class="dropdown-menu shadow-sm border-0 mt-2">
+                            <li><a class="dropdown-item" href="/about">About Us</a></li>
+                            <li><a class="dropdown-item" href="/impact">Impact & Initiatives</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/contact">Contact Us</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="solutionsDropdown" data-bs-toggle="dropdown">Solutions</a>
+                        <ul class="dropdown-menu shadow-sm border-0 mt-2">
+                            <li><a class="dropdown-item" href="/services">Consultancy Services</a></li>
+                            <li><a class="dropdown-item" href="/market-intelligence">Market Intelligence</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item fw-bold" href="/diagnostics" style="color: var(--plant-green);">
+                                    <i class="bi bi-cpu me-2"></i>AI Crop Diagnostics
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item"><a class="nav-link" href="/pricing">Pricing</a></li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="dashboardsDropdown" data-bs-toggle="dropdown">Dashboards</a>
+                        <ul class="dropdown-menu shadow-sm border-0 mt-2">
+                            <li><h6 class="dropdown-header fw-bold text-uppercase" style="color: var(--plant-green);">Client Portal</h6></li>
+                            <li><a class="dropdown-item" href="/dashboard">Overview Dashboard</a></li>
+                            <li><a class="dropdown-item" href="/live-market-prices">Live Market Prices</a></li>
+                            <li><a class="dropdown-item" href="/trends-forecasts">Trends & Forecasts</a></li>
+                            <li><a class="dropdown-item" href="/billing">Billing & Receipts</a></li>
+                            <li><a class="dropdown-item" href="/settings">Account Settings</a></li>
+                            
+                            {% if session.get('role') == 'admin' %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header text-muted fw-bold text-uppercase">Admin Access</h6></li>
+                            <li><a class="dropdown-item" href="/admin/dashboard">Admin Hub</a></li>
+                            <li><a class="dropdown-item" href="/admin/data-manager">Data Manager</a></li>
+                            <li><a class="dropdown-item" href="/admin/subscribers">Subscribers</a></li>
+                            <li><a class="dropdown-item" href="/admin/content">Content Manager</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+
+                    {% if not session.get('user_id') %}
+                    <li class="nav-item ms-lg-4 mt-3 mt-lg-0"><a class="nav-link text-white fw-bold" href="/login">Log In</a></li>
+                    <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
+                        <a class="btn btn-light fw-bold rounded-pill px-4 shadow-sm" href="/register" style="color: var(--plant-green);">Subscribe</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item ms-lg-4 mt-3 mt-lg-0"><a class="btn btn-sm btn-outline-light rounded-pill px-4" href="/logout">Logout</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow-1 bg-light">
+        {% block content %}{% endblock %}
+    </main>
+<footer class="mt-auto text-white py-4" style="background: var(--soil-brown, #3e2723);">
+    <div class="container text-center">
+        <p class="mb-2">&copy; 2026 Farmerman Systems Pvt Ltd. All Rights Reserved.</p>
+        
+        <div class="d-flex justify-content-center gap-3 small mb-3">
+            <a href="/privacy-policy" class="text-white-50 text-decoration-none hover-white">Privacy Policy</a>
+            <span class="text-white-50">|</span>
+            <a href="/terms-of-service" class="text-white-50 text-decoration-none hover-white">Terms of Service</a>
+            <span class="text-white-50">|</span>
+            <a href="/refund-policy" class="text-white-50 text-decoration-none hover-white">Refund Policy</a>
+        </div>
+
+        <div class="pt-3 border-top border-secondary opacity-75">
+            <p class="small mb-0 text-white-50">
+                System Architected by 
+                <a href="https://delstarford-works.onrender.com/" 
+                   target="_blank" 
+                   class="fw-bold text-success text-decoration-none transition-all brand-link">
+                   DELSTARFORD WORKS
+                </a>
+            </p>
+        </div>
+    </div>
+</footer>
+
+<style>
+    .hover-white:hover { color: #ffffff !important; transition: 0.3s; }
+    .brand-link { letter-spacing: 0.5px; }
+    .brand-link:hover { 
+        color: #28a745 !important; 
+        text-shadow: 0 0 8px rgba(40, 167, 69, 0.4); 
+    }
+    .transition-all { transition: all 0.3s ease; }
+</style>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <script>
+        // Optimization: Ensure GSAP reveals content even if slow network
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                document.querySelectorAll('.gsap-reveal, [style*="opacity: 0"]').forEach(el => {
+                    el.style.visibility = "visible";
+                    el.style.opacity = "1";
+                });
+            }, 3000);
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>

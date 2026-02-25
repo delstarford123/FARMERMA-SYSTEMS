@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/contact.css') }}">
+<style>
+    .gsap-reveal {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.3s ease; 
+    }
+    
+    .typewriter-cursor {
+        display: inline-block;
+        width: 3px;
+        background-color: #2E7D32;
+        margin-left: 5px;
+        animation: blink 0.8s infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="bg-dark text-white py-5 text-center overflow-hidden">
+    <div class="container py-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <h1 class="fw-bold text-success mb-3 contact-header gsap-reveal">Get in Touch</h1>
+        <p class="lead text-light max-w-75 mx-auto contact-sub-header gsap-reveal">Whether you are looking to subscribe to our data, partner on a development project, or inquire about our consultancy services, we are here to help.</p>
+    </div>
+</section>
+
+<section class="py-5 overflow-hidden">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-7">
+                <div class="card shadow border-0 gsap-reveal" id="mainContactCard">
+                    <div class="card-body p-5">
+                        <h3 class="fw-bold mb-4">Send Us a Message</h3>
+                        <form action="{{ url_for('contact_us') }}" method="POST">
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" name="name" class="form-control" placeholder="Brian Derrick" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Email Address</label>
+                                    <input type="email" name="email" class="form-control" placeholder="your@name.com" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Subject / Inquiry Type</label>
+                                <select name="subject" class="form-select">
+                                    <option value="Market Intelligence">Market Intelligence Subscription</option>
+                                    <option value="Consultancy">Consultancy & Project Design</option>
+                                    <option value="Partnership">Partnership & NGO Collaboration</option>
+                                    <option value="Support">General Support</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Message</label>
+                                <textarea name="message" class="form-control" rows="5" placeholder="How can we help you?" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-lg w-100 magnetic-btn" style="background-color: #2E7D32; border-color: #2E7D32;">Send Message</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <h3 class="fw-bold mb-4 decode-title gsap-reveal">Contact Information</h3>
+                        <div class="info-item d-flex align-items-start mb-4 gsap-reveal">
+                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #2E7D32 !important;">
+                                <span class="fs-4"></span>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-1">Headquarters</h5>
+                                <p class="text-muted mb-0">Nairobi, Kenya</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item d-flex align-items-start mb-4 gsap-reveal">
+                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; background-color: #2E7D32 !important;">
+                                <span class="fs-4">✉️</span>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-1">Email Us</h5>
+                                <p class="text-muted mb-0">info@farmermansystems.com</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-light p-4 rounded mt-4 border-start border-success border-4 collab-box gsap-reveal">
+                        <h6 class="fw-bold">Ready to Collaborate?</h6>
+                        <p class="small text-muted mb-0">We combine practical field experience with evidence-based insights.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
