@@ -127,16 +127,18 @@
                             <li><a class="dropdown-item" href="/dashboard">Overview Dashboard</a></li>
                             <li><a class="dropdown-item" href="/live-market-prices">Live Market Prices</a></li>
                             <li><a class="dropdown-item" href="/trends-forecasts">Trends & Forecasts</a></li>
+                            <li><a class="dropdown-item" href="/agripreneur-training">Agripreneur Training</a></li>
                             <li><a class="dropdown-item" href="/billing">Billing & Receipts</a></li>
                             <li><a class="dropdown-item" href="/settings">Account Settings</a></li>
                             
                             {% if session.get('role') == 'admin' %}
                             <li><hr class="dropdown-divider"></li>
-                            <li><h6 class="dropdown-header text-muted fw-bold text-uppercase">Admin Access</h6></li>
-                            <li><a class="dropdown-item" href="/admin/dashboard">Admin Hub</a></li>
-                            <li><a class="dropdown-item" href="/admin/data-manager">Data Manager</a></li>
-                            <li><a class="dropdown-item" href="/admin/subscribers">Subscribers</a></li>
-                            <li><a class="dropdown-item" href="/admin/content">Content Manager</a></li>
+<li><h6 class="dropdown-header text-muted fw-bold text-uppercase">Admin Access</h6></li>
+<li><a class="dropdown-item" href="/admin/dashboard">Admin Hub</a></li>
+<li><a class="dropdown-item" href="/admin/data-manager">Data Manager</a></li>
+<li><a class="dropdown-item" href="/admin/subscribers">Subscribers</a></li>
+<li><a class="dropdown-item" href="/admin/content">Content Manager</a></li>
+<li><a class="dropdown-item" href="/admin/upload-training-media">Training Uploads</a></li>
                             {% endif %}
                         </ul>
                     </li>

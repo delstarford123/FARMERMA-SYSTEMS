@@ -115,6 +115,49 @@ const FarmermanApp = (() => {
 
     return { init };
 })();
+// --- Agripreneur Training Module Interactions ---
 
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Smooth fade-in for tabs (if you are using GSAP)
+    const trainingTabs = document.querySelectorAll('button[data-bs-toggle="pill"]');
+    
+    trainingTabs.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function (event) {
+            // Target the newly active tab pane
+            const targetPaneId = event.target.getAttribute('data-bs-target');
+            const targetPane = document.querySelector(targetPaneId);
+            
+            // Simple GSAP animation for content revealing
+            if (typeof gsap !== 'undefined') {
+                gsap.fromTo(targetPane, 
+                    { opacity: 0, y: 20 }, 
+                    { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }
+                );
+            }
+        });
+    });
+
+    // 2. Track Resource Downloads
+    const downloadLinks = document.querySelectorAll('.download-link');
+    downloadLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            const fileName = e.target.innerText;
+            // You can replace this with an actual API call to track what your farmers are downloading
+            console.log(`[Analytics] Pro User downloaded: ${fileName}`);
+            
+            // Optional UI feedback
+            const originalText = e.target.innerText;
+            e.target.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Downloading...`;
+            e.target.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                e.target.innerText = originalText;
+                e.target.style.pointerEvents = 'auto';
+            }, 2000);
+        });
+    });
+});
 // Execution
 document.addEventListener('DOMContentLoaded', FarmermanApp.init);
+
+

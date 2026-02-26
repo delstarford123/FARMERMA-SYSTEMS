@@ -93,3 +93,42 @@ body {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* --- Agripreneur Training Portal Styles --- */
+
+.nav-pills .nav-link {
+    color: #495057;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: #e9ecef;
+}
+
+.nav-pills .nav-link.active {
+    background-color: #2E7D32 !important; /* Farmerman Green */
+    color: white !important;
+    box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+}
+
+.video-container {
+    background: #000;
+    position: relative;
+}
+
+.notes-card {
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    border: 1px solid #e9ecef !important;
+}
+
+.download-link {
+    transition: color 0.2s ease, padding-left 0.2s ease;
+}
+
+.download-link:hover {
+    color: #2E7D32 !important;
+    padding-left: 5px;
+    font-weight: 600;
+}

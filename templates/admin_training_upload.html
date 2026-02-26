@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold text-dark"><i class="fas fa-upload text-danger"></i> Training Content Manager</h2>
+            <p class="text-muted">Upload dynamic content securely to the Farmerman Academy.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold border-bottom pb-2 mb-4">Upload New Media</h5>
+                    
+                    <form action="{{ url_for('admin_upload_training') }}" method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Training Category</label>
+                            <select class="form-select" name="category" required>
+                                <option value="agripreneur">Agripreneurship</option>
+                                <option value="aqua">Aquaculture</option>
+                                <option value="econ">Agrieconomics</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="file" class="form-label fw-bold">Select File</label>
+                            <input class="form-control" type="file" id="file" name="file" required>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Content Description</label>
+                            <textarea class="form-control" name="description" rows="3" placeholder="Describe this video, audio, or document..." required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger w-100 rounded-pill fw-bold">Publish to Academy</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold border-bottom pb-2 mb-4">Currently Published</h5>
+                    
+                    {% if files_metadata %}
+                        <div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+                            {% for item in files_metadata %}
+                                <div class="list-group-item px-0 flex-column align-items-start">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1 fw-bold text-truncate"><i class="fas fa-file me-2 text-primary"></i>{{ item.filename }}</h6>
+                                        <small class="text-muted">{{ item.category | upper }}</small>
+                                    </div>
+                                    <p class="mb-1 small text-muted">{{ item.description }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted fst-italic">No content published yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
