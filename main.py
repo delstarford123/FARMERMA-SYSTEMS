@@ -25,7 +25,7 @@ load_dotenv()
 MAIL_USERNAME = os.environ.get('MAIL_USERNAME') 
 MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') 
 MAIL_SERVER = 'smtp.gmail.com'
-MAIL_PORT = 465
+MAIL_PORT = 587
 
 # ... the rest of your Firebase setup and routes continue below ...
 
@@ -377,11 +377,40 @@ def account_settings():
     profile_data = user_ref.get() or {'full_name': 'User', 'email': session.get('user_email', '')}
     return render_template('accounts&subscription settings.html', profile=profile_data)
 
+
+
+
 @app.route('/checkout')
 def subscriber_checkout():
-    if 'user_id' not in session: return redirect(url_for('register'))
-    return render_template('subscriber checkout.html')
+    # 1. Get the plan from the URL (default to 'pro' if none is provided)
+    plan_id = request.args.get('plan', 'pro')
+    
+    # 2. Set the dynamic prices based on the choice
+    if plan_id == 'basic':
+        plan_name = "Smallholder Plan"
+        amount_kes = 700
+        amount_usd = "5.00"
+    elif plan_id == 'enterprise':
+        plan_name = "Enterprise & NGO"
+        amount_kes = 20000
+        amount_usd = "150.00"
+    else: # Default to Pro
+        plan_id = 'pro'
+        plan_name = "Agribusiness Pro"
+        amount_kes = 3500
+        amount_usd = "25.00"
 
+    # 3. Pass everything to the frontend
+    return render_template(
+        'subscriber_checkout.html', 
+        plan_id=plan_id,
+        plan_name=plan_name,
+        amount_kes=amount_kes,
+        amount_usd=amount_usd,
+        paystack_public_key=os.environ.get('PAYSTACK_PUBLIC_KEY'),
+        stripe_public_key=os.environ.get('STRIPE_PUBLIC_KEY'),
+        paypal_client_id=os.environ.get('PAYPAL_CLIENT_ID')
+    )
 # ==========================================
 # TRAINING ACADEMY (Fully Protected)
 # ==========================================
@@ -759,22 +788,75 @@ def api_market_prices():
     items = rtdb.reference('market_data').get() or {}
     return jsonify([{'id': k, **v} for k, v in items.items()]), 200
 
+
+
+
+
+
+
+
+
+
+
+
 # ==========================================
-# PAYMENTS & CALLBACKS
+# PAYMENTS & CALLBACKS (M-PESA)
 # ==========================================
 @app.route('/process-mpesa', methods=['POST'])
 def process_mpesa():
     phone = request.form.get('phone_number')
-    res = initiate_stk_push(phone, 1)
-    if res.get('ResponseCode') == '0':
-        rtdb.reference(f'pending_transactions/{res.get("CheckoutRequestID")}').set({
-            'user_id': session['user_id'], 'amount': 1, 'status': 'pending'
-        })
-        flash("Check your phone!", "success")
-        return redirect(url_for('payment_success'))
-    flash("Error initiating M-Pesa.", "danger")
-    return redirect(url_for('subscriber_checkout'))
+    
+    # FIX: Get the plan from the FORM data, not the URL args
+    plan_id = request.form.get('plan_id', 'pro') 
+    
+    # 1. Safely catch the dynamic amount from the hidden HTML input
+    raw_amount = request.form.get('amount') 
+    
+    # 2. Convert to integer and handle potential math/input errors
+    try:
+        amount = int(raw_amount) if raw_amount else 3500
+    except (ValueError, TypeError):
+        amount = 3500
+        
+    # 3. Trigger the STK push
+    try:
+        res = initiate_stk_push(phone, amount)
+        
+        # LOGGING for your terminal
+        print(f"--- M-PESA DEBUG START ---")
+        print(f"Phone: {phone} | Amount: {amount} | Plan: {plan_id}")
+        print(f"Safaricom Response: {res}")
+        print(f"--- M-PESA DEBUG END ---")
+        
+        # 4. Check if the request was accepted (ResponseCode '0')
+        if res and res.get('ResponseCode') == '0':
+            checkout_id = res.get("CheckoutRequestID")
+            
+            # Record in Firebase
+            rtdb.reference(f'pending_transactions/{checkout_id}').set({
+                'user_id': session.get('user_id'), 
+                'amount': amount, 
+                'plan': plan_id, # Store plan so callback knows what tier to grant
+                'status': 'pending',
+                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+            
+            flash("Check your phone! Enter your M-Pesa PIN to complete.", "success")
+            return redirect(url_for('payment_success'))
+            
+        # Handle specific Safaricom error responses
+        error_msg = res.get('errorMessage', 'Safaricom service is currently unavailable.')
+        flash(f"M-Pesa Error: {error_msg}", "danger")
 
+    except Exception as e:
+        # This catches those 503 timeouts and connection resets
+        print(f"CRITICAL MPESA ERROR: {str(e)}")
+        flash("M-Pesa Gateway is unstable. Please try again or use a Card.", "danger")
+      
+    # FIX: Redirect back to the corr
+    # ect plan page using the plan_id we caught above
+    return redirect(url_for('subscriber_checkout', plan=plan_id))
+    
 @app.route('/mpesa-callback', methods=['POST'])
 def mpesa_callback():
     data = request.json
@@ -795,6 +877,155 @@ def mpesa_callback():
 
 @app.route('/success')
 def payment_success(): return render_template('success.html')
+from flask import jsonify
+from datetime import datetime
+
+# ==========================================
+# SYSTEM DIAGNOSTICS & HEALTH CHECK
+# ==========================================
+@app.route('/diagnostics', methods=['GET'])
+def diagnostics():
+    """Returns a 200 OK status to let Render know the server is alive."""
+    return jsonify({
+        "status": "healthy",
+        "system": "Farmerman Systems",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }), 200
+
+import stripe
+
+# Load Stripe and Paystack Keys
+stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')
+PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
+
+# ==========================================
+# STRIPE PAYMENTS (Global Cards)
+# ==========================================
+@app.route('/create-stripe-session', methods=['POST'])
+def create_stripe_session():
+    try:
+        # 1. Get the plan sent from the frontend JavaScript
+        data = request.json
+        plan_id = data.get('plan', 'pro')
+        
+        # 2. Determine the correct price in CENTS (Stripe uses cents, not dollars)
+        if plan_id == 'basic':
+            plan_name = 'Smallholder Plan'
+            unit_amount = 500 # $5.00
+        elif plan_id == 'enterprise':
+            plan_name = 'Enterprise & NGO'
+            unit_amount = 15000 # $150.00
+        else:
+            plan_id = 'pro'
+            plan_name = 'Agribusiness Pro'
+            unit_amount = 2500 # $25.00
+
+        # Create a Stripe Checkout Session
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'unit_amount': unit_amount,
+                    'product_data': {
+                        'name': f'Farmerman Systems: {plan_name}',
+                    },
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            # Pass both the user ID AND the plan ID so we know what to upgrade them to later!
+            metadata={
+                'user_id': session.get('user_id'),
+                'plan_id': plan_id
+            }, 
+            success_url=url_for('payment_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=url_for('subscriber_checkout', _external=True),
+        )
+        return jsonify({'id': checkout_session.id})
+    except Exception as e:
+        return jsonify(error=str(e)), 403
+
+
+# ==========================================
+# PAYPAL PAYMENTS (Backend Verification)
+# ==========================================
+@app.route('/paypal-transaction-complete', methods=['POST'])
+def paypal_transaction_complete():
+    data = request.json
+    order_id = data.get('orderID')
+    plan_id = data.get('plan', 'pro') # Read the dynamic plan
+    user_id = session.get('user_id')
+    
+    # Calculate receipt amount for the database
+    amount_paid = 5.00 if plan_id == 'basic' else 150.00 if plan_id == 'enterprise' else 25.00
+    
+    if user_id and order_id:
+        # Dynamically upgrade the user to their chosen tier
+        rtdb.reference(f'users/{user_id}').update({'subscription_tier': plan_id})
+        
+        # Save the receipt
+        rtdb.reference(f'completed_transactions/{user_id}').push({
+            'receipt_number': order_id, 
+            'amount': amount_paid,
+            'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
+            'plan': f'{plan_id.capitalize()} (PayPal)'
+        })
+        return jsonify({"status": "success"}), 200
+    
+    return jsonify({"status": "failed"}), 400
+
+
+# ==========================================
+# PAYSTACK PAYMENTS (Local/Global Cards)
+# ==========================================
+@app.route('/verify-paystack')
+def verify_paystack():
+    """Verifies the card payment with Paystack and upgrades the user."""
+    reference = request.args.get('reference')
+    plan_id = request.args.get('plan', 'pro') # Read the dynamic plan from the URL
+    user_id = session.get('user_id')
+    
+    if not reference or not user_id:
+        flash("Invalid payment reference.", "danger")
+        return redirect(url_for('subscriber_checkout'))
+
+    headers = {
+        "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}",
+        "Content-Type": "application/json",
+    }
+    verify_url = f"https://api.paystack.co/transaction/verify/{reference}"
+    
+    try:
+        response = requests.get(verify_url, headers=headers)
+        response_data = response.json()
+        
+        if response_data.get('data', {}).get('status') == 'success':
+            # Paystack returns the amount in cents/kobo, so divide by 100 for the receipt
+            amount_paid = response_data['data']['amount'] / 100 
+            
+            # Dynamically upgrade the user tier
+            rtdb.reference(f'users/{user_id}').update({'subscription_tier': plan_id})
+            
+            # Save the receipt
+            rtdb.reference(f'completed_transactions/{user_id}').push({
+                'receipt_number': reference, 
+                'amount': amount_paid,
+                'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
+                'plan': f'{plan_id.capitalize()} (Paystack)'
+            })
+            
+            flash(f"Payment successful! Welcome to the {plan_id.capitalize()} plan.", "success")
+            return redirect(url_for('payment_success'))
+        else:
+            flash("Payment verification failed.", "danger")
+            return redirect(url_for('subscriber_checkout'))
+            
+    except Exception as e:
+        print(f"Paystack Error: {e}")
+        flash("Server error during verification.", "danger")
+        return redirect(url_for('subscriber_checkout'))
 
 # ==========================================
 # STATIC PAGES & ERRORS

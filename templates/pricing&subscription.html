@@ -45,7 +45,7 @@
                             <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> Weekly SMS Alerts</li>
                             <li class="mb-2 text-muted"><i class="bi bi-x-lg me-2"></i> Predictive AI Trends</li>
                         </ul>
-                        <a href="/register" class="btn btn-outline-success w-100 mt-auto magnetic-btn">Start Basic Plan</a>
+                        <a href="{{ url_for('subscriber_checkout', plan='basic') }}" class="btn btn-outline-success w-100 mt-auto magnetic-btn">Start Basic Plan</a>
                     </div>
                 </div>
             </div>
@@ -63,7 +63,7 @@
                             <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> AI Predictive Trends</li>
                             <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> Historical Reports</li>
                         </ul>
-                        <a href="/checkout" class="btn btn-success w-100 mt-auto magnetic-btn py-2 fw-bold text-white">Subscribe Now</a>
+                        <a href="{{ url_for('subscriber_checkout', plan='pro') }}" class="btn btn-success w-100 mt-auto magnetic-btn py-2 fw-bold text-white">Subscribe Now</a>
                     </div>
                 </div>
             </div>
@@ -80,7 +80,7 @@
                             <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> Custom Data Collection</li>
                             <li class="mb-2"><i class="text-success bi bi-check-lg me-2 fw-bold"></i> Dedicated Manager</li>
                         </ul>
-                        <a href="/contact" class="btn btn-dark w-100 mt-auto magnetic-btn" style="background-color: var(--soil-brown); border-color: var(--soil-brown);">Contact Sales</a>
+                        <a href="{{ url_for('subscriber_checkout', plan='enterprise') }}" class="btn btn-dark w-100 mt-auto magnetic-btn" style="background-color: var(--soil-brown); border-color: var(--soil-brown);">Subscribe Now</a>
                     </div>
                 </div>
             </div>
@@ -93,7 +93,7 @@
     <div class="container text-center max-w-75">
         <h3 class="fw-bold mb-4 faq-title" style="color: var(--soil-brown);">Have Questions?</h3>
         <p class="text-muted mb-4 faq-text">Our data is sourced directly from field agents, vetted brokers, and integrated agricultural APIs. If you need a custom solution for your organization, we are ready to help.</p>
-        <a href="/contact" class="btn btn-outline-dark faq-btn">Read Full FAQ or Contact Us</a>
+        <a href="/checkout" class="btn btn-outline-dark faq-btn">Subscribe Now</a>
     </div>
 </section>
 {% endblock %}
