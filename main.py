@@ -8,6 +8,28 @@ from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import NotFound
 
+import os
+from dotenv import load_dotenv
+import smtplib
+import threading
+from email.message import EmailMessage
+from datetime import datetime
+
+# 1. LOAD THE SECRET VARIABLES
+load_dotenv()
+
+# ==========================================
+# EMAIL SMTP CONFIGURATION
+# ==========================================
+# 2. FETCH THE VARIABLES SECURELY
+MAIL_USERNAME = os.environ.get('MAIL_USERNAME') 
+MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') 
+MAIL_SERVER = 'smtp.gmail.com'
+MAIL_PORT = 465
+
+# ... the rest of your Firebase setup and routes continue below ...
+
+
 # Flask Imports
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, flash, send_from_directory, abort
 
@@ -80,6 +102,40 @@ except Exception as e:
 
 with app.app_context():
     sqlalchemy_db.create_all()
+
+
+
+def send_async_emails(user_email, admin_email, user_msg_html, admin_msg_html, name, message_body, inquiry_subject):
+    """The background worker that connects to Gmail and sends the generated templates."""
+    try:
+        with smtplib.SMTP_SSL(MAIL_SERVER, MAIL_PORT) as server:
+            server.login(MAIL_USERNAME, MAIL_PASSWORD)
+            
+            # 1. Send to User
+            user_msg = EmailMessage()
+            user_msg['Subject'] = "We received your message - Farmerman Systems"
+            user_msg['From'] = f"Farmerman Support <{MAIL_USERNAME}>"
+            user_msg['To'] = user_email
+            user_msg.set_content("Thank you for contacting Farmerman Systems. We will get back to you shortly.")
+            user_msg.add_alternative(user_msg_html, subtype='html')
+            server.send_message(user_msg)
+            
+            # 2. Send to Admin (Now uses the dropdown subject!)
+            admin_msg = EmailMessage()
+            admin_msg['Subject'] = f"🚨 {inquiry_subject} Inquiry from {name}"
+            admin_msg['From'] = f"Farmerman Server <{MAIL_USERNAME}>"
+            admin_msg['To'] = admin_email 
+            admin_msg.set_content(f"New {inquiry_subject} message from {name}: {message_body}")
+            admin_msg.add_alternative(admin_msg_html, subtype='html')
+            server.send_message(admin_msg)
+            
+    except Exception as e:
+        print(f"Failed to send background emails: {e}")
+
+
+
+
+
 
 # ==========================================
 # CONTEXT PROCESSORS
@@ -760,16 +816,58 @@ def terms_of_service(): return render_template('terms of service.html')
 @app.route('/refund-policy')
 def refund_policy(): return render_template('subscription&refund policy.html')
 
+
+
+#CONTACT US: Now with dropdown subjects and background email processing!
+
 @app.route('/contact', methods=['GET', 'POST'])
 def contact_us(): 
     if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        subject = request.form.get('subject') # CAPTURES THE DROPDOWN
+        message = request.form.get('message')
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # 1. Save to Firebase RTDB (Now includes subject)
         rtdb.reference('contact_inquiries').push({
-            'name': request.form.get('name'), 'email': request.form.get('email'),
-            'message': request.form.get('message'), 'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            'name': name, 
+            'email': email,
+            'subject': subject,
+            'message': message, 
+            'timestamp': timestamp
         })
-        flash("Message sent!", "success")
+        
+        # 2. Render the HTML templates into strings
+        current_year = datetime.now().year
+        
+        user_html = render_template('email_user_confirmation.html', 
+                                    name=name, message=message, year=current_year)
+                                    
+        # Pass the subject into the admin template
+        admin_html = render_template('email_admin_notification.html', 
+                                     name=name, email=email, subject=subject, message=message, timestamp=timestamp)
+        
+        # 3. Pass everything to the background thread
+        threading.Thread(
+            target=send_async_emails, 
+            args=(email, MAIL_USERNAME, user_html, admin_html, name, message, subject)
+        ).start()
+        
+        # 4. Instantly redirect the user
+        flash("Message sent! Check your email for a confirmation receipt.", "success")
         return redirect(url_for('contact_us'))
+        
     return render_template('contact us.html')
+
+
+
+
+
+
+
+
+
 
 @app.errorhandler(404)
 def page_not_found(e):
