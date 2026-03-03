@@ -1368,7 +1368,8 @@ def impact_initiatives(): return render_template('impact&initiatives.html')
 def pricing_subscription(): return render_template('payments/pricing_subscription.html')
 @app.route('/services')
 def services(): return render_template('our services.html')
-
+@app.route('/privacy-policy')
+def privacy_policy(): return render_template('privacy policy.html')
 
 @app.route('/pricing')
 def pricing():
