@@ -1,5 +1,6 @@
 Flask
 Flask-SQLAlchemy
+Flask-Mail
 gunicorn
 firebase-admin
 stripe
