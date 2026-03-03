@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-8">
+            <h2 class="fw-bold" style="color: #5D4037;"><i class="bi bi-calendar-video text-primary me-2"></i> Live Mentorship Sessions</h2>
+            <p class="text-muted">Schedule Google Meet Q&A sessions. Your course pages will update automatically.</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('tutor_dashboard') }}" class="btn btn-outline-secondary fw-bold shadow-sm">
+                <i class="bi bi-arrow-left me-2"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-lg" style="border-top: 5px solid #0288D1 !important;">
+                <div class="card-body p-4 p-md-5">
+                    <h5 class="fw-bold mb-4" style="color: #0288D1;">Schedule New Session</h5>
+                    
+                    <form action="{{ url_for('tutor_sessions') }}" method="POST">
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Select Target Course</label>
+                            <select name="course_id" class="form-select bg-light" required>
+                                <option value="" disabled selected>-- Choose a course --</option>
+                                {% for course in my_courses %}
+                                    <option value="{{ course.id }}">{{ course.title }}</option>
+                                {% else %}
+                                    <option value="" disabled>You have no published courses yet.</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted" style="font-size: 0.75rem;">This will update the blue Meet button for this course.</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Session Topic</label>
+                            <input type="text" name="topic" class="form-control bg-light" placeholder="e.g., Deep dive into Soil pH" required>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">Date</label>
+                                <input type="date" name="session_date" class="form-control bg-light" required>
+                            </div>
+                            <div class="col-md-6 mt-3 mt-md-0">
+                                <label class="form-label fw-bold small text-muted">Time (EAT)</label>
+                                <input type="time" name="session_time" class="form-control bg-light" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small text-muted">Google Meet Link</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-primary"><i class="bi bi-camera-video-fill"></i></span>
+                                <input type="url" name="meet_link" class="form-control bg-light" placeholder="https://meet.google.com/..." required>
+                            </div>
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary py-3 fw-bold fs-6 shadow-sm">
+                                <i class="bi bi-calendar-plus me-2"></i> Schedule Broadcast
+                            </button>
+                        </div>
+                        
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="fw-bold mb-0" style="color: #2E7D32;">My Scheduled Sessions</h5>
+                </div>
+                
+                <div class="card-body p-0" style="max-height: 600px; overflow-y: auto;">
+                    <ul class="list-group list-group-flush">
+                        {% for session in my_sessions %}
+                            <li class="list-group-item p-4 hover-bg-light transition border-bottom">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h5 class="fw-bold mb-1" style="color: #5D4037;">{{ session.topic }}</h5>
+                                        <p class="small text-success fw-bold mb-0"><i class="bi bi-journal-text me-1"></i> {{ session.course_title }}</p>
+                                    </div>
+                                    <span class="badge bg-light text-dark border"><i class="bi bi-calendar-event me-1"></i> {{ session.date }} | {{ session.time }}</span>
+                                </div>
+                                
+                                <div class="mt-3 d-flex align-items-center">
+                                    <a href="{{ session.meet_link }}" target="_blank" class="btn btn-sm btn-outline-primary me-3 fw-bold">
+                                        <i class="bi bi-box-arrow-up-right me-1"></i> Open Meet
+                                    </a>
+                                    <span class="small text-muted text-truncate" style="max-width: 200px;">
+                                        {{ session.meet_link }}
+                                    </span>
+                                </div>
+                            </li>
+                        {% else %}
+                            <div class="text-center py-5 px-3">
+                                <i class="bi bi-camera-video-off display-4 text-muted d-block mb-3 opacity-50"></i>
+                                <h5 class="text-muted fw-bold">No sessions scheduled</h5>
+                                <p class="text-muted small">Use the form on the left to schedule your first live mentorship broadcast.</p>
+                            </div>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .hover-bg-light:hover { background-color: #f8f9fa; }
+</style>
+{% endblock %}

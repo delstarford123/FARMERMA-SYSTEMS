@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5 overflow-hidden">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show shadow-sm mb-4" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <div class="card shadow-lg border-0 mt-5 border-top border-success border-4 login-card" style="border-radius: 15px;">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <div class="badge bg-light text-success mb-2 px-3 py-2 border">SECURE ACCESS</div>
+                        <h3 class="fw-bold mb-1 decode-text" style="color: #5D4037;">Intelligence Portal</h3>
+                        <p class="text-muted">Sign in to access live commodity data.</p>
+                    </div>
+                    
+                    <form action="/login" method="POST">
+                        <div class="mb-3 login-field">
+                            <label for="email" class="form-label fw-bold small text-uppercase" style="color: #5D4037;">Email Address</label>
+                            <input type="email" name="email" class="form-control form-control-lg bg-light border-0" id="email" placeholder="name@example.com" required>
+                        </div>
+                        <div class="mb-4 login-field">
+                            <label for="password" class="form-label fw-bold small text-uppercase" style="color: #5D4037;">Security Password</label>
+                            <input type="password" name="password" class="form-control form-control-lg bg-light border-0" id="password" required>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-4 login-field">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="rememberMe">
+                                <label class="form-check-label text-muted small" for="rememberMe">Remember me</label>
+                            </div>
+                            <a href="{{ url_for('reset_password') }}" class="text-success small text-decoration-none fw-bold">Forgot Password?</a>
+                        </div>
+                        
+                        <div class="d-grid login-field">
+                            <button type="submit" class="btn btn-success btn-lg fw-bold login-btn py-3" style="background-color: #2E7D32; border: none; border-radius: 10px;">
+                                Authenticate & Enter <i class="bi bi-shield-lock ms-2"></i>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-4 pt-3 border-top login-field">
+                        <p class="text-muted mb-0">New to the system? <a href="/register" class="text-success fw-bold text-decoration-none">Create an Account</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Prevent visibility before animation */
+    .login-card, .login-field { opacity: 0; }
+
+    .form-control:focus {
+        background-color: #fff !important;
+        border: 1px solid #2E7D32 !important;
+        box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+
+<script>
+    gsap.registerPlugin(TextPlugin);
+
+    // 1. Flip-X Entrance for the card
+    gsap.to(".login-card", {
+        rotationX: 0, 
+        opacity: 1, 
+        startAt: { rotationX: 90 },
+        transformPerspective: 800, 
+        duration: 1.2, 
+        ease: "power3.out"
+    });
+
+    // 2. Cascade Entrance for Fields
+    gsap.to(".login-field", {
+        y: 0,
+        opacity: 1,
+        startAt: { y: 20 },
+        stagger: 0.1,
+        duration: 0.6,
+        ease: "power2.out",
+        delay: 0.4
+    });
+
+    // 3. Decoded Effect for the title
+    gsap.from(".decode-text", {
+        text: { value: "▓▒░█▓▒░█", chars: "XO!#" },
+        duration: 1.5,
+        ease: "none",
+        delay: 0.5
+    });
+
+    // 4. Magnetic-style subtle pull for the login button
+    const loginBtn = document.querySelector(".login-btn");
+    loginBtn.addEventListener("mousemove", (e) => {
+        const rect = loginBtn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        gsap.to(loginBtn, { x: x * 0.2, y: y * 0.2, duration: 0.3 });
+    });
+    loginBtn.addEventListener("mouseleave", () => {
+        gsap.to(loginBtn, { x: 0, y: 0, duration: 0.3 });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    
+    <div class="row mb-5 text-center justify-content-center">
+        <div class="col-md-8">
+            <h1 class="fw-bold" style="color: #5D4037;"><i class="bi bi-trophy-fill text-warning me-2"></i> Academy Leaderboard</h1>
+            <p class="text-muted fs-5">See how you rank among other agribusiness scholars. Earn 100 points for every module you complete!</p>
+        </div>
+    </div>
+
+    <div class="row align-items-end justify-content-center text-center mb-5 gx-3">
+        
+        <div class="col-md-3 order-2 order-md-1 mb-4 mb-md-0">
+            {% if leaderboard|length > 1 %}
+            <div class="card border-0 shadow-sm bg-light pt-4" style="border-top: 5px solid #C0C0C0 !important;">
+                <div class="card-body">
+                    <i class="bi bi-medal-fill display-4" style="color: #C0C0C0;"></i>
+                    <h5 class="fw-bold mt-3 text-truncate">{{ leaderboard[1].name }}</h5>
+                    <p class="text-muted small mb-0">{{ leaderboard[1].points }} pts</p>
+                    <span class="badge bg-secondary mt-2">2nd Place</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4 order-1 order-md-2 mb-4 mb-md-0 z-1">
+            {% if leaderboard|length > 0 %}
+            <div class="card border-0 shadow-lg pt-5 pb-3" style="background-color: #FFFAEC; border-top: 8px solid #FFD700 !important; transform: scale(1.05);">
+                <div class="card-body">
+                    <i class="bi bi-trophy-fill display-1" style="color: #FFD700; filter: drop-shadow(0px 4px 6px rgba(255,215,0,0.4));"></i>
+                    <h4 class="fw-bold mt-3 text-truncate" style="color: #5D4037;">{{ leaderboard[0].name }}</h4>
+                    <p class="text-muted mb-0 fw-bold">{{ leaderboard[0].points }} pts</p>
+                    <span class="badge mt-2 px-3 py-2 text-dark" style="background-color: #FFD700;">Top Scholar</span>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-muted py-5">Leaderboard is empty. Be the first to score!</div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-3 order-3 order-md-3">
+            {% if leaderboard|length > 2 %}
+            <div class="card border-0 shadow-sm bg-light pt-4" style="border-top: 5px solid #CD7F32 !important;">
+                <div class="card-body">
+                    <i class="bi bi-medal-fill display-4" style="color: #CD7F32;"></i>
+                    <h5 class="fw-bold mt-3 text-truncate">{{ leaderboard[2].name }}</h5>
+                    <p class="text-muted small mb-0">{{ leaderboard[2].points }} pts</p>
+                    <span class="badge mt-2" style="background-color: #CD7F32;">3rd Place</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0" style="color: #2E7D32;">Top 10 Farmers</h5>
+                    <span class="small text-muted">Ranked by Modules Completed</span>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for user in leaderboard[3:10] %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <div class="d-flex align-items-center">
+                                <h4 class="text-muted fw-bold mb-0 me-4" style="width: 30px;">#{{ loop.index + 3 }}</h4>
+                                <div>
+                                    <h6 class="fw-bold mb-0">{{ user.name }}</h6>
+                                    <small class="text-muted">FarmerMan Scholar</small>
+                                </div>
+                            </div>
+                            <span class="badge bg-success rounded-pill px-3 py-2">{{ user.points }} pts</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            {% if current_user_rank %}
+            <div class="alert mt-4 shadow-sm border-0 d-flex justify-content-between align-items-center" style="background-color: #E8F5E9; color: #2E7D32;">
+                <div>
+                    <h6 class="fw-bold mb-1">Your Current Rank: #{{ current_user_rank.rank }}</h6>
+                    <small>You have {{ current_user_rank.points }} points. Keep learning to climb the board!</small>
+                </div>
+                <a href="{{ url_for('academy_home') }}" class="btn btn-success btn-sm fw-bold">Earn Points</a>
+            </div>
+            {% endif %}
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

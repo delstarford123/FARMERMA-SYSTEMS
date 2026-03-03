@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    
+    <div class="row mb-5 align-items-center">
+        <div class="col-md-8 mb-3 mb-md-0">
+            <span class="badge bg-primary mb-2 px-3 py-2 text-uppercase shadow-sm">Instructor Portal</span>
+            <h1 class="fw-bold" style="color: #5D4037;">Tutor Dashboard</h1>
+            <p class="text-muted fs-5 mb-0">Welcome back, {{ session.get('user_email', 'Tutor').split('@')[0]|title }}. Here is your teaching overview.</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('course_builder') }}" class="btn btn-success fw-bold py-3 px-4 shadow-sm w-100 w-md-auto" style="background-color: #2E7D32;">
+                <i class="bi bi-cloud-arrow-up-fill me-2"></i> Upload New Course
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 bg-white border-bottom border-success border-4 transition-hover">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="bg-success bg-opacity-10 text-success rounded p-3 me-3">
+                        <i class="bi bi-camera-reels-fill display-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="fw-bold mb-0 text-dark">{{ my_courses|length }}</h2>
+                        <span class="text-muted small fw-bold text-uppercase">Published Courses</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 bg-white border-bottom border-primary border-4 transition-hover">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded p-3 me-3">
+                        <i class="bi bi-people-fill display-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="fw-bold mb-0 text-dark">{{ total_enrollments }}</h2>
+                        <span class="text-muted small fw-bold text-uppercase">Total Enrollments</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 bg-white border-bottom border-warning border-4 transition-hover">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="bg-warning bg-opacity-10 text-warning rounded p-3 me-3">
+                        <i class="bi bi-award-fill display-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="fw-bold mb-0 text-dark">{{ total_completions }}</h2>
+                        <span class="text-muted small fw-bold text-uppercase">Student Completions</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body p-4 d-flex flex-wrap gap-3 justify-content-center">
+                    <a href="{{ url_for('tutor_gradebook') }}" class="btn btn-outline-dark fw-bold px-4">
+                        <i class="bi bi-journal-check me-2 text-success"></i> Open Gradebook
+                    </a>
+                    
+                    <a href="{{ url_for('academy_home') }}" class="btn btn-outline-dark fw-bold px-4">
+                        <i class="bi bi-shop me-2 text-primary"></i> View Student Catalog
+                    </a>
+                    
+                    <a href="{{ url_for('tutor_sessions') }}" class="btn btn-outline-dark fw-bold px-4">
+                        <i class="bi bi-camera-video me-2" style="color: #0288D1;"></i> Manage Live Sessions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0" style="color: #2E7D32;">My Content Library</h5>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Course Title & Category</th>
+                        <th>Published Date</th>
+                        <th>Video File</th>
+                        <th>Resource File</th>
+                        <th class="pe-4 text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in my_courses %}
+                    <tr>
+                        <td class="ps-4 py-3">
+                            <div class="fw-bold text-dark">{{ course.title }}</div>
+                            <span class="badge bg-light text-secondary border mt-1">{{ course.category|title }}</span>
+                        </td>
+                        <td class="text-muted small">{{ course.created_at[:10] if course.created_at else 'N/A' }}</td>
+                        
+                        <td>
+                            {% if course.video_file %}
+                                <span class="badge bg-success bg-opacity-10 text-success"><i class="bi bi-play-circle-fill me-1"></i> Uploaded</span>
+                            {% else %}
+                                <span class="badge bg-danger bg-opacity-10 text-danger"><i class="bi bi-x-circle me-1"></i> Missing</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td>
+                            {% if course.resource_file %}
+                                <i class="bi bi-file-earmark-pdf text-danger me-2"></i><small class="text-muted">Attached</small>
+                            {% else %}
+                                <span class="text-muted small">None</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td class="pe-4 text-end">
+                            <a href="{{ url_for('view_lesson', course_id=course.id) }}" class="btn btn-sm btn-outline-primary" title="Preview Course">
+                                <i class="bi bi-eye"></i> Preview
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="bi bi-camera-reels display-4 d-block mb-3 opacity-50"></i>
+                            <h5 class="fw-bold">No courses published yet.</h5>
+                            <p class="small text-muted mb-4">Start sharing your agricultural expertise today.</p>
+                            <a href="{{ url_for('course_builder') }}" class="btn btn-success px-4">Create Your First Course</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .transition-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .transition-hover:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+</style>
+{% endblock %}

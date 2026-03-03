@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold" style="color: #5D4037;">Course Builder</h2>
+                <span class="badge bg-primary p-2">Tutor Portal</span>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show shadow-sm">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-5">
+                    <p class="text-muted mb-4">Upload a new lesson, video, and resources for the farmers.</p>
+                    
+                    <form action="{{ url_for('course_builder') }}" method="POST" enctype="multipart/form-data">
+                        
+                        <h5 class="fw-bold mb-3 border-bottom pb-2">1. Lesson Details</h5>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Lesson Title</label>
+                            <input type="text" name="course_title" class="form-control bg-light" placeholder="e.g., Introduction to Soil pH" required>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">Category</label>
+                                <select name="category" class="form-select bg-light" required>
+                                    <option value="soil">Soil & Crop Science</option>
+                                    <option value="market">Market Intelligence</option>
+                                    <option value="livestock">Livestock Management</option>
+                                    <option value="agripreneur">Agribusiness Finance</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">Live Q&A Link (Optional)</label>
+                                <input type="url" name="meet_link" class="form-control bg-light" placeholder="https://meet.google.com/...">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small text-muted">Lesson Description & Key Takeaways</label>
+                            <textarea name="course_description" class="form-control bg-light" rows="4" placeholder="What will the farmers learn in this module?" required></textarea>
+                        </div>
+
+                        <h5 class="fw-bold mb-3 border-bottom pb-2 mt-5">2. Media & Resources</h5>
+                        
+                        <div class="mb-4 p-4 border rounded bg-light text-center">
+                            <i class="bi bi-camera-video display-4 text-success mb-2"></i>
+                            <label class="form-label fw-bold d-block">Upload Lesson Video (MP4)</label>
+                            <input class="form-control" type="file" name="video_file" accept="video/mp4,video/avi" required>
+                            <small class="text-muted">Keep files under 50MB for faster streaming.</small>
+                        </div>
+
+                        <div class="mb-4 p-4 border rounded bg-light text-center">
+                            <i class="bi bi-file-earmark-pdf display-4 text-danger mb-2"></i>
+                            <label class="form-label fw-bold d-block">Attach PDF Guide (Optional)</label>
+                            <input class="form-control" type="file" name="resource_file" accept=".pdf,.docx">
+                            <small class="text-muted">Charts, manuals, or offline reading materials.</small>
+                        </div>
+
+                        <div class="d-grid mt-5">
+                            <button type="submit" class="btn btn-success py-3 fw-bold fs-5 shadow-sm" style="background-color: #2E7D32;">
+                                <i class="bi bi-cloud-arrow-up me-2"></i> Publish Course to Academy
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

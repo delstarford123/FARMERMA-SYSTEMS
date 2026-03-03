@@ -8,6 +8,7 @@
               {% if messages %}
                 {% for category, message in messages %}
                   <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="bi {{ 'bi-check-circle-fill' if category == 'success' else 'bi-exclamation-triangle-fill' }} me-2"></i>
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                   </div>
@@ -15,44 +16,66 @@
               {% endif %}
             {% endwith %}
 
-            <div class="card shadow-lg border-0 mt-4 register-card border-top border-4" style="border-color: #2E7D32 !important;">
+            <div class="card shadow-lg border-0 mt-4 register-card border-top border-4" style="border-color: #2E7D32 !important; border-radius: 15px;">
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
                         <h3 class="fw-bold register-title" style="color: #5D4037;">Create an Account</h3>
-                        <p class="text-muted register-subtitle">Join Farmerman Systems to access exclusive market intelligence.</p>
+                        <p class="text-muted register-subtitle">Select your role to access specialized agribusiness intelligence.</p>
                     </div>
                     
                     <form action="/register" method="POST"> 
+                        <div class="mb-4 reg-field">
+                            <label class="form-label fw-bold small text-uppercase" style="color: #5D4037;">I am joining as a:</label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="role" id="roleClient" value="client" checked>
+                                    <label class="btn btn-outline-success w-100 py-3 border-2 d-flex flex-column align-items-center" for="roleClient">
+                                        <i class="bi bi-briefcase fs-3 mb-1"></i>
+                                        <span class="fw-bold">Client</span>
+                                    </label>
+                                </div>
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="role" id="roleTutor" value="tutor">
+                                    <label class="btn btn-outline-success w-100 py-3 border-2 d-flex flex-column align-items-center" for="roleTutor">
+                                        <i class="bi bi-mortarboard fs-3 mb-1"></i>
+                                        <span class="fw-bold">Tutor</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="mb-3 reg-field">
                             <label for="fullName" class="form-label fw-bold" style="color: #5D4037;">Full Name</label>
-                            <input type="text" class="form-control form-control-lg" id="fullName" name="fullName" placeholder="Kennan" required>
+                            <input type="text" class="form-control form-control-lg bg-light border-0" id="fullName" name="fullName" placeholder="Kennan" required>
                         </div>
                         
                         <div class="mb-3 reg-field">
                             <label for="email" class="form-label fw-bold" style="color: #5D4037;">Email Address</label>
-                            <input type="email" class="form-control form-control-lg" id="email" name="email" placeholder="name@example.com" required>
+                            <input type="email" class="form-control form-control-lg bg-light border-0" id="email" name="email" placeholder="name@example.com" required>
                         </div>
                         
                         <div class="mb-3 reg-field">
                             <label for="organization" class="form-label fw-bold" style="color: #5D4037;">Organization / Farm Name <span class="text-muted fw-normal">(Optional)</span></label>
-                            <input type="text" class="form-control form-control-lg" id="organization" name="organization" placeholder="e.g., Global Agribusiness Co.">
+                            <input type="text" class="form-control form-control-lg bg-light border-0" id="organization" name="organization" placeholder="e.g., Global Agribusiness Co.">
                         </div>
 
                         <div class="mb-4 reg-field">
                             <label for="password" class="form-label fw-bold" style="color: #5D4037;">Password</label>
-                            <input type="password" class="form-control form-control-lg" id="password" name="password" required minlength="8">
-                            <div class="form-text">Must be at least 8 characters long.</div>
+                            <input type="password" class="form-control form-control-lg bg-light border-0" id="password" name="password" required minlength="8">
+                            <div class="form-text">Secure your data with at least 8 characters.</div>
                         </div>
 
                         <div class="form-check mb-4 reg-field">
-                            <input class="form-check-input" type="checkbox" value="" id="termsCheck" required>
+                            <input class="form-check-input" type="checkbox" id="termsCheck" required>
                             <label class="form-check-label small text-muted" for="termsCheck">
-                                I agree to the <a href="/terms-of-service" class="text-decoration-none" style="color: #2E7D32;">Terms of Service</a> and <a href="/privacy-policy" class="text-decoration-none" style="color: #2E7D32;">Privacy Policy</a>.
+                                I agree to the <a href="/terms" class="text-decoration-none text-success">Terms</a> & <a href="/privacy" class="text-decoration-none text-success">Privacy Policy</a>.
                             </label>
                         </div>
 
                         <div class="d-grid reg-field">
-                            <button type="submit" class="btn btn-lg fw-bold shadow-sm register-btn text-white" style="background-color: #2E7D32; border-color: #2E7D32;">Create Account & Continue</button>
+                            <button type="submit" id="submitBtn" class="btn btn-lg fw-bold shadow-sm register-btn text-white py-3" style="background-color: #2E7D32; border: none;">
+                                Create Account & Continue
+                            </button>
                         </div>
                     </form>
                     
@@ -67,12 +90,19 @@
 
 <style>
     /* Prevent visibility before animation */
-    .register-card, .reg-field {
-        opacity: 0;
-    }
+    .register-card, .reg-field { opacity: 0; }
+    
     .form-control:focus {
+        background-color: #fff !important;
+        border: 1px solid #2E7D32 !important;
+        box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.15);
+    }
+
+    /* Professional Radio Button Styling */
+    .btn-check:checked + .btn-outline-success {
+        background-color: #E8F5E9;
+        color: #1B5E20;
         border-color: #2E7D32;
-        box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25);
     }
 </style>
 {% endblock %}
@@ -81,7 +111,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
 <script>
-    // 1. Flip-X Entrance for the Card
+    // 1. Entrance Animation
     gsap.to(".register-card", {
         rotationX: 0, 
         opacity: 1, 
@@ -91,7 +121,6 @@
         ease: "power3.out"
     });
 
-    // 2. Cascade Reveal for Form Fields
     gsap.to(".reg-field", {
         y: 0,
         opacity: 1,
@@ -100,6 +129,17 @@
         duration: 0.6,
         ease: "power2.out",
         delay: 0.5
+    });
+
+    // 2. Loading State on Submit
+    // This helps the user realize the system is processing the 
+    // background Welcome Email and Drip Campaign scheduler.
+    const form = document.querySelector('form');
+    const btn = document.querySelector('#submitBtn');
+
+    form.addEventListener('submit', () => {
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Setting up your portal...`;
+        btn.classList.add('disabled');
     });
 
     // 3. Magnetic Button Interaction

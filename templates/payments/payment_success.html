@@ -8,6 +8,7 @@
         --sky-blue: #0288D1;
     }
     .success-card { opacity: 0; transform: scale(0.8); }
+    
     .checkmark-circle {
         width: 100px;
         height: 100px;
@@ -18,7 +19,7 @@
         justify-content: center;
         margin: 0 auto 20px;
         color: white;
-        font-size: 3rem;
+        font-size: 3.5rem;
         box-shadow: 0 10px 20px rgba(46, 125, 50, 0.3);
     }
     .text-success { color: var(--plant-green) !important; }
@@ -28,19 +29,20 @@
 
 {% block content %}
 <div class="container d-flex align-items-center justify-content-center min-vh-100 py-5">
-    <div class="card border-0 shadow-lg text-center p-5 success-card" style="max-width: 500px; border-radius: 20px;">
+    <div class="card border-0 shadow-lg text-center p-5 success-card" style="max-width: 500px; border-radius: 20px; width: 100%;">
         <div class="card-body">
+            
             <div class="checkmark-circle">
                 <i class="bi bi-check-lg"></i>
             </div>
             
-            <h2 class="fw-bold mb-2" style="color: var(--soil-brown);">Payment Successful!</h2>
-            <p class="text-muted mb-4">Your <strong>Agribusiness Pro</strong> subscription is now active for your account in Kakamega.</p>
+            <h2 class="fw-bold mb-2 success-title" style="color: var(--soil-brown);">Payment Successful!</h2>
+            <p class="text-muted mb-4 success-text">Your <strong>{{ plan_name | default('Agribusiness Pro') }}</strong> subscription is now active for your account in Kakamega.</p>
             
-            <div class="bg-light p-3 rounded-3 mb-4 text-start border-start border-4" style="border-color: var(--sky-blue) !important;">
+            <div class="bg-light p-3 rounded-3 mb-4 text-start border-start border-4 receipt-box" style="border-color: var(--sky-blue) !important;">
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted small">Receipt Number:</span>
-                    <span class="fw-bold small text-dark">{{ receipt_no | default('MPESA_PENDING') }}</span>
+                    <span class="fw-bold small text-dark">{{ receipt_no | default('Processing / Sent via Email') }}</span>
                 </div>
                 <div class="d-flex justify-content-between">
                     <span class="text-muted small">Amount Paid:</span>
@@ -48,12 +50,14 @@
                 </div>
             </div>
 
-            <div class="d-grid gap-2 mb-3">
-                <a href="/dashboard" class="btn btn-success btn-lg fw-bold rounded-pill magnetic-btn text-white">Go to Dashboard</a>
-                <a href="/billing" class="btn btn-link text-decoration-none small" style="color: var(--sky-blue);">View Billing History</a>
+            <div class="d-grid gap-3 mb-4 success-btns">
+                <a href="{{ url_for('market_intelligence') }}" class="btn btn-success btn-lg fw-bold rounded-pill magnetic-btn text-white py-3 shadow-sm">
+                    Go to Market Dashboard <i class="bi bi-arrow-right ms-2"></i>
+                </a>
+                <a href="/billing" class="btn btn-light fw-bold rounded-pill text-muted">View Billing History</a>
             </div>
 
-            <p class="small text-muted mb-0">
+            <p class="small text-muted mb-0 timer-text">
                 Redirecting to your dashboard in <span id="countdown-timer" class="fw-bold text-success">10</span> seconds...
             </p>
         </div>
@@ -68,8 +72,23 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         
-        // --- 1. Auto-Redirect Logic ---
-        const dashboardUrl = "{{ url_for('dashboard') }}";
+        // --- 1. GSAP Entrance Animations ---
+        gsap.to(".success-card", {
+            opacity: 1, scale: 1, duration: 1, ease: "back.out(1.5)"
+        });
+
+        gsap.fromTo(".checkmark-circle", 
+            { scale: 0, rotation: -90 }, 
+            { scale: 1, rotation: 0, duration: 0.6, delay: 0.3, ease: "elastic.out(1, 0.5)" }
+        );
+
+        gsap.fromTo([".success-title", ".success-text", ".receipt-box", ".success-btns", ".timer-text"], 
+            { opacity: 0, y: 20 }, 
+            { opacity: 1, y: 0, stagger: 0.1, duration: 0.5, delay: 0.5, ease: "power2.out" }
+        );
+
+        // --- 2. Auto-Redirect Logic ---
+        const dashboardUrl = "{{ url_for('market_intelligence') }}";
         let secondsRemaining = 10;
         const timerDisplay = document.getElementById('countdown-timer');
 
@@ -83,17 +102,12 @@
             }
         }, 1000);
 
-        // Cancel redirect if the user manually clicks
-        const manualBtn = document.querySelector(".magnetic-btn");
-        manualBtn.addEventListener("click", () => clearInterval(countdownInterval));
-
-
-        // --- 2. GSAP Entrance ---
-        gsap.to(".success-card", {
-            opacity: 1, scale: 1, duration: 1, ease: "back.out(1.7)"
+        // Cancel redirect if the user manually clicks a button
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener("click", () => clearInterval(countdownInterval));
         });
 
-        // --- 3. Confetti (Using Brand Colors) ---
+        // --- 3. Brand-Colored Confetti ---
         const duration = 3 * 1000;
         const animationEnd = Date.now() + duration;
         const defaults = { 
@@ -101,7 +115,7 @@
             spread: 360, 
             ticks: 60, 
             zIndex: 0,
-            colors: ['#2E7D32', '#5D4037', '#0288D1'] // Plant Green, Soil Brown, Sky Blue
+            colors: ['#2E7D32', '#5D4037', '#0288D1'] // Your brand colors
         };
 
         function randomInRange(min, max) { return Math.random() * (max - min) + min; }
@@ -122,11 +136,12 @@
         }, 250);
 
         // --- 4. Magnetic Button Physics ---
+        const manualBtn = document.querySelector(".magnetic-btn");
         manualBtn.addEventListener("mousemove", (e) => {
             const rect = manualBtn.getBoundingClientRect();
-            const x = e.clientX - rect.left - rect.width / 2;
-            const y = e.clientY - rect.top - rect.height / 2;
-            gsap.to(manualBtn, { x: x * 0.3, y: y * 0.3, duration: 0.3 });
+            const x = (e.clientX - rect.left - rect.width / 2) * 0.2;
+            const y = (e.clientY - rect.top - rect.height / 2) * 0.2;
+            gsap.to(manualBtn, { x: x, y: y, duration: 0.3 });
         });
         manualBtn.addEventListener("mouseleave", () => {
             gsap.to(manualBtn, { x: 0, y: 0, duration: 0.3 });

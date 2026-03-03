@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 800px;">
+    
+    <div class="text-center mb-5">
+        <span class="badge bg-success mb-2 px-3 py-2 text-uppercase">Module Knowledge Check</span>
+        <h2 class="fw-bold" style="color: #5D4037;">{{ lesson.title }}</h2>
+        <p class="text-muted">Test your understanding of the material. You need 100% to fully master this module.</p>
+    </div>
+
+    <div id="quiz-container">
+        {% for item in quiz %}
+        <div class="card border-0 shadow-sm mb-4 question-card">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-4" style="color: #2E7D32;">
+                    <span class="text-muted me-2">{{ loop.index }}.</span> {{ item.question }}
+                </h5>
+                
+                <div class="options-wrapper">
+                    {% for option in item.options %}
+                    <div class="form-check custom-radio mb-3 p-3 border rounded hover-bg-light transition" id="wrapper-q{{ loop.parent.index0 }}-o{{ loop.index0 }}">
+                        <input class="form-check-input ms-1 me-3 option-input" type="radio" 
+                               name="q{{ loop.parent.index0 }}" 
+                               id="q{{ loop.parent.index0 }}-o{{ loop.index0 }}" 
+                               value="{{ loop.index0 }}" 
+                               data-correct="{{ item.answer }}">
+                        <label class="form-check-label w-100 stretched-link" for="q{{ loop.parent.index0 }}-o{{ loop.index0 }}" style="cursor: pointer;">
+                            {{ option }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="d-grid mt-5">
+            <button id="submitBtn" class="btn btn-success py-3 fw-bold fs-5 shadow-sm" onclick="gradeQuiz()">
+                <i class="bi bi-check2-all me-2"></i> Submit Answers
+            </button>
+        </div>
+    </div>
+
+    <div id="results-container" class="text-center d-none py-5 bg-white shadow-sm border rounded">
+        <i id="result-icon" class="display-1 mb-3"></i>
+        <h2 id="result-title" class="fw-bold mb-2"></h2>
+        <h4 class="text-muted mb-4">You scored: <span id="result-score" class="fw-bold text-dark"></span></h4>
+        
+        <div class="d-flex justify-content-center gap-3">
+            <button onclick="location.reload()" class="btn btn-outline-secondary fw-bold px-4">
+                <i class="bi bi-arrow-clockwise me-2"></i> Try Again
+            </button>
+            <a href="{{ url_for('my_learning') }}" class="btn btn-success fw-bold px-4">
+                <i class="bi bi-journal-check me-2"></i> Return to Dashboard
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .hover-bg-light:hover { background-color: #f8f9fa; }
+    .custom-radio { position: relative; }
+    /* Success/Fail styles applied by JS */
+    .correct-answer { background-color: #d1e7dd !important; border-color: #badbcc !important; color: #0f5132; font-weight: bold;}
+    .wrong-answer { background-color: #f8d7da !important; border-color: #f5c2c7 !important; color: #842029; text-decoration: line-through;}
+</style>
+
+<script>
+    const courseId = "{{ course_id }}";
+    const totalQuestions = {{ quiz|length }};
+
+    function gradeQuiz() {
+        let score = 0;
+        let answered = 0;
+
+        // Loop through each question group
+        for (let i = 0; i < totalQuestions; i++) {
+            const selectedOption = document.querySelector(`input[name="q${i}"]:checked`);
+            
+            if (selectedOption) {
+                answered++;
+                const isCorrect = selectedOption.value === selectedOption.getAttribute('data-correct');
+                const correctValue = selectedOption.getAttribute('data-correct');
+                
+                // Highlight the selected answer
+                const wrapper = document.getElementById(`wrapper-q${i}-o${selectedOption.value}`);
+                if (isCorrect) {
+                    score++;
+                    wrapper.classList.add("correct-answer");
+                } else {
+                    wrapper.classList.add("wrong-answer");
+                    // Also highlight the actual correct answer to teach them
+                    document.getElementById(`wrapper-q${i}-o${correctValue}`).classList.add("correct-answer");
+                }
+            } else {
+                // Highlight the correct answer anyway if they missed it
+                const correctValue = document.querySelector(`input[name="q${i}"]`).getAttribute('data-correct');
+                document.getElementById(`wrapper-q${i}-o${correctValue}`).classList.add("correct-answer");
+            }
+            
+            // Disable all inputs so they can't change their answers
+            document.querySelectorAll(`input[name="q${i}"]`).forEach(input => input.disabled = true);
+        }
+
+        // Calculate percentage
+        const percentage = Math.round((score / totalQuestions) * 100);
+
+        // Hide Submit button, show Results
+        document.getElementById('submitBtn').classList.add('d-none');
+        const resultsBox = document.getElementById('results-container');
+        resultsBox.classList.remove('d-none');
+
+        // Style the results box based on score
+        document.getElementById('result-score').innerText = `${percentage}%`;
+        
+        if (percentage === 100) {
+            document.getElementById('result-icon').className = "bi bi-trophy-fill text-warning display-1 mb-3";
+            document.getElementById('result-title').innerText = "Perfect Score!";
+            document.getElementById('result-title').style.color = "#2E7D32";
+        } else if (percentage >= 50) {
+            document.getElementById('result-icon').className = "bi bi-hand-thumbs-up-fill text-info display-1 mb-3";
+            document.getElementById('result-title').innerText = "Good Job!";
+        } else {
+            document.getElementById('result-icon').className = "bi bi-exclamation-circle-fill text-danger display-1 mb-3";
+            document.getElementById('result-title').innerText = "Keep Learning!";
+        }
+
+        // Send score to Python backend to update the Gradebook
+        fetch('/api/academy/submit-quiz', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                course_id: courseId,
+                score: percentage
+            })
+        })
+        .then(response => response.json())
+        .then(data => console.log("Score saved to Gradebook:", data))
+        .catch(err => console.error("Error saving score:", err));
+    }
+</script>
+{% endblock %}

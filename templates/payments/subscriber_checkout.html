@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* Prevent visibility before animation */
+    .payment-card, .checkout-header { opacity: 0; }
+    
+    .payment-card-body {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+    }
+    .payment-card-body:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+    }
+
+    /* M-Pesa Specific Styling */
+    .mpesa-input:focus {
+        border-color: #2E7D32 !important;
+        box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.25) !important;
+    }
+
+    /* Gateway Branding Colors */
+    .btn-paystack { color: #0BA4DB; border-color: #0BA4DB; transition: 0.3s; }
+    .btn-paystack:hover { background-color: #0BA4DB; color: white; }
+    
+    .btn-stripe { color: #635BFF; border-color: #635BFF; transition: 0.3s; }
+    .btn-stripe:hover { background-color: #635BFF; color: white; }
+
+    /* Overlay for processing state */
+    .processing-overlay {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(255,255,255,0.8);
+        display: none; align-items: center; justify-content: center;
+        z-index: 10; border-radius: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="https://js.stripe.com/v3/"></script>
+<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id or 'test' }}&currency=USD&disable-funding=credit"></script>
+
+<div class="container py-5">
+    <div class="row justify-content-center text-center mb-5 checkout-header">
+        <div class="col-md-8">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <div class="badge bg-success bg-opacity-10 text-success mb-3 px-3 py-2 rounded-pill border border-success">
+                <i class="bi bi-shield-lock-fill me-1"></i> SECURE 256-BIT ENCRYPTION
+            </div>
+            <h2 class="fw-bold mb-3" style="color: #5D4037;">Activate {{ plan_name }}</h2>
+            <p class="text-muted lead">Join the community of smart farmers today.</p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center g-4">
+        
+        <div class="col-md-6 col-lg-3 payment-card">
+            <div class="card h-100 shadow-sm border-0 border-top border-4 payment-card-body" style="border-color: #2E7D32 !important;">
+                <div class="card-body p-4 text-center d-flex flex-column">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg" alt="M-Pesa" height="40" class="mb-3 mx-auto">
+                    <h5 class="fw-bold mb-1">M-Pesa Express</h5>
+                    <p class="text-muted small mb-4">Prompt to your phone (KES {{ "{:,.0f}".format(amount_kes) }})</p>
+                    
+                    <form action="{{ url_for('process_mpesa') }}" method="POST" class="mt-auto" id="mpesa-form">
+                        <div class="mb-3 text-start">
+                            <label class="form-label small fw-bold text-muted">PHONE NUMBER</label>
+                            <input type="text" name="phone_number" class="form-control bg-light border-0 mpesa-input" placeholder="2547XXXXXXXX" required pattern="^254[71]\d{8}$">
+                            <input type="hidden" name="amount" value="{{ amount_kes }}">
+                            <input type="hidden" name="plan_id" value="{{ plan_id }}">
+                        </div>
+                        <button type="submit" class="btn btn-lg w-100 fw-bold text-white mpesa-submit" style="background-color: #2E7D32;">
+                            Pay KES {{ "{:,.0f}".format(amount_kes) }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3 payment-card">
+            <div class="card h-100 shadow-sm border-0 border-top border-4 payment-card-body" style="border-color: #0BA4DB !important;">
+                <div class="card-body p-4 text-center d-flex flex-column">
+                    <div class="mb-3 text-primary"><i class="bi bi-credit-card-2-front" style="font-size: 2.5rem;"></i></div>
+                    <h5 class="fw-bold mb-1">Local Card / Bank</h5>
+                    <p class="text-muted small mb-4">Visa/Mastercard (KES {{ "{:,.0f}".format(amount_kes) }})</p>
+                    <button id="paystack-button" class="btn btn-lg btn-outline-primary mt-auto w-100 fw-bold btn-paystack">
+                        Use Paystack
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3 payment-card">
+            <div class="card h-100 shadow-sm border-0 border-top border-4 payment-card-body" style="border-color: #635BFF !important;">
+                <div class="card-body p-4 text-center d-flex flex-column">
+                    <div class="mb-3" style="color: #635BFF;"><i class="bi bi-globe" style="font-size: 2.5rem;"></i></div>
+                    <h5 class="fw-bold mb-1">Global Card</h5>
+                    <p class="text-muted small mb-4">International Payments (${{ "{:,.2f}".format(amount_usd) }})</p>
+                    <button id="stripe-button" class="btn btn-lg btn-outline-primary mt-auto w-100 fw-bold btn-stripe">
+                        Use Stripe
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3 payment-card">
+            <div class="card h-100 shadow-sm border-0 border-top border-4 payment-card-body" style="border-color: #FFC107 !important;">
+                <div class="card-body p-4 text-center d-flex flex-column">
+                    <div class="mb-3 text-warning"><i class="bi bi-paypal" style="font-size: 2.5rem;"></i></div>
+                    <h5 class="fw-bold mb-1">PayPal</h5>
+                    <p class="text-muted small mb-4">Fast & Secure Wallet (${{ "{:,.2f}".format(amount_usd) }})</p>
+                    <div id="paypal-button-container" class="mt-auto"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<script>
+    // 1. ANIMATIONS
+    gsap.to(".checkout-header", { y: 0, opacity: 1, startAt: { y: -20 }, duration: 0.8 });
+    gsap.to(".payment-card", { y: 0, opacity: 1, startAt: { y: 30 }, stagger: 0.1, duration: 0.8, delay: 0.2 });
+
+    // 2. M-PESA 
+    document.getElementById('mpesa-form').addEventListener('submit', function() {
+        const btn = this.querySelector('.mpesa-submit');
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Connecting...`;
+        btn.classList.add('disabled');
+    });
+
+    // 3. PAYSTACK
+    document.getElementById('paystack-button').addEventListener('click', function() {
+        let handler = PaystackPop.setup({
+            key: '{{ paystack_public_key }}',
+            email: '{{ session.get("user_email") }}',
+            amount: {{ amount_kes }} * 100,
+            currency: 'KES',
+            ref: 'FMS_' + Math.floor((Math.random() * 1000000000) + 1),
+            callback: function(res) {
+                window.location.href = `/verify-paystack?reference=${res.reference}&plan={{ plan_id }}`;
+            }
+        });
+        handler.openIframe();
+    });
+
+    // 4. STRIPE
+    const stripe = Stripe('{{ stripe_public_key }}');
+    document.getElementById('stripe-button').addEventListener('click', function() {
+        this.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Connecting...`;
+        fetch('/create-stripe-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ plan: '{{ plan_id }}' })
+        })
+        .then(r => r.json())
+        .then(s => stripe.redirectToCheckout({ sessionId: s.id }));
+    });
+
+    // 5. PAYPAL
+    paypal.Buttons({
+        style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal' },
+        createOrder: (data, actions) => {
+            return actions.order.create({
+                purchase_units: [{ amount: { value: '{{ amount_usd }}' }, description: 'Farmerman {{ plan_name }}' }]
+            });
+        },
+        onApprove: (data, actions) => {
+            return actions.order.capture().then(details => {
+                fetch('/paypal-transaction-complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderID: data.orderID, plan: '{{ plan_id }}' })
+                }).then(() => window.location.href = "{{ url_for('payment_success') }}");
+            });
+        }
+    }).render('#paypal-button-container');
+</script>
+{% endblock %}

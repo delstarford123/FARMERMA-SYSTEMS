@@ -17,7 +17,7 @@
 
         <div class="row g-4 mb-4 text-center stats-row">
             <div class="col-md-4 stat-card">
-                <div class="card border-0 shadow-sm">
+                <div class="card border-0 shadow-sm border-bottom border-dark border-3">
                     <div class="card-body">
                         <h6 class="text-muted text-uppercase small fw-bold">Global Accounts</h6>
                         <h3 class="fw-bold mb-0">{{ subscribers|length }}</h3>
@@ -25,21 +25,21 @@
                 </div>
             </div>
             <div class="col-md-4 stat-card">
-                <div class="card border-0 shadow-sm">
+                <div class="card border-0 shadow-sm border-bottom border-success border-3">
                     <div class="card-body">
-                        <h6 class="text-muted text-uppercase small fw-bold">Active Subscriptions</h6>
+                        <h6 class="text-muted text-uppercase small fw-bold">Active Premium</h6>
                         <h3 class="fw-bold mb-0 text-success">
-                            {{ subscribers|selectattr('subscription_tier', 'equalto', 'pro')|list|length }}
+                            {{ subscribers|selectattr('subscription_tier', 'equalto', 'premium')|list|length }}
                         </h3>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 stat-card">
-                <div class="card border-0 shadow-sm">
+                <div class="card border-0 shadow-sm border-bottom border-primary border-3">
                     <div class="card-body">
-                        <h6 class="text-muted text-uppercase small fw-bold">Processing Payments</h6>
-                        <h3 class="fw-bold mb-0 text-warning">
-                            {{ subscribers|selectattr('subscription_status', 'equalto', 'pending_payment')|list|length }}
+                        <h6 class="text-muted text-uppercase small fw-bold">System Tutors</h6>
+                        <h3 class="fw-bold mb-0 text-primary">
+                            {{ subscribers|selectattr('role', 'equalto', 'tutor')|list|length }}
                         </h3>
                     </div>
                 </div>
@@ -47,66 +47,90 @@
         </div>
 
         <div class="card border-0 shadow-sm management-table-card">
-            <div class="card-header bg-white py-3">
-                <div class="input-group" style="max-width: 400px;">
-                    <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
-                    <input type="text" id="subscriberSearch" class="form-control bg-light border-0" placeholder="Filter by name, UID, or organization...">
+            <div class="card-header bg-white py-3 border-0">
+                <div class="row align-items-center">
+                    <div class="col-md-6 mb-2 mb-md-0">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0"><i class="bi bi-search text-success"></i></span>
+                            <input type="text" id="subscriberSearch" class="form-control bg-light border-0 shadow-none" placeholder="Search email, name, or UID...">
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <div class="btn-group btn-group-sm shadow-sm" role="group" aria-label="Role Filter">
+                            <button type="button" class="btn btn-outline-dark active filter-btn" onclick="filterByRole('all', this)">All</button>
+                            <button type="button" class="btn btn-outline-dark filter-btn" onclick="filterByRole('admin', this)">Admins</button>
+                            <button type="button" class="btn btn-outline-dark filter-btn" onclick="filterByRole('tutor', this)">Tutors</button>
+                            <button type="button" class="btn btn-outline-dark filter-btn" onclick="filterByRole('client', this)">Clients</button>
+                        </div>
+                    </div>
                 </div>
             </div>
+
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light text-muted">
+                        <thead class="bg-light text-muted small text-uppercase">
                             <tr>
-                                <th class="ps-4">User Details</th>
-                                <th>Corporate/Org</th>
-                                <th>Account Tier</th>
-                                <th>Access Level</th>
-                                <th class="text-end pe-4">Management</th>
+                                <th class="ps-4 py-3">User Details</th>
+                                <th>Org / UID</th>
+                                <th>Account Permissions & Billing</th>
+                                <th class="text-end pe-4">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="subscriberTableBody">
                             {% for sub in subscribers %}
-                            <tr class="sub-row">
+                            <tr class="sub-row" data-role="{{ sub.role }}">
                                 <td class="ps-4">
                                     <div class="d-flex align-items-center">
-                                        <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center me-3 fw-bold" style="width: 40px; height: 40px; font-size: 0.8rem;">
                                             {{ sub.full_name[0] | upper if sub.full_name else 'U' }}
                                         </div>
                                         <div>
-                                            <div class="fw-bold text-dark">{{ sub.full_name }}</div>
-                                            <div class="small text-muted">{{ sub.email }}</div>
+                                            <div class="fw-bold text-dark user-name">{{ sub.full_name }}</div>
+                                            <div class="small text-muted user-email">{{ sub.email }}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
                                     <span class="text-dark fw-medium">{{ sub.organization or 'Independent' }}</span>
-                                    <div class="small text-muted">UID: {{ sub.uid[:8] }}...</div>
+                                    <div class="small text-muted user-uid" style="font-size: 0.7rem;">ID: {{ sub.uid[:12] }}...</div>
                                 </td>
                                 <td>
-                                    {% if sub.subscription_tier == 'pro' %}
-                                        <span class="badge rounded-pill bg-success-subtle text-success border border-success px-3">PRO</span>
-                                    {% else %}
-                                        <span class="badge rounded-pill bg-secondary-subtle text-secondary border px-3">FREE</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <select class="form-select form-select-sm border-0 bg-light w-auto fw-bold" onchange="updateRole('{{ sub.uid }}', this.value)">
-                                        <option value="client" {% if sub.role == 'client' %}selected{% endif %}>Client</option>
-                                        <option value="admin" {% if sub.role == 'admin' %}selected{% endif %}>Admin</option>
-                                        <option value="researcher" {% if sub.role == 'researcher' %}selected{% endif %}>Researcher</option>
-                                    </select>
+                                    <form action="/admin/update-role" method="POST" class="d-flex gap-2">
+                                        <input type="hidden" name="user_id" value="{{ sub.uid }}">
+                                        
+                                        <div class="input-group input-group-sm" style="width: 130px;">
+                                            <span class="input-group-text bg-white"><i class="bi bi-person-badge"></i></span>
+                                            <select name="role" class="form-select border-start-0 shadow-none">
+                                                <option value="client" {% if sub.role == 'client' %}selected{% endif %}>Client</option>
+                                                <option value="tutor" {% if sub.role == 'tutor' %}selected{% endif %}>Tutor</option>
+                                                <option value="admin" {% if sub.role == 'admin' %}selected{% endif %}>Admin</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="input-group input-group-sm" style="width: 130px;">
+                                            <span class="input-group-text bg-white"><i class="bi bi-gem"></i></span>
+                                            <select name="tier" class="form-select border-start-0 shadow-none">
+                                                <option value="free" {% if sub.subscription_tier == 'free' %}selected{% endif %}>Free</option>
+                                                <option value="premium" {% if sub.subscription_tier == 'premium' or sub.subscription_tier == 'pro' %}selected{% endif %}>Premium</option>
+                                            </select>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-sm btn-dark px-3 shadow-sm update-btn">
+                                            Update
+                                        </button>
+                                    </form>
                                 </td>
                                 <td class="text-end pe-4">
-                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="alert('Accessing detailed logs for {{ sub.uid }}')"><i class="bi bi-activity"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="confirm('Are you sure you want to revoke access for this account?')"><i class="bi bi-slash-circle"></i></button>
+                                    <button class="btn btn-sm btn-outline-primary border-0" title="View Activity"><i class="bi bi-activity"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger border-0" title="Revoke Access"><i class="bi bi-slash-circle"></i></button>
                                 </td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="5" class="text-center py-5">
+                                <td colspan="4" class="text-center py-5">
                                     <i class="bi bi-cloud-slash text-muted display-4"></i>
-                                    <p class="mt-2 text-muted">No global accounts found in Firebase records.</p>
+                                    <p class="mt-2 text-muted">No accounts found in system.</p>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -119,7 +143,12 @@
 </div>
 
 <style>
-    /* Prevent pre-animation flash */
+    .form-select { cursor: pointer; border-color: #e9ecef; }
+    .form-select:focus { border-color: #198754; box-shadow: none; }
+    .input-group-text { border-color: #e9ecef; color: #6c757d; }
+    .filter-btn.active { background-color: #212529 !important; color: white !important; }
+    
+    /* GSAP Pre-animation states */
     .access-header, .stat-card, .management-table-card, .sub-row { opacity: 0; }
 </style>
 {% endblock %}
@@ -131,81 +160,49 @@
 <script>
     gsap.registerPlugin(TextPlugin);
 
-    // 1. Decoded Effect for Header
-    gsap.from(".decode-access", {
-        text: { value: "▓▒░█▓▒░█▓▒░█▓▒", chars: "XO!#" },
-        duration: 1.5,
-        ease: "none",
-        onStart: () => gsap.set(".access-header", {opacity: 1})
-    });
+    // Initial Animations
+    gsap.from(".decode-access", { text: { value: "▓▒░█▓▒░█▓▒░█▓▒", chars: "XO!#" }, duration: 1.5, onStart: () => gsap.set(".access-header", {opacity: 1}) });
+    gsap.to(".stat-card", { y: 0, opacity: 1, startAt: { y: -50 }, stagger: 0.1, duration: 1, ease: "back.out(1.7)", delay: 0.3 });
+    gsap.to(".management-table-card", { opacity: 1, y: 0, startAt: { y: 20 }, duration: 0.6, delay: 0.5 });
+    gsap.to(".sub-row", { opacity: 1, x: 0, startAt: { x: -20 }, stagger: 0.03, duration: 0.4, delay: 0.7 });
 
-    // 2. Elastic Snap for Stats Cards
-    gsap.to(".stat-card", {
-        y: 0,
-        opacity: 1,
-        startAt: { y: -100 },
-        stagger: 0.2,
-        duration: 1.5,
-        ease: "elastic.out(1, 0.3)",
-        delay: 0.5
-    });
+    // Filter Logic
+    function filterByRole(role, btn) {
+        // UI toggle
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
 
-    // 3. Perspective Fly for Management Table
-    gsap.to(".management-table-card", {
-        z: 0,
-        opacity: 1,
-        startAt: { z: -1000 },
-        transformPerspective: 1000,
-        duration: 1.2,
-        ease: "power3.out",
-        delay: 0.8
-    });
-
-    // 4. Cascade Reveal for Subscriber Rows
-    gsap.to(".sub-row", {
-        x: 0,
-        opacity: 1,
-        startAt: { x: -30 },
-        stagger: 0.05,
-        duration: 0.5,
-        ease: "power2.out",
-        delay: 1.2
-    });
-
-    // 5. Magnetic Pull for Export Button
-    const exportBtn = document.querySelector(".magnetic-btn");
-    exportBtn.addEventListener("mousemove", (e) => {
-        const rect = exportBtn.getBoundingClientRect();
-        const x = e.clientX - rect.left - rect.width / 2;
-        const y = e.clientY - rect.top - rect.height / 2;
-        gsap.to(exportBtn, { x: x * 0.3, y: y * 0.3, duration: 0.3 });
-    });
-    exportBtn.addEventListener("mouseleave", () => {
-        gsap.to(exportBtn, { x: 0, y: 0, duration: 0.3 });
-    });
-
-    // UI Search Logic
-    document.getElementById('subscriberSearch').addEventListener('keyup', function() {
-        let value = this.value.toLowerCase();
-        let rows = document.querySelectorAll('#subscriberTableBody tr');
+        const rows = document.querySelectorAll('.sub-row');
         rows.forEach(row => {
-            row.style.display = row.innerText.toLowerCase().includes(value) ? '' : 'none';
-        });
-    });
-
-    // Role Sync Logic
-    function updateRole(uid, newRole) {
-        if(!confirm(`Change access level to ${newRole.toUpperCase()}?`)) return;
-        fetch('/admin/update-role', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ uid: uid, role: newRole })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) console.log("Firebase Role Updated");
-            else alert(`System Error: ${data.error}`);
+            const userRole = row.getAttribute('data-role');
+            if (role === 'all' || userRole === role) {
+                row.style.display = '';
+                gsap.to(row, { opacity: 1, duration: 0.3 });
+            } else {
+                row.style.display = 'none';
+                row.style.opacity = 0;
+            }
         });
     }
+
+    // Advanced Search Logic (Email, Name, UID)
+    document.getElementById('subscriberSearch').addEventListener('input', function() {
+        const term = this.value.toLowerCase();
+        const rows = document.querySelectorAll('.sub-row');
+        
+        rows.forEach(row => {
+            const name = row.querySelector('.user-name').innerText.toLowerCase();
+            const email = row.querySelector('.user-email').innerText.toLowerCase();
+            const uid = row.querySelector('.user-uid').innerText.toLowerCase();
+            
+            if (name.includes(term) || email.includes(term) || uid.includes(term)) {
+                row.style.display = '';
+                row.style.opacity = 1;
+            } else {
+                row.style.display = 'none';
+                row.style.opacity = 0;
+            }
+        });
+    });
 </script>
 {% endblock %}

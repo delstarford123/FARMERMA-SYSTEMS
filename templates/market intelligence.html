@@ -6,6 +6,7 @@
         --plant-green: #2E7D32;
         --soil-brown: #5D4037;
         --sky-blue: #0288D1;
+        --glass-bg: rgba(255, 255, 255, 0.8);
     }
     .text-success { color: var(--plant-green) !important; }
     .bg-success { background-color: var(--plant-green) !important; }
@@ -13,9 +14,25 @@
     .btn-outline-success { color: var(--plant-green); border-color: var(--plant-green); }
     .btn-outline-success:hover { background-color: var(--plant-green); color: white; }
     
-    /* Prevent flickering */
-    .intel-lead, .intel-btns, .risk-item, .preview-card, .cta-title, .cta-text, .cta-btn {
+    /* Reveal animations pre-states */
+    .intel-lead, .intel-btns, .risk-item, .preview-item-card, .cta-title, .cta-text, .cta-btn {
         opacity: 0;
+    }
+
+    /* Locked overlay styling */
+    .locked-overlay {
+        backdrop-filter: blur(8px);
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .preview-item-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .preview-item-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
     }
 </style>
 {% endblock %}
@@ -26,8 +43,67 @@
         <h1 class="display-5 fw-bold text-success mb-3 intel-title">Agricultural Market Intelligence</h1>
         <p class="lead max-w-75 mx-auto text-light intel-lead">Stop guessing. Start planning. Access real-time commodity prices, supply chain trends, and AI-driven forecasts across Africa.</p>
         <div class="mt-4 intel-btns">
-            <a href="/pricing" class="btn btn-success btn-lg px-4 me-3 magnetic-btn">View Subscription Plans</a>
+            <a href="/pricing" class="btn btn-success btn-lg px-4 me-3 shadow magnetic-btn">View Subscription Plans</a>
             <a href="/register" class="btn btn-outline-light btn-lg px-4 magnetic-btn">Create Free Account</a>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-white">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold" style="color: var(--soil-brown);">Regional Market Pulse</h2>
+            <p class="text-muted">Direct field data from regional hubs including Kakamega, Eldoret, and Kampala.</p>
+        </div>
+
+        <div class="row g-4">
+            {% for item in preview %}
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 h-100 preview-item-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <span class="badge bg-light text-success border mb-2 small">LIVE FEED</span>
+                                <h5 class="fw-bold mb-0 text-dark">{{ item.commodity }}</h5>
+                                <small class="text-muted">Unit: 90kg Bag</small>
+                            </div>
+                            <div class="text-success"><i class="bi bi-graph-up-arrow fs-4"></i></div>
+                        </div>
+
+                        <hr class="text-muted opacity-25">
+
+                        {% if session.get('tier') in ['premium', 'pro'] or session.get('user_role') in ['admin', 'tutor'] %}
+                            <div class="py-2">
+                                <h3 class="fw-bold text-success mb-1">KES {{ item.price }}</h3>
+                                <p class="small text-muted mb-0">
+                                    <i class="bi bi-clock-history me-1"></i> Verified: {{ item.updated_at or 'Today' }}
+                                </p>
+                            </div>
+                        {% else %}
+                            <div class="position-relative py-3">
+                                <h3 class="fw-bold text-muted mb-1" style="filter: blur(8px); user-select: none;">
+                                    KES 4,250
+                                </h3>
+                                <div class="position-absolute top-50 start-50 translate-middle text-center w-100">
+                                    <a href="/pricing" class="btn btn-dark btn-sm rounded-pill shadow-sm px-3">
+                                        <i class="bi bi-lock-fill me-1"></i> Unlock Price
+                                    </a>
+                                </div>
+                            </div>
+                            <p class="small text-danger mt-1 mb-0 fw-medium"><i class="bi bi-shield-exclamation me-1"></i> Pro Membership Required</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12 text-center py-5">
+                <p class="text-muted italic">Refreshing global market nodes... Check back in a moment.</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-5">
+            <a href="/live-market-prices" class="btn btn-outline-success px-5 rounded-pill fw-bold">View Full Global Board</a>
         </div>
     </div>
 </section>
@@ -37,40 +113,28 @@
         <div class="row align-items-center g-5">
             <div class="col-lg-6">
                 <h2 class="fw-bold mb-4 risk-heading" style="color: var(--soil-brown);">Reduce Risk in Every Harvest</h2>
-                <p class="lead text-muted">Agricultural markets are volatile. Without accurate data, farmers underprice their yields, and agribusinesses miscalculate their supply chains.</p>
-                <p>Farmerman Systems mitigates this risk by providing an exclusive, subscriber-only dashboard that tracks live prices across regional markets like Kakamega.</p>
+                <p class="lead text-muted">Agricultural markets are volatile. Without accurate data, farmers underprice their yields and miscalculate their supply chains.</p>
                 
                 <ul class="list-group list-group-flush mt-4">
                     <li class="list-group-item bg-transparent border-0 d-flex align-items-center ps-0 risk-item">
-                        <span class="badge bg-success me-3 rounded-pill p-2">✓</span> Negotiate better prices with brokers.
+                        <span class="badge bg-success me-3 rounded-pill p-2"><i class="bi bi-check2"></i></span> Negotiate better prices with brokers.
                     </li>
                     <li class="list-group-item bg-transparent border-0 d-flex align-items-center ps-0 risk-item">
-                        <span class="badge bg-success me-3 rounded-pill p-2">✓</span> Time your market entry for maximum profit.
+                        <span class="badge bg-success me-3 rounded-pill p-2"><i class="bi bi-check2"></i></span> Time your market entry for maximum profit.
                     </li>
                     <li class="list-group-item bg-transparent border-0 d-flex align-items-center ps-0 risk-item">
-                        <span class="badge bg-success me-3 rounded-pill p-2">✓</span> NGOs: Direct funding based on real-time community needs.
+                        <span class="badge bg-success me-3 rounded-pill p-2"><i class="bi bi-check2"></i></span> Access AI forecasts to predict regional shortages.
                     </li>
                 </ul>
             </div>
             
             <div class="col-lg-6">
-                <div class="card border-0 shadow-lg preview-card">
-                    <div class="card-body p-5 bg-white rounded text-center">
-                        <h4 class="fw-bold mb-3" style="color: var(--soil-brown);">Live Dashboard Preview</h4>
-                        <p class="text-muted small">Updated daily by our field intelligence team.</p>
-                        <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                            <span class="fw-bold">Maize (90kg)</span>
-                            <span class="text-success">▲ KES 3,400</span>
-                        </div>
-                        <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
-                            <span class="fw-bold">Soybeans (50kg)</span>
-                            <span class="text-danger">▼ UGX 115,000</span>
-                        </div>
-                        <div class="d-flex justify-content-between pb-2 mb-3">
-                            <span class="fw-bold">Sorghum (90kg)</span>
-                            <span class="text-muted">▬ TZS 85,000</span>
-                        </div>
-                        <a href="/login" class="btn btn-outline-success w-100 mt-2 unlock-btn">Unlock Full Dashboard</a>
+                <div class="card border-0 shadow-lg preview-card p-2" style="border-radius: 20px;">
+                    <img src="https://images.unsplash.com/photo-1595113316349-9fa4eb24f884?auto=format&fit=crop&q=80&w=800" class="card-img-top rounded shadow-sm" alt="Market Analysis">
+                    <div class="card-body">
+                        <h5 class="fw-bold text-dark">Proprietary AI Trends</h5>
+                        <p class="text-muted small">Our neural networks analyze historical data to give you a 15-day price forecast with 89% accuracy.</p>
+                        <a href="/trends-forecasts" class="btn btn-success w-100">Run AI Forecast</a>
                     </div>
                 </div>
             </div>
@@ -81,8 +145,8 @@
 <section class="py-5 text-center text-white overflow-hidden footer-cta" style="background-color: var(--sky-blue);">
     <div class="container">
         <h3 class="fw-bold cta-title">Ready to access the data?</h3>
-        <p class="mb-4 cta-text">Subscribe instantly via M-Pesa, PayPal, Stripe, or Bank Transfer.</p>
-        <a href="/pricing" class="btn btn-light btn-lg fw-bold px-5 cta-btn" style="color: var(--sky-blue);">Subscribe Now</a>
+        <p class="mb-4 cta-text">Join 500+ agribusinesses using Farmerman Intelligence daily.</p>
+        <a href="/pricing" class="btn btn-light btn-lg fw-bold px-5 cta-btn shadow" style="color: var(--sky-blue);">Subscribe Now</a>
     </div>
 </section>
 {% endblock %}
@@ -95,7 +159,7 @@
 <script>
     gsap.registerPlugin(ScrollTrigger, TextPlugin);
 
-    // 1. Decoded Hero Title
+    // 1. Decoded Hero Title Effect
     gsap.from(".intel-title", {
         text: { value: "▓▒░█▓▒░█▓▒░█▓▒", chars: "XO!#" },
         duration: 2,
@@ -104,45 +168,46 @@
     gsap.to(".intel-lead", { opacity: 1, y: 0, startAt: {y: 20}, duration: 1, delay: 1 });
     gsap.to(".intel-btns", { opacity: 1, y: 0, startAt: {y: 20}, duration: 1, delay: 1.3 });
 
-    // 2. Risk Section Animation
-    gsap.from(".risk-heading", {
-        scrollTrigger: ".risk-heading",
-        x: -100,
-        opacity: 0,
-        duration: 1,
-        ease: "power2.out"
-    });
+    // 2. Risk Items Cascade
     gsap.to(".risk-item", {
-        scrollTrigger: ".risk-item",
+        scrollTrigger: { trigger: ".risk-item", start: "top 90%" },
         opacity: 1,
         x: 0,
         startAt: { x: -30 },
-        stagger: 0.2,
+        stagger: 0.15,
         duration: 0.8
     });
 
-    // 3. Perspective Entrance for Preview Card
-    gsap.to(".preview-card", {
-        scrollTrigger: ".preview-card",
+    // 3. Grid Item Stagger
+    gsap.to(".preview-item-card", {
+        scrollTrigger: { trigger: ".preview-item-card", start: "top 85%" },
         opacity: 1,
-        z: 0,
-        startAt: { z: -1000 },
-        transformPerspective: 1000,
-        duration: 1.2,
+        y: 0,
+        startAt: { y: 40 },
+        stagger: 0.1,
+        duration: 0.6,
+        ease: "power2.out"
+    });
+
+    // 4. Perspective Entrance for Preview Image
+    gsap.to(".preview-card", {
+        scrollTrigger: { trigger: ".preview-card", start: "top 80%" },
+        opacity: 1,
+        rotationY: 0,
+        startAt: { rotationY: -15, opacity: 0 },
+        duration: 1.5,
         ease: "power3.out"
     });
 
-    // 4. Bouncy Entrance for CTA
+    // 5. Bouncy CTA
     const ctaTl = gsap.timeline({
         scrollTrigger: { trigger: ".footer-cta", start: "top 90%" }
     });
-    ctaTl.to(".cta-title", { opacity: 1, y: 0, startAt: {y: -50}, duration: 0.8, ease: "bounce.out" })
-         .to(".cta-text", { opacity: 1, duration: 0.5 }, "-=0.3")
-         .to(".cta-btn", { opacity: 1, scale: 1, startAt: {scale: 0.8}, duration: 0.5, ease: "back.out(1.7)" });
+    ctaTl.to(".cta-title", { opacity: 1, y: 0, startAt: {y: -30}, duration: 0.6, ease: "back.out(2)" })
+         .to(".cta-btn", { opacity: 1, scale: 1, startAt: {scale: 0.7}, duration: 0.5, ease: "elastic.out(1, 0.5)" }, "-=0.2");
 
-    // 5. Magnetic Hover Effects
-    const btns = document.querySelectorAll(".magnetic-btn, .unlock-btn, .cta-btn");
-    btns.forEach(btn => {
+    // 6. Magnetic Buttons
+    document.querySelectorAll(".magnetic-btn, .cta-btn").forEach(btn => {
         btn.addEventListener("mousemove", (e) => {
             const rect = btn.getBoundingClientRect();
             const x = e.clientX - rect.left - rect.width / 2;

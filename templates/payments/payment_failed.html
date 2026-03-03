@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .failed-card { opacity: 0; transform: scale(0.9); }
+    .error-circle {
+        width: 80px; height: 80px;
+        background: #ffebee; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 20px; color: #d32f2f; font-size: 3rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container d-flex align-items-center justify-content-center min-vh-100 py-5">
+    <div class="card border-0 shadow-lg text-center p-5 failed-card border-top border-danger border-4" style="max-width: 450px; border-radius: 15px;">
+        <div class="card-body">
+            <div class="error-circle">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
+            
+            <h3 class="fw-bold mb-3 text-dark">Payment Unsuccessful</h3>
+            
+            <p class="text-muted mb-4">
+                {{ error_message | default("Your transaction could not be completed. Don't worry, no charges were made to your account.") }}
+            </p>
+            
+            <div class="bg-light p-3 rounded mb-4 text-start small text-muted">
+                <strong>Common reasons:</strong>
+                <ul class="mb-0 mt-2 ps-3">
+                    <li>Insufficient funds or M-Pesa limits.</li>
+                    <li>Network timeout during PIN entry.</li>
+                    <li>Card provider blocked the transaction.</li>
+                </ul>
+            </div>
+
+            <div class="d-grid gap-2">
+                <a href="{{ url_for('pricing') }}" class="btn btn-danger btn-lg fw-bold rounded-pill shadow-sm">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Try Again
+                </a>
+                <a href="mailto:support@farmerman.com" class="btn btn-link text-decoration-none text-muted">Contact Support</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+    gsap.to(".failed-card", {
+        opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.5)"
+    });
+</script>
+{% endblock %}

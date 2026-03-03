@@ -1,0 +1,79 @@
+{
+  "rules": {
+    "users": {
+      // 1. Admin Hub: Admins can read the entire user list for the dashboard
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      
+      "$uid": {
+        // Users can read their own profile; Admins bypass this via the parent rule
+        ".read": "auth != null && $uid === auth.uid",
+        
+        // 2. Security Lock: Admins can write anything. Users can write to their profile, 
+        // BUT cannot change or add 'role' or 'subscription_tier'.
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || ($uid === auth.uid && (!newData.hasChild('role') || newData.child('role').val() === data.child('role').val()) && (!newData.hasChild('subscription_tier') || newData.child('subscription_tier').val() === data.child('subscription_tier').val())))"
+      }
+    },
+
+    "training_content": {
+      // 3. Academy: Pro users and Admins can view the courses
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('subscription_tier').val() === 'pro' || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+      // Only admins can upload new courses
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
+
+    "market_data": {
+      // 4. Live Markets: Publicly readable for all farmers and the mobile app
+      ".read": true,
+      // Only admins can update the prices
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
+
+    "site_content": {
+      // 5. CMS Content: Publicly readable so the website loads for visitors
+      ".read": true,
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
+
+    "content_history": {
+      // 6. CMS Logs: Private to admins
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
+
+    "completed_transactions": {
+      // 7. Billing: Admins can see all revenue across all users
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      
+      "$uid": {
+        // Users can only see their own billing history
+        ".read": "auth != null && $uid === auth.uid",
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+      }
+    },
+
+    "pending_transactions": {
+      // 8. M-Pesa Handshake: Any authenticated user's checkout process can write here
+      ".write": "auth != null",
+      // Only Admins can monitor the pending queue
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
+
+    "contact_inquiries": {
+      // 9. Support: Anyone (even unauthenticated visitors) can send a contact message
+      ".write": true,
+      // Only admins can read the inbox
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
+
+    "diagnostic_history": {
+      // 10. AI Scans: Admins can view all global diagnostic trends if needed
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      
+      "$uid": {
+        // Users can read/write their own AI scan logs
+        ".read": "auth != null && $uid === auth.uid",
+        ".write": "auth != null && $uid === auth.uid"
+      }
+    }
+  }
+}

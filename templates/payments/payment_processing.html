@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container d-flex align-items-center justify-content-center min-vh-100 py-5">
+    <div class="card border-0 shadow-lg text-center p-5 border-top border-success border-4" style="max-width: 450px; border-radius: 15px;">
+        <div class="card-body">
+            
+            <div class="mb-4 text-success" style="font-size: 4rem; animation: pulse 1.5s infinite;">
+                <i class="bi bi-phone-vibrate"></i>
+            </div>
+            
+            <h3 class="fw-bold mb-3 text-dark">Check your phone</h3>
+            <p class="text-muted mb-4">
+                We have sent an M-Pesa prompt to your phone. Please enter your PIN to complete the transaction.
+            </p>
+            
+            <div class="d-flex align-items-center justify-content-center text-muted small mb-4">
+                <div class="spinner-border spinner-border-sm me-2 text-success" role="status"></div>
+                Waiting for Safaricom confirmation...
+            </div>
+
+            <p class="small text-muted mb-0">Do not close or refresh this page.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.7; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const checkoutId = "{{ checkout_id }}";
+        let attempts = 0;
+        const maxAttempts = 20; // Will poll for about 60 seconds total
+
+        const pollInterval = setInterval(() => {
+            attempts++;
+            
+            fetch(`/api/check-payment/${checkoutId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'completed') {
+                        clearInterval(pollInterval);
+                        // Safaricom confirmed payment! Now redirect to success.
+                        window.location.href = "{{ url_for('payment_success') }}";
+                    } else if (data.status === 'failed') {
+                        clearInterval(pollInterval);
+                        // Safaricom confirmed user cancelled.
+                        window.location.href = "{{ url_for('payment_failed', msg='Transaction was cancelled or failed.') }}";
+                    }
+                    
+                    if (attempts >= maxAttempts) {
+                        clearInterval(pollInterval);
+                        // Timeout reached
+                        window.location.href = "{{ url_for('payment_failed', msg='Transaction timed out. If you paid, it will reflect in your billing history shortly.') }}";
+                    }
+                })
+                .catch(err => console.error("Polling error:", err));
+                
+        }, 3000); // Check every 3 seconds
+    });
+</script>
+{% endblock %}

@@ -28,7 +28,7 @@
             letter-spacing: -0.01em; 
         }
         
-        /* Utility Classes for your new theme */
+        /* Utility Classes */
         .bg-plant-green { background-color: var(--plant-green) !important; }
         .bg-soil-brown { background-color: var(--soil-brown) !important; }
         .text-sky-blue { color: var(--sky-blue) !important; }
@@ -43,10 +43,10 @@
         .dropdown-menu { border-top: 4px solid var(--soil-brown) !important; }
         .dropdown-item:hover { background-color: rgba(46, 125, 50, 0.05); color: var(--plant-green); }
         
-        /* Fix FOUC (Flash of Unstyled Content) */
+        /* Fix FOUC */
         .gsap-reveal, [style*="opacity: 0"] { visibility: hidden; }
 
-        /* Banner styling using Sky Blue for prominence */
+        /* Banner styling */
         #live-banner {
             position: relative;
             z-index: 1050; 
@@ -56,9 +56,8 @@
 
         .small-edit-btn:hover { background: rgba(255,255,255,0.2); transition: 0.3s; }
         
-        /* Footer styling using Soil Brown */
+        /* Footer styling */
         footer { background-color: var(--soil-brown) !important; }
-        
         main { position: relative; z-index: 1; }
     </style>
     
@@ -121,24 +120,43 @@
                     <li class="nav-item"><a class="nav-link" href="/pricing">Pricing</a></li>
 
                     <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle fw-bold text-warning" href="#" id="academyDropdown" data-bs-toggle="dropdown">
+                            <i class="bi bi-mortarboard-fill me-1"></i> Academy
+                        </a>
+                        <ul class="dropdown-menu shadow-sm border-0 mt-2">
+                            <li><h6 class="dropdown-header fw-bold text-uppercase" style="color: var(--plant-green);">Student Learning</h6></li>
+                            <li><a class="dropdown-item" href="{{ url_for('academy_home') }}"><i class="bi bi-collection-play me-2"></i>Course Library</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('my_learning') }}"><i class="bi bi-journal-check me-2"></i>My Learning Dashboard</a></li>
+                            <li><a class="dropdown-item text-warning fw-bold" href="{{ url_for('academy_leaderboard') }}"><i class="bi bi-trophy-fill me-2"></i>Leaderboard</a></li>
+                            
+                            {% if session.get('role') in ['admin', 'tutor'] %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header fw-bold text-uppercase" style="color: var(--sky-blue);">Instructor Tools</h6></li>
+                            <li><a class="dropdown-item fw-bold" href="{{ url_for('tutor_dashboard') }}"><i class="bi bi-briefcase-fill me-2"></i>Tutor Portal</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+
+                    <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="dashboardsDropdown" data-bs-toggle="dropdown">Dashboards</a>
                         <ul class="dropdown-menu shadow-sm border-0 mt-2">
                             <li><h6 class="dropdown-header fw-bold text-uppercase" style="color: var(--plant-green);">Client Portal</h6></li>
                             <li><a class="dropdown-item" href="/dashboard">Overview Dashboard</a></li>
                             <li><a class="dropdown-item" href="/live-market-prices">Live Market Prices</a></li>
                             <li><a class="dropdown-item" href="/trends-forecasts">Trends & Forecasts</a></li>
-                            <li><a class="dropdown-item" href="/agripreneur-training">Agripreneur Training</a></li>
+                            <li><a class="dropdown-item" href="/agripreneur-training">Legacy Training Media</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/billing">Billing & Receipts</a></li>
                             <li><a class="dropdown-item" href="/settings">Account Settings</a></li>
                             
                             {% if session.get('role') == 'admin' %}
                             <li><hr class="dropdown-divider"></li>
-<li><h6 class="dropdown-header text-muted fw-bold text-uppercase">Admin Access</h6></li>
-<li><a class="dropdown-item" href="/admin/dashboard">Admin Hub</a></li>
-<li><a class="dropdown-item" href="/admin/data-manager">Data Manager</a></li>
-<li><a class="dropdown-item" href="/admin/subscribers">Subscribers</a></li>
-<li><a class="dropdown-item" href="/admin/content">Content Manager</a></li>
-<li><a class="dropdown-item" href="/admin/upload-training-media">Training Uploads</a></li>
+                            <li><h6 class="dropdown-header text-muted fw-bold text-uppercase">Admin Access</h6></li>
+                            <li><a class="dropdown-item" href="/admin/dashboard">Admin Hub</a></li>
+                            <li><a class="dropdown-item" href="/admin/data-manager">Data Manager</a></li>
+                            <li><a class="dropdown-item" href="/admin/subscribers">Subscribers</a></li>
+                            <li><a class="dropdown-item" href="/admin/content">Content Manager</a></li>
+                            <li><a class="dropdown-item" href="/admin/upload-training-media">Legacy Uploads</a></li>
                             {% endif %}
                         </ul>
                     </li>
@@ -159,40 +177,41 @@
     <main class="flex-grow-1 bg-light">
         {% block content %}{% endblock %}
     </main>
-<footer class="mt-auto text-white py-4" style="background: var(--soil-brown, #3e2723);">
-    <div class="container text-center">
-        <p class="mb-2">&copy; 2026 Farmerman Systems Pvt Ltd. All Rights Reserved.</p>
-        
-        <div class="d-flex justify-content-center gap-3 small mb-3">
-            <a href="/privacy-policy" class="text-white-50 text-decoration-none hover-white">Privacy Policy</a>
-            <span class="text-white-50">|</span>
-            <a href="/terms-of-service" class="text-white-50 text-decoration-none hover-white">Terms of Service</a>
-            <span class="text-white-50">|</span>
-            <a href="/refund-policy" class="text-white-50 text-decoration-none hover-white">Refund Policy</a>
-        </div>
 
-        <div class="pt-3 border-top border-secondary opacity-75">
-            <p class="small mb-0 text-white-50">
-                System Architected by 
-                <a href="https://www.delstarfordworks.co.ke" 
-                   target="_blank" 
-                   class="fw-bold text-success text-decoration-none transition-all brand-link">
-                   DELSTARFORD WORKS
-                </a>
-            </p>
-        </div>
-    </div>
-</footer>
+    <footer class="mt-auto text-white py-4" style="background: var(--soil-brown, #3e2723);">
+        <div class="container text-center">
+            <p class="mb-2">&copy; 2026 Farmerman Systems Pvt Ltd. All Rights Reserved.</p>
+            
+            <div class="d-flex justify-content-center gap-3 small mb-3">
+                <a href="/privacy-policy" class="text-white-50 text-decoration-none hover-white">Privacy Policy</a>
+                <span class="text-white-50">|</span>
+                <a href="/terms-of-service" class="text-white-50 text-decoration-none hover-white">Terms of Service</a>
+                <span class="text-white-50">|</span>
+                <a href="/refund-policy" class="text-white-50 text-decoration-none hover-white">Refund Policy</a>
+            </div>
 
-<style>
-    .hover-white:hover { color: #ffffff !important; transition: 0.3s; }
-    .brand-link { letter-spacing: 0.5px; }
-    .brand-link:hover { 
-        color: #28a745 !important; 
-        text-shadow: 0 0 8px rgba(40, 167, 69, 0.4); 
-    }
-    .transition-all { transition: all 0.3s ease; }
-</style>
+            <div class="pt-3 border-top border-secondary opacity-75">
+                <p class="small mb-0 text-white-50">
+                    System Architected by 
+                    <a href="https://www.delstarfordworks.co.ke" 
+                       target="_blank" 
+                       class="fw-bold text-success text-decoration-none transition-all brand-link">
+                       DELSTARFORD WORKS
+                    </a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <style>
+        .hover-white:hover { color: #ffffff !important; transition: 0.3s; }
+        .brand-link { letter-spacing: 0.5px; }
+        .brand-link:hover { 
+            color: #28a745 !important; 
+            text-shadow: 0 0 8px rgba(40, 167, 69, 0.4); 
+        }
+        .transition-all { transition: all 0.3s ease; }
+    </style>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>

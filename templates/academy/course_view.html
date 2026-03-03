@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid bg-light">
+    <div class="row">
+        
+        <nav class="col-md-3 col-lg-2 d-md-block bg-white sidebar shadow-sm vh-100 overflow-auto p-0">
+            <div class="p-4 border-bottom" style="background-color: #5D4037; color: white;">
+                <h6 class="fw-bold mb-0">{{ lesson.category|title | default('Academy Module') }}</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="#" class="list-group-item list-group-item-action active py-3" style="background-color: #2E7D32; border-color: #2E7D32;">
+                    <i class="bi bi-play-circle-fill me-2"></i> {{ lesson.title }}
+                </a>
+                <div class="p-3 text-muted small bg-light">
+                    <i class="bi bi-info-circle me-1"></i> More lessons in this category will appear here as they are uploaded.
+                </div>
+            </div>
+        </nav>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/academy" class="text-success text-decoration-none">Academy</a></li>
+                    <li class="breadcrumb-item text-muted">{{ lesson.category|title }}</li>
+                    <li class="breadcrumb-item active fw-bold">{{ lesson.title }}</li>
+                </ol>
+            </nav>
+
+            <div class="row mt-3">
+                <div class="col-lg-8">
+                    
+                    <div class="ratio ratio-16x9 shadow rounded overflow-hidden bg-black mb-4">
+                        {% if lesson.video_file %}
+                            <video controls controlsList="nodownload" class="w-100 h-100 object-fit-contain">
+                                <source src="{{ url_for('secure_media', filename=lesson.video_file) }}" type="video/mp4">
+                                Your browser does not support HTML video.
+                            </video>
+                        {% else %}
+                            <div class="d-flex align-items-center justify-content-center h-100 text-white flex-column">
+                                <i class="bi bi-camera-video-off display-3 mb-2"></i>
+                                <p>No video available for this lesson.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <h2 class="fw-bold mb-3" style="color: #5D4037;">{{ lesson.title }}</h2>
+                    <p class="text-muted small">
+                        <i class="bi bi-person-badge me-1"></i> Instructor: {{ lesson.tutor_name | default('FarmerMan Expert') }} &nbsp;|&nbsp; 
+                        <i class="bi bi-calendar3 me-1"></i> Published: {{ lesson.created_at[:10] if lesson.created_at else 'Recently' }}
+                    </p>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="lesson-description bg-white p-4 rounded shadow-sm border">
+                        <h5 class="fw-bold mb-3">Lesson Overview</h5>
+                        <p style="white-space: pre-line; color: #444;">{{ lesson.description }}</p>
+                    </div>
+                    <hr class="my-5">
+<div class="qna-section mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold mb-0" style="color: #5D4037;">
+            <i class="bi bi-chat-dots-fill me-2 text-success"></i>Course Discussion
+        </h4>
+        <span class="badge bg-secondary rounded-pill">{{ comments|length }} Comments</span>
+    </div>
+    
+    <div class="card border-0 shadow-sm mb-5" style="background-color: #F1F8E9;">
+        <div class="card-body p-4">
+            <form action="{{ url_for('post_course_comment', course_id=lesson.id) }}" method="POST">
+                <div class="mb-3">
+                    <label class="form-label fw-bold" style="color: #2E7D32;">Ask a question or share your thoughts</label>
+                    <textarea name="message" class="form-control bg-white border-0 shadow-sm" rows="3" placeholder="E.g., How often should I test the soil pH after applying lime?" required></textarea>
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-success fw-bold px-4 shadow-sm">
+                        <i class="bi bi-send-fill me-2"></i>Post Comment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="comments-list">
+        {% for comment in comments %}
+        <div class="card border-0 border-bottom mb-3 bg-transparent">
+            <div class="card-body p-0 pb-3">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-success text-white rounded-circle d-flex justify-content-center align-items-center fw-bold me-3 shadow-sm" style="width: 45px; height: 45px; font-size: 1.2rem;">
+                        {{ comment.user_name[0]|upper }}
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0" style="color: #5D4037;">{{ comment.user_name }}</h6>
+                        <small class="text-muted" style="font-size: 0.8rem;">
+                            <i class="bi bi-clock me-1"></i>{{ comment.timestamp }}
+                        </small>
+                    </div>
+                </div>
+                <p class="mb-0 text-dark ms-5 ps-3" style="white-space: pre-line; border-left: 2px solid #E0E0E0;">
+                    {{ comment.message }}
+                </p>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted border rounded bg-white shadow-sm">
+            <i class="bi bi-chat-square-text display-4 mb-3 d-block opacity-50"></i>
+            <h5 class="fw-bold text-muted">No questions yet.</h5>
+            <p>Be the first to start the discussion! Ask the tutor or your fellow farmers a question.</p>
+        </div>
+        {% endfor %}
+       </div>
+</div>
+                </div>
+
+                <div class="col-lg-4 mt-4 mt-lg-0">
+                    
+                    <div class="card border-0 shadow-sm mb-4 text-white" style="background-color: #0288D1;">
+                        <div class="card-body p-4 text-center">
+                            <h5 class="fw-bold"><i class="bi bi-camera-video me-2"></i>Live Expert Q&A</h5>
+                            <p class="small opacity-75">Join our field officer online for real-time advice on this module.</p>
+                            
+                            {% if lesson.meet_link %}
+                                <a href="{{ lesson.meet_link }}" target="_blank" class="btn btn-light w-100 fw-bold text-primary shadow-sm">
+                                    Join Google Meet
+                                </a>
+                            {% else %}
+                                <button class="btn btn-outline-light w-100" disabled>No Live Session Scheduled</button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold mb-3" style="color: #5D4037;">Downloadable Resources</h6>
+                            
+                            {% if lesson.resource_file %}
+                                <div class="d-grid gap-2">
+                                    <a href="{{ url_for('secure_media', filename=lesson.resource_file) }}" target="_blank" class="btn btn-outline-dark text-start">
+                                        <i class="bi bi-file-earmark-pdf text-danger me-2"></i> {{ lesson.resource_file }}
+                                    </a>
+                                </div>
+                            {% else %}
+                                <p class="text-muted small mb-0"><i class="bi bi-info-circle me-1"></i> No attached documents for this lesson.</p>
+                            {% endif %}
+                            
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<style>
+    .sidebar { border-right: 1px solid #dee2e6; }
+    main { min-height: 100vh; }
+    /* Keeps video constrained beautifully within the black box */
+    .object-fit-contain { object-fit: contain; }
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const video = document.querySelector("video");
+    const courseContainer = document.getElementById("course-container");
+    
+    if (video && courseContainer) {
+        const courseId = courseContainer.getAttribute("data-course-id");
+        let progressSaved = false;
+
+        // 1. Listen for the precise moment the video ends
+        video.addEventListener("ended", function() {
+            if (progressSaved) return; // Prevent spamming the database
+            
+            console.log("Video finished! Updating progress to 100%...");
+
+            // 2. Ping the Python backend silently in the background
+            fetch('/api/academy/update-progress', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    course_id: courseId,
+                    progress: 100 // Send 100% completion
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    progressSaved = true;
+                    
+                    // 3. Provide visual feedback to the farmer
+                    const successBadge = document.createElement("div");
+                    successBadge.className = "alert alert-success mt-3 shadow-sm fade show";
+                    successBadge.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i> <strong>Module Complete!</strong> Your progress has been saved.`;
+                    
+                    // Insert the success badge right under the video
+                    video.parentElement.insertAdjacentElement("afterend", successBadge);
+                    
+                    // Optional: Update the sidebar to show the module as green/checked
+                    document.querySelector(".list-group-item.active").innerHTML = `<i class="bi bi-check-circle-fill me-2 text-warning"></i> {{ lesson.title }} <span class="badge bg-light text-success ms-2 float-end">Completed</span>`;
+                }
+            })
+            .catch(error => console.error('Error saving progress:', error));
+        });
+    }
+});
+</script>
+{% endblock %}
