@@ -1460,6 +1460,29 @@ def contact_us():
         
     return render_template('contact us.html')
 
+
+@app.route('/delete_account', methods=['POST'])
+@login_required
+def delete_account():
+    user_id = session.get('user_id')
+    try:
+        # 1. Remove from Firebase
+        rtdb.reference(f'users/{user_id}').delete()
+        
+        # 2. Clear local session
+        session.clear()
+        
+        flash("Your account has been permanently deleted.", "info")
+        # Change 'index' to whatever your landing page function is called
+        # The logs suggest 'login' might be your intended landing page
+        return redirect(url_for('login')) 
+        
+    except Exception as e:
+        print(f"Error deleting account: {e}")
+        flash("An error occurred.", "danger")
+        # The logs explicitly said use 'account_settings'
+        return redirect(url_for('account_settings'))
+    
 @app.route('/diagnostics', methods=['GET'])
 def diagnostics():
     health_data = {
@@ -1467,7 +1490,7 @@ def diagnostics():
         "system": "Farmerman Systems",
         "timestamp": datetime.now().strftime("%Y-%b-%d %H:%M:%S"),
         "version": "2.1.0",
-        "uptime": "99.9%" # You can calculate actual uptime if needed
+        "uptime": "99.9%" 
     }
     return render_template('diagnostics.html', data=health_data)
 
