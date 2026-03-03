@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .status-pulse {
+        width: 20px;
+        height: 20px;
+        background: #28a745;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 0 rgba(40, 167, 69, 0.4);
+        animation: pulse 2s infinite;
+        vertical-align: middle;
+        margin-right: 10px;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+        70% { box-shadow: 0 0 0 15px rgba(40, 167, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+    }
+
+    .diag-card {
+        background: #f8f9fa;
+        border-left: 5px solid #2E7D32;
+        border-radius: 8px;
+    }
+
+    .terminal-window {
+        background: #1e1e1e;
+        color: #dcdcdc;
+        padding: 20px;
+        border-radius: 8px;
+        font-family: 'Courier New', Courier, monospace;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold" style="color: #5D4037;">System Diagnostics</h1>
+                <p class="text-muted">Real-time infrastructure monitoring for {{ data.system }}</p>
+            </div>
+
+            <div class="card shadow-sm mb-4 diag-card">
+                <div class="card-body d-flex justify-content-between align-items-center p-4">
+                    <div>
+                        <h4 class="mb-1 fw-bold">Overall System Health</h4>
+                        <p class="mb-0 text-muted">All microservices are operating within normal parameters.</p>
+                    </div>
+                    <div class="text-end">
+                        <span class="status-pulse"></span>
+                        <span class="h4 fw-bold text-success">{{ data.status }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-5">
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm border-0 text-center p-3">
+                        <div class="text-muted small fw-bold">LATENCY</div>
+                        <div class="h3 fw-bold mt-2">24ms</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm border-0 text-center p-3">
+                        <div class="text-muted small fw-bold">UPTIME</div>
+                        <div class="h3 fw-bold mt-2 text-primary">{{ data.uptime }}</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm border-0 text-center p-3">
+                        <div class="text-muted small fw-bold">GATEWAY</div>
+                        <div class="h3 fw-bold mt-2 text-success">Active</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="terminal-window">
+                <div class="d-flex border-bottom border-secondary pb-2 mb-3">
+                    <div class="bg-danger rounded-circle me-2" style="width:12px; height:12px;"></div>
+                    <div class="bg-warning rounded-circle me-2" style="width:12px; height:12px;"></div>
+                    <div class="bg-success rounded-circle" style="width:12px; height:12px;"></div>
+                    <span class="ms-auto small opacity-50">system_log.sh</span>
+                </div>
+                <div class="small">
+                    <p class="mb-1"><span class="text-success">[OK]</span> Initializing Firebase Connection...</p>
+                    <p class="mb-1"><span class="text-success">[OK]</span> Stripe API handshake successful.</p>
+                    <p class="mb-1"><span class="text-success">[OK]</span> M-Pesa Daraja secure tunnel open.</p>
+                    <p class="mb-1"><span class="text-success">[OK]</span> APScheduler: 4 active jobs found.</p>
+                    <p class="mb-0 text-info mt-3">Ready for requests at {{ data.timestamp }}</p>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">Return to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

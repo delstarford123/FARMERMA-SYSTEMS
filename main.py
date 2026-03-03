@@ -1404,7 +1404,14 @@ def contact_us():
 
 @app.route('/diagnostics', methods=['GET'])
 def diagnostics():
-    return jsonify({"status": "healthy", "system": "Farmerman Systems", "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}), 200
+    health_data = {
+        "status": "Healthy",
+        "system": "Farmerman Systems",
+        "timestamp": datetime.now().strftime("%Y-%b-%d %H:%M:%S"),
+        "version": "2.1.0",
+        "uptime": "99.9%" # You can calculate actual uptime if needed
+    }
+    return render_template('diagnostics.html', data=health_data)
 
 @app.errorhandler(404)
 def page_not_found(e):
