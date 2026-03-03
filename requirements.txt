@@ -1,6 +1,7 @@
 Flask
 Flask-SQLAlchemy
 Flask-Mail
+APScheduler
 gunicorn
 firebase-admin
 stripe
