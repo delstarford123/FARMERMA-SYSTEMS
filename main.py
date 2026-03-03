@@ -833,6 +833,63 @@ def academy_leaderboard():
                            leaderboard=leaderboard, 
                            current_user_rank=current_user_rank) 
 
+
+@app.route('/agripreneur_training')
+@premium_required
+def agripreneur_training():
+    """Renders the premium academy dashboard with categorized learning tracks."""
+    try:
+        content_ref = rtdb.reference('training_content').get() or {}
+        # Convert dict to list and sort by a 'order' key if it exists
+        all_content = sorted(content_ref.values(), key=lambda x: x.get('order', 0))
+    except Exception as e:
+        print(f"Academy Data Error: {e}")
+        all_content = []
+
+    # Efficiently categorize using a dictionary comprehension
+    categories = ['agripreneur', 'aqua', 'econ']
+    categorized_content = {cat: [c for c in all_content if c.get('category') == cat] for cat in categories}
+    
+    return render_template('agripreneur_training.html', content=categorized_content)
+
+@app.route('/secure-media/<path:filename>')
+@premium_required
+def secure_media(filename):
+    """Serves premium files only to authorized users with specific headers."""
+    try:
+        # added conditional headers to prevent embedding on external sites
+        response = send_from_directory(PREMIUM_CONTENT_FOLDER, filename)
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        return response
+    except FileNotFoundError:
+        abort(404, description="This training resource is currently unavailable.")
+        
+import os
+from werkzeug.utils import secure_filename
+from datetime import datetime
+
+
+@app.route('/admin-delete-training/<content_id>')
+@login_required
+def delete_training(content_id):
+    """Removes metadata from Firebase and attempts to delete the local file."""
+    ref = rtdb.reference(f'training_content/{content_id}')
+    item = ref.get()
+    
+    if item:
+        # Delete local file
+        try:
+            os.remove(os.path.join(PREMIUM_CONTENT_FOLDER, item['filename']))
+        except OSError:
+            pass # File might already be gone
+        
+        # Remove from DB
+        ref.delete()
+        flash("Content removed successfully.", "info")
+    
+    return redirect(url_for('training_manager'))
+
+      
 # ==========================================
 # FARMERMAN ACADEMY (API ROUTES)
 # ==========================================

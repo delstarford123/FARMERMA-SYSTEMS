@@ -1,18 +1,35 @@
 {% extends "base.html" %}
 
+{% block extra_css %}
+<style>
+    /* Premium Academy Styling */
+    .nav-pills .nav-link { color: #555; font-weight: 600; border: 1px solid #eee; transition: 0.3s; }
+    .nav-pills .nav-link.active { background-color: #2E7D32 !important; box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3); }
+    .hover-card { transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.05) !important; }
+    .hover-card:hover { transform: translateY(-8px); box-shadow: 0 12px 25px rgba(0,0,0,0.1) !important; }
+    .video-container { position: relative; background: #000; border-radius: 12px 12px 0 0; overflow: hidden; }
+    .media-placeholder { height: 200px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="fw-bold text-dark"><i class="fas fa-graduation-cap text-success"></i> Farmerman Academy</h1>
-            <p class="text-muted">Exclusive Pro Training: Master the business and science of agriculture.</p>
+    <div class="row mb-5">
+        <div class="col-lg-8">
+            <h1 class="fw-bold text-dark"><i class="fas fa-graduation-cap text-success me-2"></i>Farmerman Academy</h1>
+            <p class="text-muted lead">Master the business and science of high-yield agriculture with our Pro-tier modules.</p>
+        </div>
+        <div class="col-lg-4 text-lg-end d-flex align-items-center justify-content-lg-end">
+             <div class="badge bg-success bg-opacity-10 text-success p-3 rounded-4 border border-success border-opacity-25">
+                <i class="fas fa-check-circle me-1"></i> Subscriber Access Verified
+             </div>
         </div>
     </div>
 
-    <ul class="nav nav-pills mb-4" id="trainingTabs" role="tablist">
-        <li class="nav-item" role="presentation"><button class="nav-link active rounded-pill px-4" id="agripreneur-tab" data-bs-toggle="pill" data-bs-target="#agripreneur" type="button" role="tab">Agripreneurship</button></li>
-        <li class="nav-item" role="presentation"><button class="nav-link rounded-pill px-4 mx-2" id="aqua-tab" data-bs-toggle="pill" data-bs-target="#aqua" type="button" role="tab">Aquaculture</button></li>
-        <li class="nav-item" role="presentation"><button class="nav-link rounded-pill px-4" id="econ-tab" data-bs-toggle="pill" data-bs-target="#econ" type="button" role="tab">Agrieconomics</button></li>
+    <ul class="nav nav-pills mb-5 justify-content-center justify-content-md-start" id="trainingTabs" role="tablist">
+        <li class="nav-item"><button class="nav-link active rounded-pill px-4" data-bs-toggle="pill" data-bs-target="#agripreneur">Agripreneurship</button></li>
+        <li class="nav-item"><button class="nav-link rounded-pill px-4 mx-2" data-bs-toggle="pill" data-bs-target="#aqua">Aquaculture</button></li>
+        <li class="nav-item"><button class="nav-link rounded-pill px-4" data-bs-toggle="pill" data-bs-target="#econ">Agrieconomics</button></li>
     </ul>
 
     {% macro render_content(items) %}
@@ -20,47 +37,59 @@
             <div class="row g-4">
                 {% for item in items %}
                     <div class="col-md-6 col-lg-4">
-                        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+                        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden hover-card">
                             
-                            {% if item.file_type in ['mp4', 'avi'] %}
-                                <div class="bg-dark">
-                                    <video width="100%" height="200" controls controlsList="nodownload">
-                                        <source src="{{ url_for('secure_media', filename=item.filename) }}" type="video/{{ item.file_type }}">
-                                    </video>
-                                </div>
-                            
-                            {% elif item.file_type in ['jpg', 'jpeg', 'png', 'webp'] %}
-                                <img src="{{ url_for('secure_media', filename=item.filename) }}" alt="{{ item.filename }}" style="height: 200px; width: 100%; object-fit: cover;">
-                            
-                            {% elif item.file_type in ['mp3', 'wav'] %}
-                                <div class="bg-light d-flex align-items-center justify-content-center p-3" style="height: 200px;">
-                                    <audio controls class="w-100">
-                                        <source src="{{ url_for('secure_media', filename=item.filename) }}" type="audio/{{ 'mpeg' if item.file_type == 'mp3' else 'wav' }}">
-                                    </audio>
-                                </div>
+                            <div class="media-container">
+                                {% if item.file_type in ['mp4', 'webm'] %}
+                                    <div class="video-container">
+                                        <video width="100%" height="200" controls controlsList="nodownload" poster="{{ item.thumbnail or '' }}">
+                                            <source src="{{ url_for('secure_media', filename=item.filename) }}" type="video/{{ item.file_type }}">
+                                            Your browser does not support the video tag.
+                                        </video>
+                                    </div>
                                 
-                            {% else %}
-                                <div class="bg-soft-success d-flex flex-column align-items-center justify-content-center p-4" style="height: 200px; background-color: #e8f5e9;">
-                                    <i class="fas fa-file-alt fa-3x text-success mb-3"></i>
-                                    <a href="{{ url_for('secure_media', filename=item.filename) }}" target="_blank" class="btn btn-success btn-sm rounded-pill px-4">Download Document</a>
-                                </div>
-                            {% endif %}
+                                {% elif item.file_type in ['jpg', 'jpeg', 'png', 'webp'] %}
+                                    <img src="{{ url_for('secure_media', filename=item.filename) }}" class="img-fluid" style="height: 200px; width: 100%; object-fit: cover;">
+                                
+                                {% elif item.file_type in ['mp3', 'wav'] %}
+                                    <div class="media-placeholder flex-column">
+                                        <i class="fas fa-headphones fa-3x text-success mb-3"></i>
+                                        <audio controls class="px-3 w-100">
+                                            <source src="{{ url_for('secure_media', filename=item.filename) }}" type="audio/{{ 'mpeg' if item.file_type == 'mp3' else 'wav' }}">
+                                        </audio>
+                                    </div>
+                                    
+                                {% else %}
+                                    <div class="media-placeholder flex-column text-center p-4">
+                                        <i class="fas fa-file-pdf fa-4x text-danger mb-3"></i>
+                                        <a href="{{ url_for('secure_media', filename=item.filename) }}" target="_blank" class="btn btn-dark btn-sm rounded-pill px-4">
+                                            <i class="fas fa-eye me-1"></i> View Document
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
 
                             <div class="card-body">
-                                <h6 class="fw-bold text-truncate" title="{{ item.filename }}">{{ item.filename }}</h6>
-                                <p class="small text-muted mb-0">{{ item.description }}</p>
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="fw-bold text-dark mb-0">{{ item.filename[:40] }}{% if item.filename|length > 40 %}...{% endif %}</h6>
+                                    <span class="badge bg-light text-dark small border">{{ item.file_type|upper }}</span>
+                                </div>
+                                <p class="small text-muted mb-0">{{ item.description or 'No description provided for this module.' }}</p>
                             </div>
-                            <div class="card-footer bg-white border-0 pt-0 text-end">
-                                <small class="text-muted"><i class="fas fa-clock me-1"></i> {{ item.upload_date.split(' ')[0] }}</small>
+
+                            <div class="card-footer bg-white border-0 pt-0 d-flex justify-content-between align-items-center">
+                                <small class="text-muted"><i class="far fa-calendar-alt me-1"></i> {{ item.upload_date.split(' ')[0] if item.upload_date else 'Recent' }}</small>
+                                <button class="btn btn-link btn-sm text-success p-0 text-decoration-none">Details <i class="fas fa-chevron-right ms-1" style="font-size: 0.7rem;"></i></button>
                             </div>
                         </div>
                     </div>
                 {% endfor %}
             </div>
         {% else %}
-            <div class="text-center py-5">
-                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No content published in this category yet.</h5>
+            <div class="text-center py-5 border rounded-4 bg-light bg-opacity-50">
+                <i class="fas fa-lock-open fa-3x text-muted mb-3 opacity-25"></i>
+                <h5 class="text-muted">New modules are being prepared.</h5>
+                <p class="small text-muted">Check back soon for updated {{ category_name }} content.</p>
             </div>
         {% endif %}
     {% endmacro %}

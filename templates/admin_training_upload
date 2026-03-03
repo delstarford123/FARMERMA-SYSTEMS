@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold text-dark"><i class="fas fa-tasks text-danger me-2"></i>Academy Content Manager</h2>
+            <p class="text-muted">Upload and manage training assets. Supported: MP4, PDF, JPG, MP3.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">Upload New Module</h5>
+                    <form id="uploadForm" action="{{ url_for('admin_upload_training') }}" method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">CATEGORY</label>
+                            <select class="form-select border-0 bg-light" name="category" required>
+                                <option value="agripreneur">Agripreneurship</option>
+                                <option value="aqua">Aquaculture</option>
+                                <option value="econ">Agrieconomics</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">RESOURCE FILE</label>
+                            <input class="form-control border-0 bg-light" type="file" name="file" required>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold">BRIEF DESCRIPTION</label>
+                            <textarea class="form-control border-0 bg-light" name="description" rows="3" required></textarea>
+                        </div>
+
+                        <div class="progress mb-3 d-none" style="height: 10px;">
+                            <div id="uploadProgress" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%"></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger w-100 rounded-pill fw-bold py-2 shadow-sm">
+                            <i class="fas fa-cloud-upload-alt me-2"></i>Publish to Academy
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">Live Academy Content</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr class="small text-muted">
+                                    <th>FILE</th>
+                                    <th>CAT</th>
+                                    <th>TYPE</th>
+                                    <th class="text-end">ACTION</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in files_metadata %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-truncate" style="max-width: 150px;">{{ item.filename }}</div>
+                                        <div class="text-muted" style="font-size: 0.7rem;">{{ item.upload_date }}</div>
+                                    </td>
+                                    <td><span class="badge bg-soft-info text-dark border small">{{ item.category }}</span></td>
+                                    <td><code class="text-uppercase small">{{ item.file_type }}</code></td>
+                                    <td class="text-end">
+                                        <a href="{{ url_for('delete_training', content_id=item.id) }}" 
+                                           class="btn btn-outline-danger btn-sm rounded-circle"
+                                           onclick="return confirm('Delete this resource permanently?')">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted fst-italic">No active content modules found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple script to show progress bar on submit
+    document.getElementById('uploadForm').onsubmit = function() {
+        document.querySelector('.progress').classList.remove('d-none');
+        let bar = document.getElementById('uploadProgress');
+        let width = 0;
+        let interval = setInterval(() => {
+            if (width >= 90) clearInterval(interval);
+            else { width++; bar.style.width = width + '%'; }
+        }, 100);
+    };
+</script>
+{% endblock %}
