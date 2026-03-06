@@ -15,12 +15,12 @@
         </h1>
         
         <p class="lead mb-5 text-dark hero-lead" style="max-width: 800px; margin: 0 auto; font-weight: 500; opacity: 0;">
-            {{ hero.body if hero else "We bridge the gap between farmers, markets, and policymakers through market intelligence, AI-driven insights, and inclusive empowerment programs." }}
+            {{ hero.body if hero else "Supporting governments, investors, and agribusiness leaders to build competitive agricultural economies across Africa. [cite: 48]" }}
         </p>
         
         <div class="d-flex justify-content-center gap-3 hero-btns" style="opacity: 0;">
-            <a href="/pricing" class="btn btn-primary btn-lg px-5 fw-bold shadow-sm magnetic-btn">Subscribe to Market Data</a>
-            <a href="/contact" class="btn btn-outline-dark btn-lg px-5 fw-bold bg-white magnetic-btn">Consult With Us</a>
+            <a href="/services" class="btn btn-primary btn-lg px-5 fw-bold shadow-sm magnetic-btn">Request Advisory Services</a>
+            <a href="/contact" class="btn btn-outline-dark btn-lg px-5 fw-bold bg-white magnetic-btn">Contact Our Team </a>
         </div>
 
         {% if session.get('role') == 'admin' %}
@@ -34,60 +34,189 @@
 </section>
 
 <section class="py-5 bg-white overflow-hidden">
-    <div class="container py-4">
-        <div class="row text-center mb-5 section-header" style="opacity: 0;">
-            <div class="col-lg-8 mx-auto">
-                <h2 class="fw-bold text-primary-green">Reducing Risk. Maximizing Profit.</h2>
-                <p class="text-muted lead">Farmerman Systems provides the critical infrastructure needed to navigate volatile agricultural markets and build resilient rural livelihoods.</p>
+    <div class="container py-5">
+        <div class="row mb-5 align-items-center section-problem" style="opacity: 0;">
+            <div class="col-lg-6">
+                <span class="text-danger fw-bold text-uppercase tracking-wide">The Challenge</span>
+                <h2 class="fw-bold text-dark mt-2 mb-4">Africa’s Agricultural Transformation Challenge</h2>
+                <p class="text-muted lead">Africa holds 60% of the world’s uncultivated arable land, yet the continent imports billions of dollars in food every year.</p>
+                <p class="text-muted">Structural challenges across markets, finance, infrastructure, and climate resilience continue to constrain the sector. Farmerman Systems works at the intersection of data, policy, and investment to unlock Africa’s agricultural potential.</p>
             </div>
+            <div class="col-lg-6">
+                                <div class="row g-3 mt-3">
+                    <div class="col-sm-6"><div class="p-3 bg-light rounded shadow-sm border-start border-danger border-4"><i class="bi bi-graph-down text-danger me-2"></i> Market failures & price volatility</div></div>
+                    <div class="col-sm-6"><div class="p-3 bg-light rounded shadow-sm border-start border-danger border-4"><i class="bi bi-link-45deg text-danger me-2"></i> Weak agricultural value chains</div></div>
+                    <div class="col-sm-6"><div class="p-3 bg-light rounded shadow-sm border-start border-danger border-4"><i class="bi bi-bank text-danger me-2"></i> Agricultural finance gaps</div></div>
+                    <div class="col-sm-6"><div class="p-3 bg-light rounded shadow-sm border-start border-danger border-4"><i class="bi bi-cloud-lightning-rain text-danger me-2"></i> Climate risks & instability</div></div>
+                    <div class="col-sm-6"><div class="p-3 bg-light rounded shadow-sm border-start border-danger border-4"><i class="bi bi-people text-danger me-2"></i> Youth unemployment</div></div>
+                    <div class="col-sm-6"><div class="p-3 bg-light rounded shadow-sm border-start border-danger border-4"><i class="bi bi-server text-danger me-2"></i> Lack of data systems</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-light overflow-hidden">
+    <div class="container py-5">
+        <div class="text-center mb-5 section-services" style="opacity: 0;">
+            <span class="text-success fw-bold text-uppercase tracking-wide">What We Do</span>
+            <h2 class="fw-bold text-primary-green mt-2">Our Strategic Advisory Services</h2>
         </div>
         
         <div class="row g-4">
-            <div class="col-md-4 feature-card" style="opacity: 0;">
-                <div class="card h-100 shadow-sm border-0 bg-light">
-                    <div class="card-body text-center p-4">
-                        <div class="display-5 text-success mb-3"><i class="bi bi-graph-up-arrow"></i></div>
-                        <h4 class="card-title fw-bold">Market Intelligence</h4>
-                        <p class="card-text text-muted">Access live, verified dashboards tracking agricultural commodity prices and trends across regional markets.</p>
+            <div class="col-md-6 col-lg-4 service-card" style="opacity: 0;">
+                <div class="card h-100 shadow-sm border-0 hover-lift">
+                    <div class="card-body p-4">
+                        <div class="display-6 text-success mb-3"><i class="bi bi-bar-chart-line"></i></div>
+                        <h4 class="card-title fw-bold">Agricultural Market Intelligence</h4>
+                        <p class="card-text text-muted">Market research, trade analytics, and commodity monitoring systems.</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 feature-card" style="opacity: 0;">
-                <div class="card h-100 shadow-sm border-0 bg-light">
-                    <div class="card-body text-center p-4">
-                        <div class="display-5 text-success mb-3"><i class="bi bi-people-fill"></i></div>
-                        <h4 class="card-title fw-bold">Community Empowerment</h4>
-                        <p class="card-text text-muted">Capacity-building programs dedicated to enhancing the participation of women and youth in agribusiness.</p>
+            <div class="col-md-6 col-lg-4 service-card" style="opacity: 0;">
+                <div class="card h-100 shadow-sm border-0 hover-lift">
+                    <div class="card-body p-4">
+                        <div class="display-6 text-success mb-3"><i class="bi bi-cash-coin"></i></div>
+                        <h4 class="card-title fw-bold">Agribusiness Investment Advisory</h4>
+                        <p class="card-text text-muted">Bankable project design, financial modelling, and agricultural investment structuring.</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 feature-card" style="opacity: 0;">
-                <div class="card h-100 shadow-sm border-0 bg-light">
-                    <div class="card-body text-center p-4">
-                        <div class="display-5 text-success mb-3"><i class="bi bi-cpu-fill"></i></div>
-                        <h4 class="card-title fw-bold">Digital Innovation & AI</h4>
-                        <p class="card-text text-muted">Integrating emerging technologies and AI to create smart, predictive models for agricultural value chains.</p>
+            <div class="col-md-6 col-lg-4 service-card" style="opacity: 0;">
+                <div class="card h-100 shadow-sm border-0 hover-lift">
+                    <div class="card-body p-4">
+                        <div class="display-6 text-success mb-3"><i class="bi bi-diagram-3"></i></div>
+                        <h4 class="card-title fw-bold">Value Chain Development</h4>
+                        <p class="card-text text-muted">Post-harvest systems, agro-processing clusters, and logistics optimization.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4 service-card" style="opacity: 0;">
+                <div class="card h-100 shadow-sm border-0 hover-lift">
+                    <div class="card-body p-4">
+                        <div class="display-6 text-success mb-3"><i class="bi bi-file-earmark-text"></i></div>
+                        <h4 class="card-title fw-bold">Agricultural Policy Advisory</h4>
+                        <p class="card-text text-muted">Food security strategy, agricultural reforms, and institutional development.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4 service-card" style="opacity: 0;">
+                <div class="card h-100 shadow-sm border-0 hover-lift">
+                    <div class="card-body p-4">
+                        <div class="display-6 text-success mb-3"><i class="bi bi-globe-americas"></i></div>
+                        <h4 class="card-title fw-bold">Climate Smart Agriculture</h4>
+                        <p class="card-text text-muted">Resilient farming systems and sustainable land management.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4 service-card" style="opacity: 0;">
+                <div class="card h-100 shadow-sm border-0 hover-lift">
+                    <div class="card-body p-4">
+                        <div class="display-6 text-success mb-3"><i class="bi bi-cpu"></i></div>
+                        <h4 class="card-title fw-bold">Digital Agriculture Systems</h4>
+                        <p class="card-text text-muted">Farm data platforms, predictive analytics, and agricultural intelligence tools.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+            </div>
+</section>
+
+<section class="py-5 bg-white overflow-hidden">
+    <div class="container py-5 text-center">
+        <h2 class="fw-bold mb-5 section-why" style="opacity: 0;">Why Organizations Work With Us</h2>
+        <div class="row g-4">
+            <div class="col-md-4 why-card" style="opacity: 0;">
+                <div class="p-4 border border-2 border-success rounded-4 h-100">
+                    <h4 class="fw-bold text-dark">Strategic Intelligence</h4>
+                    <p class="text-muted mb-0">Evidence-based agricultural research and analytics.</p>
+                </div>
+            </div>
+            <div class="col-md-4 why-card" style="opacity: 0;">
+                <div class="p-4 border border-2 border-success rounded-4 h-100 bg-success text-white">
+                    <h4 class="fw-bold">Systems Thinking</h4>
+                    <p class="text-white-50 mb-0">Designing agricultural ecosystems rather than isolated projects.</p>
+                </div>
+            </div>
+            <div class="col-md-4 why-card" style="opacity: 0;">
+                <div class="p-4 border border-2 border-success rounded-4 h-100">
+                    <h4 class="fw-bold text-dark">Investment Focus</h4>
+                    <p class="text-muted mb-0">Transforming agricultural opportunities into bankable ventures.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-dark text-white text-center overflow-hidden">
+    <div class="container py-5">
+        <h2 class="fw-bold text-success mb-4 section-vision" style="opacity: 0;">Our Vision</h2>
+        <p class="lead max-w-75 mx-auto mb-4 section-vision" style="opacity: 0;">To help build a globally competitive, climate-resilient, and investment-ready agricultural economy across Africa.</p>
+        <h4 class="fw-light fst-italic text-light section-vision" style="opacity: 0;">"Agriculture is not only a sector. It is the foundation of food security, economic development, and rural prosperity."</h4>
+    </div>
+</section>
+
+<section class="py-4 bg-light border-bottom border-top overflow-hidden">
+    <div class="container text-center">
+        <p class="text-muted small fw-bold text-uppercase mb-4">Trusted Across the Ecosystem</p>
+        <div class="d-flex flex-wrap justify-content-center gap-4 gap-md-5 align-items-center opacity-75">
+            <div class="fw-bold text-dark"><i class="bi bi-building"></i> Governments</div>
+            <div class="fw-bold text-dark"><i class="bi bi-globe"></i> Development Agencies</div>
+            <div class="fw-bold text-dark"><i class="bi bi-briefcase"></i> Agribusinesses</div>
+            <div class="fw-bold text-dark"><i class="bi bi-bank"></i> Financial Institutions</div>
+            <div class="fw-bold text-dark"><i class="bi bi-people"></i> Farmer Cooperatives</div>
+            <div class="fw-bold text-dark"><i class="bi bi-pie-chart"></i> Impact Investors</div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-white overflow-hidden">
+    <div class="container py-5">
+        <h2 class="fw-bold mb-5 text-center section-insights" style="opacity: 0;">Insights on Africa’s Agricultural Future</h2>
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-6 col-lg-3 insight-card" style="opacity: 0;">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <span class="badge bg-soft-success text-success mb-2">Research</span>
+                        <h6 class="fw-bold">The Future of African Food Systems</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 insight-card" style="opacity: 0;">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <span class="badge bg-soft-success text-success mb-2">Finance</span>
+                        <h6 class="fw-bold">Unlocking Agricultural Investment in Africa</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 insight-card" style="opacity: 0;">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <span class="badge bg-soft-success text-success mb-2">Markets</span>
+                        <h6 class="fw-bold">Building Competitive Agricultural Value Chains</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 insight-card" style="opacity: 0;">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <span class="badge bg-soft-success text-success mb-2">Climate</span>
+                        <h6 class="fw-bold">Climate Resilience in African Agriculture</h6>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
-<div class="hero-section">
-    {% set home_hero = get_site_content('home_hero') %}
-    {% if home_hero %}
-        <h1>{{ home_hero.title }}</h1>
-        <p>{{ home_hero.body | safe }}</p>
-    {% else %}
-        <h1>Default Transforming African Agribusiness</h1>
-        <p>Default mission statement text...</p>
-    {% endif %}
-</div>
-<section class="py-5 bg-dark text-white text-center overflow-hidden footer-cta">
-    <div class="container py-4">
-        <h3 class="fw-bold mb-4 cta-title" style="opacity: 0;">Partnering for Sustainable Growth</h3>
-        <p class="lead max-w-75 mx-auto mb-5 text-light cta-text" style="opacity: 0;">We work alongside government institutions, development agencies, NGOs, financial institutions, and private agribusinesses to design impact-driven solutions.</p>
-        <a href="/about" class="btn btn-outline-light btn-lg px-4 cta-btn" style="opacity: 0;">Learn More About Our Founder & Vision</a>
+
+<section class="py-5 bg-success text-white text-center overflow-hidden footer-cta">
+    <div class="container py-5">
+        <h2 class="fw-bold mb-4 cta-title" style="opacity: 0;">Partner With Farmerman Systems</h2>
+        <p class="lead max-w-75 mx-auto mb-5 text-light cta-text" style="opacity: 0;">Whether you are designing agricultural policy, building agribusiness investments, or transforming rural economies, Farmerman Systems provides the strategic insight needed to deliver impact.</p>
+                <div class="d-flex justify-content-center gap-3 mt-4">
+            <a href="/contact" class="btn btn-light btn-lg px-5 fw-bold text-success cta-btn" style="opacity: 0;">Contact Our Team</a>
+        </div>
     </div>
 </section>
 
@@ -100,6 +229,10 @@
         animation: blink 0.8s infinite;
     }
     @keyframes blink { 50% { opacity: 0; } }
+    .max-w-75 { max-width: 75%; }
+    .hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .hover-lift:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important; }
+    .bg-soft-success { background-color: rgba(25, 135, 84, 0.1); }
 </style>
 {% endblock %}
 
@@ -112,63 +245,62 @@
     gsap.registerPlugin(ScrollTrigger, TextPlugin);
 
     // 1. Elastic Snap (Badge)
-    gsap.from(".hero-badge", {
-        y: -100,
-        opacity: 0,
-        duration: 1.5,
-        ease: "elastic.out(1, 0.3)"
+    gsap.from(".hero-badge", { y: -100, opacity: 0, duration: 1.5, ease: "elastic.out(1, 0.3)" });
+
+    // 2. Typewriter (CMS Title or Default)
+    const heroTitle = "{{ hero.title if hero else 'Transforming African Agriculture Through Intelligence, Investment, and Systems Design' }}";
+    gsap.to("#hero-typewriter", { text: heroTitle, duration: 3, delay: 0.5, ease: "none" });
+
+    // 3. Hero Sequential Entrances
+    gsap.to(".hero-lead", { opacity: 1, y: -20, duration: 1, delay: 3.5, ease: "power2.out" });
+    gsap.to(".hero-btns", { opacity: 1, y: -20, duration: 1, delay: 3.8, ease: "power2.out" });
+    gsap.to(".admin-control", { opacity: 1, duration: 0.5, delay: 4.2 });
+
+    // 4. Scroll Triggered Problem Section
+    gsap.to(".section-problem", {
+        scrollTrigger: ".section-problem",
+        opacity: 1, y: -30, duration: 1, ease: "power2.out"
     });
 
-    // 2. Typewriter (CMS Title)
-    const heroTitle = "{{ hero.title if hero else 'Transforming African Agribusiness Ecosystems' }}";
-    gsap.to("#hero-typewriter", {
-        text: heroTitle,
-        duration: 2.5,
-        delay: 0.5,
-        ease: "none"
+    // 5. Scroll Triggered Services Header & Cards
+    gsap.to(".section-services", {
+        scrollTrigger: ".section-services",
+        opacity: 1, y: -20, duration: 1, ease: "power2.out"
+    });
+    
+    gsap.to(".service-card", {
+        scrollTrigger: { trigger: ".service-card", start: "top 85%" },
+        opacity: 1, y: -30, stagger: 0.15, duration: 0.8, ease: "power3.out"
     });
 
-    // 3. Sequential Entrances
-    gsap.to(".hero-lead", { opacity: 1, y: -20, duration: 1, delay: 2.5, ease: "power2.out" });
-    gsap.to(".hero-btns", { opacity: 1, y: -20, duration: 1, delay: 2.8, ease: "power2.out" });
-    gsap.to(".admin-control", { opacity: 1, duration: 0.5, delay: 3.2 });
-
-    // 4. Scroll Triggered Section Headers
-    gsap.to(".section-header", {
-        scrollTrigger: ".section-header",
-        opacity: 1,
-        y: -30,
-        duration: 1,
-        ease: "power2.out"
+    // 6. Why Work With Us Cards
+    gsap.to(".section-why", { scrollTrigger: ".section-why", opacity: 1, y: -20, duration: 1 });
+    gsap.to(".why-card", {
+        scrollTrigger: { trigger: ".why-card", start: "top 85%" },
+        opacity: 1, scale: 1, startAt: { scale: 0.9 }, stagger: 0.2, duration: 0.6, ease: "back.out(1.5)"
     });
 
-    // 5. Cascade Feature Cards
-    gsap.to(".feature-card", {
-        scrollTrigger: {
-            trigger: ".feature-card",
-            start: "top 85%"
-        },
-        opacity: 1,
-        y: -50,
-        stagger: 0.2,
-        duration: 0.8,
-        ease: "power3.out"
+    // 7. Vision Section
+    gsap.to(".section-vision", {
+        scrollTrigger: ".section-vision",
+        opacity: 1, y: 0, startAt: { y: 20 }, stagger: 0.3, duration: 1
     });
 
-    // 6. Footer CTA Timeline
-    const ctaTl = gsap.timeline({
-        scrollTrigger: {
-            trigger: ".footer-cta",
-            start: "top 80%"
-        }
+    // 8. Insights Section
+    gsap.to(".section-insights", { scrollTrigger: ".section-insights", opacity: 1, duration: 1 });
+    gsap.to(".insight-card", {
+        scrollTrigger: { trigger: ".insight-card", start: "top 90%" },
+        opacity: 1, y: -20, stagger: 0.15, duration: 0.8
     });
-    ctaTl.to(".cta-title", { opacity: 1, x: 0, duration: 0.8 })
+
+    // 9. Footer CTA Timeline
+    const ctaTl = gsap.timeline({ scrollTrigger: { trigger: ".footer-cta", start: "top 80%" } });
+    ctaTl.to(".cta-title", { opacity: 1, y: 0, startAt:{y: 30}, duration: 0.8 })
          .to(".cta-text", { opacity: 1, duration: 0.8 }, "-=0.4")
          .to(".cta-btn", { opacity: 1, scale: 1.1, duration: 0.5, ease: "back.out(1.7)" });
 
-    // 7. Interactive Magnetic Buttons
-    const btns = document.querySelectorAll(".magnetic-btn");
-    btns.forEach(btn => {
+    // 10. Interactive Magnetic Buttons
+    document.querySelectorAll(".magnetic-btn").forEach(btn => {
         btn.addEventListener("mousemove", (e) => {
             const rect = btn.getBoundingClientRect();
             const x = e.clientX - rect.left - rect.width / 2;

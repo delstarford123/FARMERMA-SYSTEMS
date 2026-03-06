@@ -15,7 +15,7 @@
     .btn-outline-success:hover { background-color: var(--plant-green); color: white; }
     
     /* Reveal animations pre-states */
-    .intel-lead, .intel-btns, .risk-item, .preview-item-card, .cta-title, .cta-text, .cta-btn {
+    .intel-lead, .intel-btns, .risk-item, .preview-item-card, .cta-title, .cta-text, .cta-btn, .solution-card {
         opacity: 0;
     }
 
@@ -27,10 +27,10 @@
         transition: all 0.3s ease;
     }
 
-    .preview-item-card {
+    .preview-item-card, .solution-card {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-    .preview-item-card:hover {
+    .preview-item-card:hover, .solution-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
     }
@@ -40,8 +40,8 @@
 {% block content %}
 <section class="py-5 overflow-hidden text-white text-center" style="background-color: var(--soil-brown);">
     <div class="container py-5">
-        <h1 class="display-5 fw-bold text-success mb-3 intel-title">Agricultural Market Intelligence</h1>
-        <p class="lead max-w-75 mx-auto text-light intel-lead">Stop guessing. Start planning. Access real-time commodity prices, supply chain trends, and AI-driven forecasts across Africa.</p>
+        <h1 class="display-5 fw-bold text-success mb-3 intel-title">Market Intelligence & Trade Analytics</h1>
+        <p class="lead max-w-75 mx-auto text-light intel-lead">Turning market data into strategic decisions for agribusinesses, governments, investors, and farmers across Africa.</p>
         <div class="mt-4 intel-btns">
             <a href="/pricing" class="btn btn-success btn-lg px-4 me-3 shadow magnetic-btn">View Subscription Plans</a>
             <a href="/register" class="btn btn-outline-light btn-lg px-4 magnetic-btn">Create Free Account</a>
@@ -49,11 +49,118 @@
     </div>
 </section>
 
-<section class="py-5 bg-white">
+<section class="py-5 bg-light overflow-hidden">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <h2 class="fw-bold mb-4 risk-heading" style="color: var(--soil-brown);">Why Market Intelligence Matters</h2>
+                <p class="lead text-muted">Agricultural markets in Africa are often fragmented, opaque, and unpredictable. Many producers and businesses operate without reliable information on prices, demand, or trade flows — leading to wasted resources, weak negotiating positions, and missed opportunities.</p>
+                <p class="text-muted">Farmerman Systems provides agricultural market intelligence that helps stakeholders make data-driven decisions with confidence. Our services are designed to reduce risk, increase competitiveness, and support profitable agribusiness outcomes.</p>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-lg preview-card p-4 bg-white" style="border-radius: 20px;">
+                    <h5 class="fw-bold text-dark mb-4 border-bottom pb-2">Who This Service Is For</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> Governments and policymakers</li>
+                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> Agribusiness companies</li>
+                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> Exporters and traders</li>
+                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> Investors and financial institutions</li>
+                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> Farmer cooperatives and producer organizations</li>
+                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> Development partners and NGOs</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-white overflow-hidden">
+    <div class="container py-4">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold" style="color: var(--soil-brown);">Our Market Intelligence Solutions</h2>
+            <p class="text-muted">Comprehensive data and analytics to drive your agricultural strategy.</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4 solution-card">
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
+                    <div class="card-body p-4">
+                        <div class="fs-1 mb-3"></div>
+                        <h5 class="fw-bold">1. Agricultural Market Research</h5>
+                        <p class="small text-muted mb-3">In-depth analysis of supply, demand, and price behavior across agricultural commodities.</p>
+                        <ul class="small text-muted list-unstyled mb-0">
+                            <li><i class="bi bi-dash text-success"></i> Market sizing and trend analysis</li>
+                            <li><i class="bi bi-dash text-success"></i> Demand drivers and growth forecasts</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4 solution-card">
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
+                    <div class="card-body p-4">
+                        <div class="fs-1 mb-3"></div>
+                        <h5 class="fw-bold">2. Price Monitoring Systems</h5>
+                        <p class="small text-muted mb-3">Real-time tracking of key commodity prices across major markets.</p>
+                        <ul class="small text-muted list-unstyled mb-0">
+                            <li><i class="bi bi-dash text-success"></i> Daily/weekly price reports</li>
+                            <li><i class="bi bi-dash text-success"></i> Local and regional price comparisons</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4 solution-card">
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
+                    <div class="card-body p-4">
+                        <div class="fs-1 mb-3"></div>
+                        <h5 class="fw-bold">3. Cross-Border Trade Analysis</h5>
+                        <p class="small text-muted mb-3">Optimizing trade strategy with reliable regional trade data and analysis.</p>
+                        <ul class="small text-muted list-unstyled mb-0">
+                            <li><i class="bi bi-dash text-success"></i> Export and import trend reports</li>
+                            <li><i class="bi bi-dash text-success"></i> Tariff and non-tariff barrier reviews</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-6 solution-card">
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
+                    <div class="card-body p-4">
+                        <div class="fs-1 mb-3"></div>
+                        <h5 class="fw-bold">4. Demand Forecasting & Predictive Analytics</h5>
+                        <p class="small text-muted mb-3">Understanding future demand is essential for production planning and investment.</p>
+                        <ul class="small text-muted list-unstyled mb-0">
+                            <li><i class="bi bi-dash text-success"></i> Short-term & long-term forecasting models</li>
+                            <li><i class="bi bi-dash text-success"></i> Risk assessments for demand shocks</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-6 solution-card">
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
+                    <div class="card-body p-4">
+                        <div class="fs-1 mb-3"></div>
+                        <h5 class="fw-bold">5. Market Linkage Platforms</h5>
+                        <p class="small text-muted mb-3">We help connect producers directly with buyers, processors, and investors.</p>
+                        <ul class="small text-muted list-unstyled mb-0">
+                            <li><i class="bi bi-dash text-success"></i> Buyer-seller mapping</li>
+                            <li><i class="bi bi-dash text-success"></i> Regional market access facilitation</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-light">
     <div class="container">
         <div class="text-center mb-5">
             <h2 class="fw-bold" style="color: var(--soil-brown);">Regional Market Pulse</h2>
-            <p class="text-muted">Direct field data from regional hubs including Kakamega, Eldoret, and Kampala.</p>
+            <p class="text-muted">Direct field data from regional hubs. Upgrade for full access.</p>
         </div>
 
         <div class="row g-4">
@@ -108,45 +215,14 @@
     </div>
 </section>
 
-<section class="py-5 bg-light overflow-hidden">
-    <div class="container">
-        <div class="row align-items-center g-5">
-            <div class="col-lg-6">
-                <h2 class="fw-bold mb-4 risk-heading" style="color: var(--soil-brown);">Reduce Risk in Every Harvest</h2>
-                <p class="lead text-muted">Agricultural markets are volatile. Without accurate data, farmers underprice their yields and miscalculate their supply chains.</p>
-                
-                <ul class="list-group list-group-flush mt-4">
-                    <li class="list-group-item bg-transparent border-0 d-flex align-items-center ps-0 risk-item">
-                        <span class="badge bg-success me-3 rounded-pill p-2"><i class="bi bi-check2"></i></span> Negotiate better prices with brokers.
-                    </li>
-                    <li class="list-group-item bg-transparent border-0 d-flex align-items-center ps-0 risk-item">
-                        <span class="badge bg-success me-3 rounded-pill p-2"><i class="bi bi-check2"></i></span> Time your market entry for maximum profit.
-                    </li>
-                    <li class="list-group-item bg-transparent border-0 d-flex align-items-center ps-0 risk-item">
-                        <span class="badge bg-success me-3 rounded-pill p-2"><i class="bi bi-check2"></i></span> Access AI forecasts to predict regional shortages.
-                    </li>
-                </ul>
-            </div>
-            
-            <div class="col-lg-6">
-                <div class="card border-0 shadow-lg preview-card p-2" style="border-radius: 20px;">
-                    <img src="https://images.unsplash.com/photo-1595113316349-9fa4eb24f884?auto=format&fit=crop&q=80&w=800" class="card-img-top rounded shadow-sm" alt="Market Analysis">
-                    <div class="card-body">
-                        <h5 class="fw-bold text-dark">Proprietary AI Trends</h5>
-                        <p class="text-muted small">Our neural networks analyze historical data to give you a 15-day price forecast with 89% accuracy.</p>
-                        <a href="/trends-forecasts" class="btn btn-success w-100">Run AI Forecast</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
 <section class="py-5 text-center text-white overflow-hidden footer-cta" style="background-color: var(--sky-blue);">
-    <div class="container">
-        <h3 class="fw-bold cta-title">Ready to access the data?</h3>
-        <p class="mb-4 cta-text">Join 500+ agribusinesses using Farmerman Intelligence daily.</p>
-        <a href="/pricing" class="btn btn-light btn-lg fw-bold px-5 cta-btn shadow" style="color: var(--sky-blue);">Subscribe Now</a>
+    <div class="container py-4">
+        <h3 class="fw-bold cta-title mb-3">Make Data-Driven Decisions Today</h3>
+        <p class="mb-4 cta-text lead max-w-75 mx-auto">Get customized intelligence briefs, access our interactive price dashboards, or consult with our analyst team.</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="/contact" class="btn btn-light btn-lg fw-bold px-4 cta-btn shadow" style="color: var(--sky-blue);">Request Intelligence Report</a>
+            <a href="/pricing" class="btn btn-outline-light btn-lg fw-bold px-4 cta-btn shadow">Subscribe to Dashboards</a>
+        </div>
     </div>
 </section>
 {% endblock %}
@@ -171,42 +247,36 @@
     // 2. Risk Items Cascade
     gsap.to(".risk-item", {
         scrollTrigger: { trigger: ".risk-item", start: "top 90%" },
-        opacity: 1,
-        x: 0,
-        startAt: { x: -30 },
-        stagger: 0.15,
-        duration: 0.8
+        opacity: 1, x: 0, startAt: { x: -30 }, stagger: 0.1, duration: 0.8
     });
 
-    // 3. Grid Item Stagger
+    // 3. Solutions Grid
+    gsap.to(".solution-card", {
+        scrollTrigger: { trigger: ".solution-card", start: "top 85%" },
+        opacity: 1, y: 0, startAt: { y: 40 }, stagger: 0.1, duration: 0.6, ease: "power2.out"
+    });
+
+    // 4. Market Pulse Preview
     gsap.to(".preview-item-card", {
         scrollTrigger: { trigger: ".preview-item-card", start: "top 85%" },
-        opacity: 1,
-        y: 0,
-        startAt: { y: 40 },
-        stagger: 0.1,
-        duration: 0.6,
-        ease: "power2.out"
+        opacity: 1, y: 0, startAt: { y: 40 }, stagger: 0.1, duration: 0.6, ease: "power2.out"
     });
 
-    // 4. Perspective Entrance for Preview Image
+    // 5. Perspective Entrance for Preview Image/Card
     gsap.to(".preview-card", {
         scrollTrigger: { trigger: ".preview-card", start: "top 80%" },
-        opacity: 1,
-        rotationY: 0,
-        startAt: { rotationY: -15, opacity: 0 },
-        duration: 1.5,
-        ease: "power3.out"
+        opacity: 1, rotationY: 0, startAt: { rotationY: -15, opacity: 0 }, duration: 1.5, ease: "power3.out"
     });
 
-    // 5. Bouncy CTA
+    // 6. Bouncy CTA
     const ctaTl = gsap.timeline({
         scrollTrigger: { trigger: ".footer-cta", start: "top 90%" }
     });
     ctaTl.to(".cta-title", { opacity: 1, y: 0, startAt: {y: -30}, duration: 0.6, ease: "back.out(2)" })
-         .to(".cta-btn", { opacity: 1, scale: 1, startAt: {scale: 0.7}, duration: 0.5, ease: "elastic.out(1, 0.5)" }, "-=0.2");
+         .to(".cta-text", { opacity: 1, duration: 0.4 })
+         .to(".cta-btn", { opacity: 1, scale: 1, startAt: {scale: 0.7}, stagger: 0.1, duration: 0.5, ease: "elastic.out(1, 0.5)" }, "-=0.2");
 
-    // 6. Magnetic Buttons
+    // 7. Magnetic Buttons
     document.querySelectorAll(".magnetic-btn, .cta-btn").forEach(btn => {
         btn.addEventListener("mousemove", (e) => {
             const rect = btn.getBoundingClientRect();

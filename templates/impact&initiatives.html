@@ -5,31 +5,54 @@
     <div class="container py-4 text-center">
         <span class="text-success fw-bold text-uppercase tracking-wide d-block impact-badge">Our Mission in Action</span>
         <h1 class="fw-bold text-primary-green mt-2 mb-3 impact-title"><span id="impact-typewriter"></span><span class="typewriter-cursor">|</span></h1>
-        <p class="lead text-muted max-w-75 mx-auto impact-lead" style="opacity: 0;">Farmerman Systems goes beyond consultancy. We actively design and implement sustainable programs that promote resilient rural livelihoods across Africa.</p>
+        <p class="lead text-muted max-w-75 mx-auto impact-lead" style="opacity: 0;">At Farmerman Systems, impact is measured not only by projects delivered, but by the lasting transformation of agricultural systems, markets, and livelihoods across Africa. Through research, advisory, and investment strategy, we work to unlock agriculture’s power as a driver of economic growth, food security, and rural prosperity. Our mission is simple: Build agricultural systems that work for farmers, investors, and nations.</p>
     </div>
 </section>
 
+<section class="py-5 bg-success bg-opacity-10 border-top border-bottom border-success border-opacity-25 overflow-hidden">
+    <div class="container py-3">
+        <div class="row text-center g-4">
+            <div class="col-6 col-md-3">
+                <h2 class="display-4 fw-bold text-success mb-0"><span class="stat-counter" data-target="500">0</span>+</h2>
+                <p class="text-muted fw-bold small text-uppercase">Farmers Reached</p>
+            </div>
+            <div class="col-6 col-md-3">
+                <h2 class="display-4 fw-bold text-success mb-0"><span class="stat-counter" data-target="10">0</span>+</h2>
+                <p class="text-muted fw-bold small text-uppercase">Value Chains Studied</p>
+            </div>
+            <div class="col-6 col-md-3">
+                <h2 class="display-4 fw-bold text-success mb-0">$<span class="stat-counter" data-target="1">0</span>M+</h2>
+                <p class="text-muted fw-bold small text-uppercase">Investments Structured</p>
+            </div>
+            <div class="col-6 col-md-3">
+                <h2 class="display-4 fw-bold text-success mb-0"><span class="stat-counter" data-target="5">0</span>+</h2>
+                <p class="text-muted fw-bold small text-uppercase">Strategic Partnerships</p>
+            </div>
+        </div>
+    </div>
+</section>
 <section class="py-5 overflow-hidden">
     <div class="container py-4">
         <div class="row align-items-center g-5">
             <div class="col-lg-6 order-lg-2">
-                <div class="rounded shadow-lg bg-secondary impact-img-right" style="height: 400px; background: url('https://images.unsplash.com/photo-1530262929451-caf6b99b5136?auto=format&fit=crop&w=800&q=80') center/cover; opacity: 0;"></div>
+                <div class="rounded shadow-lg bg-secondary gsap-img-right" style="height: 400px; background: url('{{ url_for('static', filename='8.jpg') }}') center/cover; opacity: 0;"></div>
             </div>
             <div class="col-lg-6 order-lg-1">
-                <h3 class="fw-bold mb-3 text-dark impact-sub-title">Women & Youth Agribusiness Empowerment</h3>
-                <p class="text-muted impact-text" style="opacity: 0;">The future of African agriculture relies on the inclusion of its most dynamic demographics. We bridge the gap by designing capacity-building programs that target women and youth.</p>
+                <h3 class="fw-bold mb-3 text-dark gsap-fade-up">Strengthening Markets & Farmers</h3>
+                <p class="text-muted gsap-fade-up" style="opacity: 0;">African farmers often produce without reliable markets. Farmerman Systems helps build market intelligence and structured agricultural markets that connect farmers to buyers, investors, and value chains. Our goal is to transform farmers from subsistence producers into agribusiness entrepreneurs.</p>
+                
                 <ul class="list-unstyled mt-4">
-                    <li class="d-flex mb-3 impact-list-item" style="opacity: 0;">
+                    <li class="d-flex mb-3 gsap-list-item" style="opacity: 0;">
                         <i class="bi bi-check-circle-fill text-success fs-5 me-3"></i>
-                        <span><strong>Skills Transfer:</strong> Training in modern, climate-resilient farming techniques and agribusiness management.</span>
+                        <span><strong>Market Access:</strong> Improved price discovery and stronger commodity trading systems.</span>
                     </li>
-                    <li class="d-flex mb-3 impact-list-item" style="opacity: 0;">
+                    <li class="d-flex mb-3 gsap-list-item" style="opacity: 0;">
                         <i class="bi bi-check-circle-fill text-success fs-5 me-3"></i>
-                        <span><strong>Market Access:</strong> Connecting young and female farmers directly to profitable markets using our intelligence platforms.</span>
+                        <span><strong>Capacity Building:</strong> Agribusiness training to overcome low productivity and limited knowledge.</span>
                     </li>
-                    <li class="d-flex mb-3 impact-list-item" style="opacity: 0;">
+                    <li class="d-flex mb-3 gsap-list-item" style="opacity: 0;">
                         <i class="bi bi-check-circle-fill text-success fs-5 me-3"></i>
-                        <span><strong>Financial Inclusion:</strong> Advisory support to help marginalized groups access agricultural financing and development grants.</span>
+                        <span><strong>Sustainable Methods:</strong> Promoting agroecology practices and value chain integration.</span>
                     </li>
                 </ul>
             </div>
@@ -37,20 +60,71 @@
     </div>
 </section>
 
-
-
 <section class="py-5 bg-light border-top overflow-hidden">
     <div class="container py-4">
         <div class="row align-items-center g-5">
             <div class="col-lg-6">
-                <div class="rounded shadow-lg bg-secondary impact-img-left" style="height: 400px; background: url('https://images.unsplash.com/photo-1592982537447-6f296cb31454?auto=format&fit=crop&w=800&q=80') center/cover; opacity: 0;"></div>
+                <div class="rounded shadow-lg bg-secondary gsap-img-left" style="height: 400px; background: url('{{ url_for('static', filename='6.jpg') }}') center/cover; opacity: 0;"></div>
             </div>
             <div class="col-lg-6">
-                <h3 class="fw-bold mb-3 text-dark impact-sub-title-2">Community Mobilization & Value Chain Development</h3>
-                <p class="text-muted impact-text-2" style="opacity: 0;">By mobilizing farming communities into cooperative models and optimizing local value chains, we drastically reduce post-harvest losses and operational risks.</p>
-                <p class="text-muted mb-4 impact-text-2" style="opacity: 0;">Our project design, monitoring, and evaluation support ensures that development partner funds translate into measurable, ground-level impact.</p>
-                <a href="/contact" class="btn btn-success px-4 py-2 fw-bold magnetic-btn impact-btn" style="opacity: 0;">Partner With Us on a Project</a>
+                <h3 class="fw-bold mb-3 text-dark gsap-fade-up">Building Climate-Resilient Agriculture</h3>
+                <p class="text-muted gsap-fade-up" style="opacity: 0;">Climate change is one of the greatest threats to African agriculture. Erratic rainfall, droughts, and extreme weather are increasingly affecting crop yields and farmer livelihoods. Farmerman Systems promotes climate-smart agricultural systems to protect our food future.</p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6 mb-3 gsap-list-item" style="opacity: 0;">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-success text-white rounded-circle p-2 me-3"><i class="bi bi-cloud-rain"></i></div>
+                            <span class="fw-bold text-muted small">Water harvesting systems</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3 gsap-list-item" style="opacity: 0;">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-success text-white rounded-circle p-2 me-3"><i class="bi bi-tree"></i></div>
+                            <span class="fw-bold text-muted small">Soil regeneration practices</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3 gsap-list-item" style="opacity: 0;">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-success text-white rounded-circle p-2 me-3"><i class="bi bi-sun"></i></div>
+                            <span class="fw-bold text-muted small">Climate-resilient crops</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3 gsap-list-item" style="opacity: 0;">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-success text-white rounded-circle p-2 me-3"><i class="bi bi-globe-americas"></i></div>
+                            <span class="fw-bold text-muted small">Sustainable land management</span>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 overflow-hidden">
+    <div class="container py-4">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6 order-lg-2">
+                <div class="rounded shadow-lg bg-secondary gsap-img-right" style="height: 400px; background: url('{{ url_for('static', filename='7.jpg') }}') center/cover; opacity: 0;"></div>
+            </div>
+            <div class="col-lg-6 order-lg-1">
+                <h3 class="fw-bold mb-3 text-dark gsap-fade-up">Finance & Empowering the Next Generation</h3>
+                <p class="text-muted gsap-fade-up" style="opacity: 0;">One of the largest barriers to agricultural transformation in Africa is access to finance and investment. Farmerman Systems bridges this gap by helping agribusinesses access capital, investors identify opportunities, and governments design investment strategies.</p>
+                <p class="text-muted mb-4 gsap-fade-up" style="opacity: 0;">Furthermore, agriculture must become a sector of opportunity for Africa’s youth. Through research, mentorship, and training programs, we are helping build the next generation of agribusiness leaders, agricultural entrepreneurs, and market innovators.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-dark text-white text-center overflow-hidden relative">
+    <div class="container py-5">
+        <h2 class="fw-bold mb-4 text-success gsap-fade-up">Our Long-Term Vision (2035)</h2>
+        <p class="lead mb-5 mx-auto max-w-75 gsap-fade-up">By 2035 Farmerman Systems aims to contribute to transforming 10+ agricultural value chains across Africa, supporting 100,000 farmers through knowledge and market access, facilitating $100 million in agricultural investments, and building resilient food systems across African economies.</p>
+        
+        <div class="bg-white bg-opacity-10 p-5 rounded-4 shadow-lg border border-success border-opacity-25 gsap-fade-up">
+            <h3 class="fw-bold mb-3">Join Us in Transforming African Agriculture</h3>
+            <p class="mb-4 text-light">Africa’s agricultural future will not be built by farmers alone. It will be built through collaboration between farmers, investors, researchers, and governments. Farmerman Systems exists to bring these systems together.</p>
+            <a href="{{ url_for('contact_us') }}" class="btn btn-success btn-lg px-5 py-3 fw-bold magnetic-btn">Become a Partner Today</a>
         </div>
     </div>
 </section>
@@ -59,11 +133,12 @@
     .typewriter-cursor {
         display: inline-block;
         width: 3px;
-        background-color: var(--primary-green);
+        background-color: #198754;
         margin-left: 5px;
         animation: blink 0.8s infinite;
     }
     @keyframes blink { 50% { opacity: 0; } }
+    .max-w-75 { max-width: 75%; }
 </style>
 {% endblock %}
 
@@ -75,64 +150,73 @@
 <script>
     gsap.registerPlugin(ScrollTrigger, TextPlugin);
 
-    // 1. Header Animations
+    // 1. Hero Animations
     gsap.from(".impact-badge", { y: -50, opacity: 0, duration: 1, ease: "elastic.out(1, 0.3)" });
-    gsap.to("#impact-typewriter", { text: "Impact & Initiatives", duration: 1.5, delay: 0.5, ease: "none" });
-    gsap.to(".impact-lead", { opacity: 1, y: 0, duration: 1, delay: 1.5 });
+    gsap.to("#impact-typewriter", { text: "Transforming Agriculture Across Africa", duration: 2, delay: 0.5, ease: "none" }); 
+    gsap.to(".impact-lead", { opacity: 1, y: 0, duration: 1, delay: 2.5 });
 
-    // 2. Women & Youth Section (Scroll Triggered)
-    gsap.to(".impact-img-right", {
-        scrollTrigger: ".impact-img-right",
-        opacity: 1, z: 0, startAt: { z: -1000 },
-        transformPerspective: 1000, duration: 1.2, ease: "power3.out"
+    // 2. Number Counters (Scroll Triggered)
+    ScrollTrigger.create({
+        trigger: ".stat-counter",
+        start: "top 85%",
+        onEnter: () => {
+            gsap.utils.toArray('.stat-counter').forEach(counter => {
+                const target = parseInt(counter.getAttribute('data-target'));
+                gsap.to(counter, {
+                    innerHTML: target,
+                    duration: 2.5,
+                    snap: { innerHTML: 1 },
+                    ease: "power2.out"
+                });
+            });
+        },
+        once: true
     });
 
-    gsap.from(".impact-sub-title", {
-        scrollTrigger: ".impact-sub-title",
-        rotationX: 90, opacity: 0, transformPerspective: 800, duration: 1, ease: "power3.out"
+    // 3. Reusable Scroll Animations for Sections
+    gsap.utils.toArray('.gsap-img-right').forEach(img => {
+        gsap.to(img, {
+            scrollTrigger: img,
+            opacity: 1, z: 0, startAt: { z: -1000 },
+            transformPerspective: 1000, duration: 1.2, ease: "power3.out"
+        });
     });
 
-    gsap.to(".impact-text", { scrollTrigger: ".impact-text", opacity: 1, y: 0, startAt: { y: 30 }, duration: 0.8 });
-
-    gsap.to(".impact-list-item", {
-        scrollTrigger: ".impact-list-item",
-        opacity: 1, x: 0, startAt: { x: -50 },
-        stagger: 0.2, duration: 0.6, ease: "power2.out"
+    gsap.utils.toArray('.gsap-img-left').forEach(img => {
+        gsap.to(img, {
+            scrollTrigger: img,
+            opacity: 1, x: 0, rotation: 0, startAt: { x: -600, rotation: -10 },
+            duration: 1, ease: "back.out(1.4)"
+        });
     });
 
-    // 3. Community Mobilization Section
-    gsap.to(".impact-img-left", {
-        scrollTrigger: ".impact-img-left",
-        opacity: 1, x: 0, rotation: 0, startAt: { x: -600, rotation: -10 },
-        duration: 1, ease: "back.out(1.4)"
+    gsap.utils.toArray('.gsap-fade-up').forEach(elem => {
+        gsap.fromTo(elem, 
+            { opacity: 0, y: 30 },
+            { scrollTrigger: elem, opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }
+        );
     });
 
-    gsap.from(".impact-sub-title-2", {
-        scrollTrigger: ".impact-sub-title-2",
-        rotationX: 90, opacity: 0, transformPerspective: 800, duration: 1, ease: "power3.out"
-    });
-
-    gsap.to(".impact-text-2", {
-        scrollTrigger: ".impact-text-2",
-        opacity: 1, stagger: 0.2, y: 0, startAt: { y: 30 }, duration: 0.8
-    });
-
-    gsap.to(".impact-btn", {
-        scrollTrigger: ".impact-btn",
-        opacity: 1, scale: 1, startAt: { scale: 0.5 },
-        duration: 0.5, ease: "back.out(1.7)"
+    gsap.utils.toArray('.gsap-list-item').forEach(item => {
+        gsap.to(item, {
+            scrollTrigger: item,
+            opacity: 1, x: 0, startAt: { x: -50 },
+            duration: 0.6, ease: "power2.out"
+        });
     });
 
     // 4. Magnetic Pull for Button
     const btn = document.querySelector(".magnetic-btn");
-    btn.addEventListener("mousemove", (e) => {
-        const rect = btn.getBoundingClientRect();
-        const x = e.clientX - rect.left - rect.width / 2;
-        const y = e.clientY - rect.top - rect.height / 2;
-        gsap.to(btn, { x: x * 0.3, y: y * 0.3, duration: 0.3 });
-    });
-    btn.addEventListener("mouseleave", () => {
-        gsap.to(btn, { x: 0, y: 0, duration: 0.3 });
-    });
+    if(btn) {
+        btn.addEventListener("mousemove", (e) => {
+            const rect = btn.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            gsap.to(btn, { x: x * 0.3, y: y * 0.3, duration: 0.3 });
+        });
+        btn.addEventListener("mouseleave", () => {
+            gsap.to(btn, { x: 0, y: 0, duration: 0.3 });
+        });
+    }
 </script>
 {% endblock %}

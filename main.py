@@ -105,7 +105,7 @@ with app.app_context():
 def send_async_emails(user_email, admin_email, user_msg_html, admin_msg_html, name, message_body, inquiry_subject):
     """Background worker for Contact Forms using smtplib."""
     try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server: # Changed to port 465 for SSL
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server: 
             server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
             
             # Send to User
@@ -166,7 +166,7 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             flash("Please log in to access this page.", "warning")
-            return redirect(url_for('login')) # Updated to standard 'login' route
+            return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -182,10 +182,10 @@ def admin_required(f):
 def tutor_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        user_role = session.get('role', session.get('user_role')) # Safely checks both 
+        user_role = session.get('role', session.get('user_role'))
         if user_role not in ['tutor', 'admin']:
             flash("Access denied: This area is reserved for Tutors.", "danger")
-            return redirect(url_for('market_intelligence')) # Redirects to safe dashboard
+            return redirect(url_for('market_intelligence'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -205,9 +205,9 @@ def premium_required(f):
             return f(*args, **kwargs)
 
         # Only Paid tiers get through
-        if user_tier not in ['premium', 'pro', 'enterprise']:
-            flash("Upgrade Required: This is Premium Market Intelligence.", "warning")
-            return redirect(url_for('pricing')) # Redirects to pricing page
+        if user_tier not in ['premium', 'pro', 'enterprise', 'bronze', 'silver', 'gold']:
+            flash("Upgrade Required: This is Premium Content.", "warning")
+            return redirect(url_for('pricing'))
         
         return f(*args, **kwargs)
     return decorated_function
@@ -243,9 +243,6 @@ def token_admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-import threading
-from flask_mail import Message
-
 # ==========================================
 # BACKGROUND EMAIL WORKER
 # ==========================================
@@ -256,7 +253,6 @@ def send_welcome_email(user_email, name, role):
             subject = "Welcome to the Faculty!" if role == 'tutor' else "Your Market Intelligence is Ready!"
             msg = Message(subject, recipients=[user_email])
             
-            # Use the templates we designed earlier
             template = 'emails/welcome_tutor.html' if role == 'tutor' else 'emails/welcome_client.html'
             msg.html = render_template(template, name=name)
             
@@ -276,7 +272,7 @@ def register():
         full_name = request.form.get('fullName').strip()
         organization = request.form.get('organization', '').strip()
         
-        # 1. SECURITY: Capture and sanitize the role (Force 'client' if tampered)
+        # 1. SECURITY: Capture and sanitize the role
         selected_role = request.form.get('role', 'client').strip().lower()
         if selected_role not in ['client', 'tutor']:
             selected_role = 'client'
@@ -296,10 +292,10 @@ def register():
                 'created_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
             
-            # 4. Fire off the Welcome Email (Using threading so the page loads instantly)
+            # 4. Fire off the Welcome Email
             threading.Thread(target=send_welcome_email, args=(email, full_name, selected_role)).start()
             
-            # 5. Schedule the Drip Campaign (Fires 3 days from exactly right now)
+            # 5. Schedule the Drip Campaign
             run_time = datetime.now() + timedelta(days=3)
             scheduler.add_job(
                 func=send_drip_followup,
@@ -341,27 +337,26 @@ def login():
                 raw_role = str(user_data.get('role', 'client')).strip().lower()
                 raw_tier = str(user_data.get('subscription_tier', 'free')).strip().lower()
             else:
-                # Auto-heal missing profile data
                 raw_role = 'client'
                 raw_tier = 'free'
                 user_ref.set({'email': email, 'role': raw_role, 'subscription_tier': raw_tier, 'uid': uid})
 
             # 3. Secure the Session
-            session.clear() # Clear any old rogue data
+            session.clear() 
             session.permanent = True 
             session['user_id'] = uid
             session['user_email'] = email
             session['role'] = raw_role
-            session['tier'] = raw_tier # Using 'tier' matches our @premium_required decorator
+            session['tier'] = raw_tier 
             session['subscription_tier'] = raw_tier 
 
             # 4. Smart Redirects based on Role
             if raw_role == 'admin':
                 flash("Welcome back, Administrator!", "success")
-                return redirect(url_for('subscriber_management')) # Send admins to the new management table
+                return redirect(url_for('subscriber_management')) 
             elif raw_role == 'tutor':
                 flash("Welcome to the Faculty Portal!", "success")
-                return redirect(url_for('market_intelligence')) # Or point to 'academy_home'
+                return redirect(url_for('market_intelligence')) 
             else:
                 flash("Authentication successful. Welcome to your portal!", "success")
                 return redirect(url_for('market_intelligence'))
@@ -372,7 +367,6 @@ def login():
             print(f"Login System Error: {e}")
             flash("System error during login. Check server console.", "danger")
             
-    # Assuming you named your new login template 'login.html'
     return render_template('login.html')
 
 @app.route('/reset-password', methods=['GET', 'POST'])
@@ -386,7 +380,7 @@ def reset_password():
             req = requests.post(request_ref, headers=headers, json=data)
             req.raise_for_status() 
             flash(f"A password reset link has been sent to {email}. Please check your inbox.", "success")
-            return redirect(url_for('client_login'))
+            return redirect(url_for('login'))
         except requests.exceptions.HTTPError:
             error_data = req.json().get('error', {}).get('message', '')
             if error_data == "EMAIL_NOT_FOUND":
@@ -398,7 +392,6 @@ def reset_password():
             
     return render_template('reset_password.html')
 
-
 @app.route('/logout')
 def logout():
     role = session.get('role')
@@ -409,7 +402,6 @@ def logout():
     else:
         flash("You have been securely logged out.", "info")
         
-    # THE FIX: Changed 'client_login' to 'login' to match our new routing
     return redirect(url_for('login'))
 
 # ==========================================
@@ -425,36 +417,26 @@ def dashboard():
         return render_template('dashboard.html', profile=profile)
     except Exception as e:
         return render_template('dashboard.html', profile={'full_name': 'User'})
-# --- BILLING & INVOICE HISTORY PAGE ---
+
 @app.route('/billing')
 @login_required
 def billing_history():
     user_id = session.get('user_id')
-    
-    # 1. Fetch user profile (Useful if you want to print their Name/Organization on the invoice)
     profile = rtdb.reference(f'users/{user_id}').get() or {}
-    
-    # Securely grab the current plan (checks database first, falls back to session)
     current_plan = profile.get('subscription_tier', session.get('subscription_tier', 'free'))
-    
-    # 2. Fetch transactions from Firebase
     txns_ref = rtdb.reference(f'completed_transactions/{user_id}').get()
-    
-    # 3. Clean, Pythonic sorting: Converts the Firebase dictionary to a list and sorts by date (newest first)
     transactions_list = sorted(txns_ref.values(), key=lambda x: x.get('date', ''), reverse=True) if txns_ref else []
         
     return render_template(
         'payments/billing_history.html', 
-        profile=profile,               # Passes user data to the HTML
-        transactions=transactions_list, # Passes the sorted receipts
-        current_plan=current_plan      # Passes the active subscription tier
+        profile=profile, 
+        transactions=transactions_list, 
+        current_plan=current_plan
     )
 
-# --- PAYMENT FAILED PAGE ---
 @app.route('/payment-failed')
 @login_required
 def payment_failed():
-    # Pass an optional custom error message via the URL (e.g., /payment-failed?msg=Card+Declined)
     error_message = request.args.get('msg', None)
     return render_template('payments/payment_failed.html', error_message=error_message)
 
@@ -475,31 +457,6 @@ def account_settings():
         
     profile_data = user_ref.get() or {'full_name': 'User', 'email': session.get('user_email', '')}
     return render_template('accounts&subscription settings.html', profile=profile_data)
-
-@app.route('/checkout')
-@login_required 
-def subscriber_checkout():
-    plan_id = request.args.get('plan', 'pro')
-    
-    # FIX: Removed the quotes around the USD amounts so they are floats, not strings!
-    if plan_id == 'basic':
-        plan_name, amount_kes, amount_usd = "Smallholder Plan", 700, 5.00
-    elif plan_id == 'enterprise':
-        plan_name, amount_kes, amount_usd = "Enterprise & NGO", 20000, 150.00
-    else:
-        plan_id, plan_name, amount_kes, amount_usd = 'pro', "Agribusiness Pro", 3500, 25.00
-
-    return render_template(
-        'payments/subscriber_checkout.html',
-        plan_id=plan_id, 
-        plan_name=plan_name, 
-        amount_kes=amount_kes, 
-        amount_usd=amount_usd,
-        paystack_public_key=os.environ.get('PAYSTACK_PUBLIC_KEY', ''),
-        stripe_public_key=os.environ.get('STRIPE_PUBLIC_KEY', ''),
-        paypal_client_id=os.environ.get('PAYPAL_CLIENT_ID', '')
-    )
-    
       
 # ==========================================
 # ADMIN HUB (Fully Protected)
@@ -608,7 +565,7 @@ def subscriber_management():
         return redirect(url_for('admin_dashboard'))
     
 @app.route('/admin/update-role', methods=['POST'])
-@admin_required # Ensure only the top admin can do this
+@admin_required
 def update_user_role():
     """Updates a user's role (admin/tutor/client) and tier (free/premium)."""
     target_uid = request.form.get('user_id')
@@ -617,10 +574,9 @@ def update_user_role():
 
     if not target_uid:
         flash("User ID is missing.", "danger")
-        return redirect(url_for('admin_subscribers'))
+        return redirect(url_for('subscriber_management'))
 
     try:
-        # Update Firebase
         rtdb.reference(f'users/{target_uid}').update({
             'role': new_role,
             'subscription_tier': new_tier
@@ -630,14 +586,12 @@ def update_user_role():
         flash(f"Error updating user: {e}", "danger")
 
     return redirect(url_for('subscriber_management'))
+
 # ==========================================
 # PROTECTED MARKET INTELLIGENCE & AI
 # ==========================================
-
 @app.route('/market-intelligence')
 @login_required
-# We leave this open to all logged-in users, but use the "Blur" 
-# technique in the HTML template to hide the best parts.
 def market_intelligence():
     try:
         featured_items = rtdb.reference('market_data').order_by_key().limit_to_last(3).get()
@@ -649,14 +603,14 @@ def market_intelligence():
 
 @app.route('/live-market-prices')
 @login_required
-@premium_required # <--- ONLY PRO CLIENTS, TUTORS, & ADMINS
+@premium_required
 def live_market_prices():
     items = MarketData.query.order_by(MarketData.commodity.asc()).all()
     return render_template('live market prices.html', market_items=items)
 
 @app.route('/trends-forecasts')
 @login_required
-@premium_required # <--- AI INSIGHTS ARE HIGH-VALUE; LOCK THEM
+@premium_required 
 def trends_forecasts():
     records = MarketData.query.filter_by(commodity="Maize (90kg)").all()
     hist = [{'date': r.updated_at, 'price': r.price} for r in records]
@@ -669,13 +623,11 @@ def trends_forecasts():
 
 @app.route('/api/market-prices', methods=['GET'])
 def api_market_prices():
-    # Security for API: Check session within the function
     if session.get('tier') not in ['premium', 'pro'] and session.get('user_role') not in ['admin', 'tutor']:
         return jsonify({"error": "Premium subscription required to access raw data"}), 403
         
     items = rtdb.reference('market_data').get() or {}
     return jsonify([{'id': k, **v} for k, v in items.items()]), 200
-
 
 # ==========================================
 # FARMERMAN ACADEMY (STUDENT ROUTES)
@@ -685,20 +637,17 @@ def api_market_prices():
 def academy_home():
     user_tier = session.get('subscription_tier', 'free')
     if session.get('role') == 'admin':
-        user_tier = 'admin' # Admins bypass all locks
+        user_tier = 'admin' 
         
     try:
         courses_data = rtdb.reference('academy_courses').get() or {}
-        # Convert dictionary to list and inject the ID
         courses = [{'id': k, **v} for k, v in courses_data.items()]
-        # Show newest courses first
         courses.reverse() 
     except Exception as e:
         print(f"Error fetching courses: {e}")
         courses = []
         
     return render_template('academy/index.html', user_tier=user_tier, courses=courses)
-
 
 @app.route('/academy/my-learning')
 @login_required
@@ -732,11 +681,9 @@ def my_learning():
                            completed_courses=completed_courses,
                            user_tier=user_tier)
 
-
 @app.route('/academy/course/<course_id>')
 @premium_required 
 def view_lesson(course_id):
-    # Fetch specific course
     lesson_data = rtdb.reference(f'academy_courses/{course_id}').get()
     
     if not lesson_data:
@@ -745,13 +692,11 @@ def view_lesson(course_id):
         
     lesson_data['id'] = course_id 
     
-    # Fetch Comments for this course
     comments_data = rtdb.reference(f'course_comments/{course_id}').get() or {}
     comments = [{'id': k, **v} for k, v in comments_data.items()]
     comments.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
     
     return render_template('academy/course_view.html', lesson=lesson_data, comments=comments)
-
 
 @app.route('/academy/course/<course_id>/quiz')
 @premium_required
@@ -764,7 +709,6 @@ def take_quiz(course_id):
     quiz_data = rtdb.reference(f'academy_courses/{course_id}/quiz').get()
     
     if not quiz_data:
-        # Fallback sample quiz
         quiz_data = [
             {
                 "question": "What is the optimal soil pH range for most agricultural crops?",
@@ -788,7 +732,6 @@ def take_quiz(course_id):
                            quiz=quiz_data, 
                            course_id=course_id)
 
-
 @app.route('/academy/certificate')
 @login_required
 def generate_certificate():
@@ -805,7 +748,6 @@ def generate_certificate():
         
     today_date = datetime.now().strftime("%B %d, %Y")
     return render_template('academy/certificate.html', student_name=full_name, date=today_date)
-
 
 @app.route('/academy/leaderboard')
 @login_required
@@ -833,20 +775,16 @@ def academy_leaderboard():
                            leaderboard=leaderboard, 
                            current_user_rank=current_user_rank) 
 
-
 @app.route('/agripreneur_training')
 @premium_required
 def agripreneur_training():
-    """Renders the premium academy dashboard with categorized learning tracks."""
     try:
         content_ref = rtdb.reference('training_content').get() or {}
-        # Convert dict to list and sort by a 'order' key if it exists
         all_content = sorted(content_ref.values(), key=lambda x: x.get('order', 0))
     except Exception as e:
         print(f"Academy Data Error: {e}")
         all_content = []
 
-    # Efficiently categorize using a dictionary comprehension
     categories = ['agripreneur', 'aqua', 'econ']
     categorized_content = {cat: [c for c in all_content if c.get('category') == cat] for cat in categories}
     
@@ -855,41 +793,30 @@ def agripreneur_training():
 @app.route('/secure-media/<path:filename>')
 @premium_required
 def secure_media(filename):
-    """Serves premium files only to authorized users with specific headers."""
     try:
-        # added conditional headers to prevent embedding on external sites
         response = send_from_directory(PREMIUM_CONTENT_FOLDER, filename)
         response.headers['X-Content-Type-Options'] = 'nosniff'
         return response
     except FileNotFoundError:
         abort(404, description="This training resource is currently unavailable.")
         
-import os
-from werkzeug.utils import secure_filename
-from datetime import datetime
-
-
 @app.route('/admin-delete-training/<content_id>')
 @login_required
 def delete_training(content_id):
-    """Removes metadata from Firebase and attempts to delete the local file."""
     ref = rtdb.reference(f'training_content/{content_id}')
     item = ref.get()
     
     if item:
-        # Delete local file
         try:
             os.remove(os.path.join(PREMIUM_CONTENT_FOLDER, item['filename']))
         except OSError:
-            pass # File might already be gone
+            pass 
         
-        # Remove from DB
         ref.delete()
         flash("Content removed successfully.", "info")
     
     return redirect(url_for('training_manager'))
 
-      
 # ==========================================
 # FARMERMAN ACADEMY (API ROUTES)
 # ==========================================
@@ -913,7 +840,6 @@ def update_progress():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route('/api/academy/submit-quiz', methods=['POST'])
 @login_required
 def submit_quiz():
@@ -933,7 +859,6 @@ def submit_quiz():
         return jsonify({"success": True, "message": "Score saved successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @app.route('/academy/course/<course_id>/comment', methods=['POST'])
 @premium_required
@@ -991,7 +916,6 @@ def tutor_dashboard():
                            total_enrollments=total_enrollments,
                            total_completions=total_completions)
 
-
 @app.route('/academy/tutor/gradebook')
 @tutor_required
 def tutor_gradebook():
@@ -1033,7 +957,6 @@ def tutor_gradebook():
                            student_records=student_records,
                            active_learners=active_learners,
                            total_completions=total_completions)
-
 
 @app.route('/academy/tutor/sessions', methods=['GET', 'POST'])
 @tutor_required
@@ -1086,28 +1009,10 @@ def tutor_sessions():
     return render_template('academy/tutor_sessions.html', 
                            my_courses=my_courses, 
                            my_sessions=my_sessions)
-    
-         
+          
 # ==========================================
 # TUTOR SECURITY & UPLOAD LOGIC
 # ==========================================
-
-def tutor_required(f):
-    """Gatekeeper: Only Admins or approved Tutors can build courses."""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            flash("Please log in.", "warning")
-            return redirect(url_for('client_login'))
-            
-        role = session.get('role', 'client')
-        if role not in ['admin', 'tutor']:
-            flash("Access Denied: You must be an approved Tutor to upload courses.", "danger")
-            return redirect(url_for('dashboard'))
-            
-        return f(*args, **kwargs)
-    return decorated_function
-
 @app.route('/academy/tutor/builder', methods=['GET', 'POST'])
 @tutor_required
 def course_builder():
@@ -1116,8 +1021,7 @@ def course_builder():
         title = request.form.get('course_title')
         description = request.form.get('course_description')
         category = request.form.get('category')
-        meet_link = request.form.get('meet_link', '')
-        
+        meet_link = request.form.get('meet_link', '')       
         # 2. Handle File Uploads (Video & PDF)
         video_file = request.files.get('video_file')
         resource_file = request.files.get('resource_file')
@@ -1162,6 +1066,24 @@ stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')
 PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
 
+# --- MASTER PRICING DICTIONARY ---
+# Single source of truth for all payment gateways
+SYSTEM_PRICING = {
+    'bronze': {"name": "Bronze Consulting Package", "kes": 75000, "usd": 500.00},
+    'silver': {"name": "Silver Consulting Package", "kes": 180000, "usd": 1200.00},
+    'gold': {"name": "Gold Consulting Package", "kes": 420000, "usd": 2800.00},
+    'course_entrepreneurship': {"name": "Agribusiness Entrepreneurship", "kes": 3750, "usd": 25.00},
+    'course_marketing': {"name": "Agricultural Marketing", "kes": 3000, "usd": 20.00},
+    'course_finance': {"name": "Financial Management", "kes": 4500, "usd": 30.00},
+    'course_value_chain': {"name": "Value Chain Development", "kes": 5250, "usd": 35.00},
+    'course_post_harvest': {"name": "Post-Harvest Loss Strategies", "kes": 3000, "usd": 20.00},
+    'course_bankable': {"name": "Bankable Agribusiness Projects", "kes": 6000, "usd": 40.00},
+    'course_market_intel': {"name": "Market Intelligence & Research", "kes": 7500, "usd": 50.00},
+    'course_consulting': {"name": "Agribusiness Consulting Skills", "kes": 9000, "usd": 60.00},
+    'bundle_starter': {"name": "Agribusiness Starter Bundle", "kes": 9000, "usd": 60.00},
+    'bundle_investor': {"name": "Agribusiness Investor Bundle", "kes": 18000, "usd": 120.00}
+}
+
 # --- Helper Function for Clean Code ---
 def record_successful_transaction(user_id, plan_id, amount, gateway, receipt_number):
     """Updates the user tier and logs the transaction securely."""
@@ -1192,14 +1114,14 @@ def record_successful_transaction(user_id, plan_id, amount, gateway, receipt_num
 @login_required
 def process_mpesa():
     phone = request.form.get('phone_number')
-    plan_id = request.form.get('plan_id', 'pro') 
+    plan_id = request.form.get('plan_id', 'bronze') 
     raw_amount = request.form.get('amount') 
     
-    # Validation & Fallbacks
+    # Validation & Fallbacks - Now uses SYSTEM_PRICING
     try:
-        amount = int(float(raw_amount)) if raw_amount else 3500
+        amount = int(float(raw_amount)) if raw_amount else SYSTEM_PRICING.get(plan_id, SYSTEM_PRICING['bronze'])['kes']
     except (ValueError, TypeError):
-        amount = 3500
+        amount = SYSTEM_PRICING.get(plan_id, SYSTEM_PRICING['bronze'])['kes']
         
     try:
         res = initiate_stk_push(phone, amount)
@@ -1214,7 +1136,6 @@ def process_mpesa():
                 'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
             
-            # PERFECTED: Send to the waiting room, NOT the success page!
             return redirect(url_for('payment_processing', checkout_id=checkout_id))
             
         error_msg = res.get('errorMessage', 'Safaricom service is currently unavailable.')
@@ -1242,7 +1163,7 @@ def mpesa_callback():
                 receipt = next((i['Value'] for i in meta if i['Name'] == 'MpesaReceiptNumber'), 'UNKNOWN')
                 
                 uid = pending_data.get('user_id')
-                plan_bought = pending_data.get('plan_id', 'pro')
+                plan_bought = pending_data.get('plan_id', 'bronze')
                 amount = pending_data.get('amount', 0)
                 
                 # Record the transaction securely
@@ -1260,6 +1181,28 @@ def mpesa_callback():
     except Exception as e:
         print(f"M-Pesa Callback Error: {e}")
         return jsonify({"ResultCode": 1, "ResultDesc": "Internal Server Error"}), 500
+
+@app.route('/checkout')
+@login_required 
+def subscriber_checkout():
+    # 1. Get the plan from the URL (e.g., /checkout?plan=silver or ?plan=course_marketing)
+    # If no plan is specified, it safely defaults to 'bronze'
+    plan_id = request.args.get('plan', 'bronze')
+    
+    # 2. Look up the exact pricing from our master dictionary (SYSTEM_PRICING)
+    selected_plan = SYSTEM_PRICING.get(plan_id, SYSTEM_PRICING['bronze'])
+
+    # 3. Send the dynamic prices to the HTML template
+    return render_template(
+        'payments/subscriber_checkout.html',
+        plan_id=plan_id, 
+        plan_name=selected_plan['name'], 
+        amount_kes=selected_plan['kes'], 
+        amount_usd=selected_plan['usd'],
+        paystack_public_key=os.environ.get('PAYSTACK_PUBLIC_KEY', ''),
+        stripe_public_key=os.environ.get('STRIPE_PUBLIC_KEY', ''),
+        paypal_client_id=os.environ.get('PAYPAL_CLIENT_ID', '')
+    )
 
 @app.route('/payment-processing/<checkout_id>')
 @login_required
@@ -1280,32 +1223,29 @@ def check_payment_status(checkout_id):
     
     # If the transaction is GONE, mpesa_callback successfully processed it!
     return jsonify({'status': 'completed'})
+
 # --- 2. STRIPE LOGIC ---
 @app.route('/create-stripe-session', methods=['POST'])
 @login_required
 def create_stripe_session():
     try:
         data = request.json
-        plan_id = data.get('plan', 'pro')
+        plan_id = data.get('plan', 'bronze')
         
-        # Consistent USD pricing (Stripe expects amount in cents)
-        pricing_tiers = {
-            'basic': {'name': 'Smallholder Plan', 'price': 500},       # $5.00
-            'pro': {'name': 'Agribusiness Pro', 'price': 2500},       # $25.00
-            'enterprise': {'name': 'Enterprise & NGO', 'price': 15000} # $150.00 (Fixed from 150000)
-        }
-        
-        selected_plan = pricing_tiers.get(plan_id, pricing_tiers['pro'])
+        # Look up the plan in our master dictionary
+        selected_plan = SYSTEM_PRICING.get(plan_id, SYSTEM_PRICING['bronze'])
+        # Stripe expects amounts in cents, so we multiply the USD amount by 100
+        amount_in_cents = int(selected_plan['usd'] * 100)
 
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
                 'price_data': {
                     'currency': 'usd',
-                    'unit_amount': selected_plan['price'],
+                    'unit_amount': amount_in_cents,
                     'product_data': {
                         'name': f"Farmerman Systems: {selected_plan['name']}",
-                        'description': f"Access to {plan_id.capitalize()} market intelligence tools"
+                        'description': f"Payment for {selected_plan['name']}"
                     },
                 },
                 'quantity': 1,
@@ -1328,19 +1268,18 @@ def create_stripe_session():
 @login_required
 def stripe_success():
     """Validates the redirect back from Stripe."""
-    plan_id = request.args.get('plan_id', 'pro')
+    plan_id = request.args.get('plan_id', 'bronze')
     session_id = request.args.get('session_id')
     user_id = session.get('user_id')
     
-    # Pricing map for database recording (Standard USD)
-    pricing = {'basic': 5.00, 'pro': 25.00, 'enterprise': 150.00}
+    # Grab the accurate USD price for the receipt
+    amount_paid = SYSTEM_PRICING.get(plan_id, SYSTEM_PRICING['bronze'])['usd']
     
     if session_id and user_id:
-        record_successful_transaction(user_id, plan_id, pricing.get(plan_id, 25.0), "Stripe", f"STR_{session_id[-8:]}")
+        record_successful_transaction(user_id, plan_id, amount_paid, "Stripe", f"STR_{session_id[-8:]}")
         return redirect(url_for('payment_success'))
     
     return redirect(url_for('pricing'))
-
 
 # --- 3. PAYPAL LOGIC ---
 @app.route('/paypal-transaction-complete', methods=['POST'])
@@ -1349,12 +1288,11 @@ def paypal_transaction_complete():
     try:
         data = request.json
         order_id = data.get('orderID')
-        plan_id = data.get('plan', 'pro')
+        plan_id = data.get('plan', 'bronze')
         user_id = session.get('user_id')
         
-        # Map amount for consistent database records
-        pricing = {'basic': 5.00, 'pro': 25.00, 'enterprise': 150.00}
-        amount_paid = pricing.get(plan_id, 25.00)
+        # Grab the accurate USD price for the receipt
+        amount_paid = SYSTEM_PRICING.get(plan_id, SYSTEM_PRICING['bronze'])['usd']
         
         if user_id and order_id:
             record_successful_transaction(user_id, plan_id, amount_paid, "PayPal", f"PAY_{order_id}")
@@ -1365,20 +1303,18 @@ def paypal_transaction_complete():
         print(f"PayPal Recording Error: {e}")
         return jsonify({"status": "failed"}), 500
 
-
 # --- 4. PAYSTACK LOGIC ---
 @app.route('/verify-paystack')
 @login_required
 def verify_paystack():
     reference = request.args.get('reference')
-    plan_id = request.args.get('plan', 'pro')
+    plan_id = request.args.get('plan', 'bronze')
     user_id = session.get('user_id')
     
     if not reference or not user_id: 
         flash("Invalid transaction reference.", "warning")
         return redirect(url_for('pricing'))
     
-    # PAYSTACK_SECRET_KEY should be in your .env file
     secret_key = os.environ.get('PAYSTACK_SECRET_KEY')
     verify_url = f"https://api.paystack.co/transaction/verify/{reference}"
     headers = {"Authorization": f"Bearer {secret_key}"}
@@ -1388,7 +1324,7 @@ def verify_paystack():
         response_data = response.json()
         
         if response_data.get('status') is True and response_data.get('data', {}).get('status') == 'success':
-            # Paystack sends amount in Kobo/Cents (KES 3500 is 350000)
+            # Paystack sends amount in Kobo/Cents, so we divide by 100
             actual_amount = response_data['data']['amount'] / 100 
             
             record_successful_transaction(user_id, plan_id, actual_amount, "Paystack", reference)
@@ -1403,40 +1339,48 @@ def verify_paystack():
         
     return redirect(url_for('pricing'))
 
-
 # --- SUCCESS PAGE ---
 @app.route('/success')
 @login_required
 def payment_success(): 
-    # Updated to point to the payments folder
     return render_template('payments/payment_success.html')
-
 
 #==========================================
 # STATIC PAGES & ERRORS
 # ==========================================
 @app.route('/')
-def home(): return render_template('home.html')
-@app.route('/about')
-def about_us(): return render_template('about us.html')
-@app.route('/impact')
-def impact_initiatives(): return render_template('impact&initiatives.html')
-@app.route('/pricing')
-def pricing_subscription(): return render_template('payments/pricing_subscription.html')
-@app.route('/services')
-def services(): return render_template('our services.html')
-@app.route('/privacy-policy')
-def privacy_policy(): return render_template('privacy policy.html')
+def home(): 
+    return render_template('home.html')
 
+@app.route('/about')
+def about_us(): 
+    return render_template('about us.html')
+
+@app.route('/impact')
+def impact_initiatives(): 
+    return render_template('impact&initiatives.html')
+
+@app.route('/services')
+def services(): 
+    return render_template('our services.html')
+
+@app.route('/privacy-policy')
+def privacy_policy(): 
+    return render_template('privacy policy.html')
+
+# DEDUPLICATED PRICING ROUTE
 @app.route('/pricing')
 def pricing():
     # Notice the "payments/" folder prefix here
     return render_template('payments/pricing_subscription.html')
 
 @app.route('/terms-of-service')
-def terms_of_service(): return render_template('terms of service.html')
+def terms_of_service(): 
+    return render_template('terms of service.html')
+
 @app.route('/refund-policy')
-def refund_policy(): return render_template('subscription&refund policy.html')
+def refund_policy(): 
+    return render_template('subscription&refund policy.html')
 
 @app.route('/contact', methods=['GET', 'POST'])
 def contact_us(): 
@@ -1453,13 +1397,13 @@ def contact_us():
         user_html = render_template('email_user_confirmation.html', name=name, message=message, year=current_year)
         admin_html = render_template('email_admin_notification.html', name=name, email=email, subject=subject, message=message, timestamp=timestamp)
         
-        threading.Thread(target=send_async_emails, args=(email, MAIL_USERNAME, user_html, admin_html, name, message, subject)).start()
+        # BUG FIX: Use app.config['MAIL_USERNAME'] instead of undefined MAIL_USERNAME
+        threading.Thread(target=send_async_emails, args=(email, app.config['MAIL_USERNAME'], user_html, admin_html, name, message, subject)).start()
         
         flash("Message sent! Check your email for a confirmation receipt.", "success")
         return redirect(url_for('contact_us'))
         
     return render_template('contact us.html')
-
 
 @app.route('/delete_account', methods=['POST'])
 @login_required
