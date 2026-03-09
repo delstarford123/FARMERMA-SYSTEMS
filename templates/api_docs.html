@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* Prevent FOUC for GSAP */
+    .docs-sidebar, .docs-content, .code-block-wrapper { opacity: 0; }
+    
+    .code-block-wrapper {
+        position: relative;
+        background: #1e1e1e;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .copy-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255,255,255,0.1);
+        border: none;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 5px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    
+    .copy-btn:hover { background: rgba(255,255,255,0.2); }
+    
+    .docs-nav-link {
+        color: #5D4037;
+        transition: 0.2s;
+        border-left: 3px solid transparent;
+    }
+    
+    .docs-nav-link:hover, .docs-nav-link.active {
+        color: #2E7D32;
+        background: #E8F5E9;
+        border-left-color: #2E7D32;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-white min-vh-100 py-5 border-top">
+    <div class="container py-4">
+        <div class="row">
+            
+            <div class="col-md-3 d-none d-md-block border-end docs-sidebar">
+                <h5 class="fw-bold mb-4" style="color: var(--plant-green);">
+                    <i class="bi bi-terminal me-2"></i>Farmerman API
+                </h5>
+                <div class="list-group list-group-flush sticky-top" style="top: 100px;">
+                    <a href="#intro" class="list-group-item list-group-item-action docs-nav-link border-0">Introduction</a>
+                    <a href="#auth" class="list-group-item list-group-item-action docs-nav-link border-0">Authentication</a>
+                    <a href="#endpoints" class="list-group-item list-group-item-action docs-nav-link active border-0">Endpoints</a>
+                    <a href="#get-prices" class="list-group-item list-group-item-action docs-nav-link border-0 ms-3 small">GET /api/market-prices</a>
+                    <a href="#errors" class="list-group-item list-group-item-action docs-nav-link border-0">Error Codes</a>
+                </div>
+            </div>
+
+            <div class="col-md-9 ps-md-5 docs-content">
+                
+                <div id="intro" class="mb-5">
+                    <h1 class="fw-bold mb-3" style="color: var(--soil-brown);">Farmerman Systems API</h1>
+                    <p class="text-muted lead">Build agricultural intelligence into your own applications. The Farmerman API allows Enterprise clients to fetch live commodity prices directly from our Kakamega and Western region data nodes.</p>
+                </div>
+
+                <hr class="my-5">
+
+                <div id="auth" class="mb-5">
+                    <h3 class="fw-bold mb-3">Authentication</h3>
+                    <p class="text-muted">The Farmerman API uses Bearer Tokens to authenticate requests. You must include your Enterprise API key in the `Authorization` header of every request.</p>
+                    <div class="alert border-warning bg-warning bg-opacity-10 d-flex align-items-center">
+                        <i class="bi bi-shield-lock-fill text-warning fs-4 me-3"></i>
+                        <span class="small text-dark"><strong>Keep your token secure.</strong> Never expose it in client-side code (like frontend JavaScript). Route all requests through your secure backend.</span>
+                    </div>
+                </div>
+
+                <hr class="my-5">
+
+                <div id="get-prices" class="mb-5">
+                    <h3 class="fw-bold mb-3">Retrieve Market Prices</h3>
+                    <p class="text-muted">Fetch an array of live agricultural commodity prices across tracked regions.</p>
+                    
+                    <div class="d-flex align-items-center bg-light p-3 rounded mb-4 border position-relative code-block-wrapper">
+                        <span class="badge bg-success me-3 fs-6 px-3 py-2">GET</span>
+                        <code class="fs-6 text-light" id="endpoint-url">https://farmerman-systems.onrender.com/api/market-prices</code>
+                        <button class="copy-btn" onclick="copyText('endpoint-url', this)"><i class="bi bi-clipboard"></i> Copy</button>
+                    </div>
+
+                    <h5 class="fw-bold mt-5 mb-3">Headers</h5>
+                    <table class="table table-bordered mb-5 align-middle">
+                        <thead class="table-light">
+                            <tr><th>Header</th><th>Required</th><th>Description</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code class="text-dark">Authorization</code></td>
+                                <td><span class="badge bg-danger">Required</span></td>
+                                <td>Format: <code>Bearer YOUR_API_TOKEN</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h5 class="fw-bold mb-3">JSON Response Example (200 OK)</h5>
+                    <div class="code-block-wrapper p-4 shadow-sm">
+                        <button class="copy-btn" onclick="copyText('json-response', this)"><i class="bi bi-clipboard"></i> Copy</button>
+<pre class="mb-0"><code id="json-response" style="color: #a6e22e;">[
+  {
+    "id": "-NkXyZpQwE2_3",
+    "commodity": "Maize (90kg)",
+    "region": "Kakamega",
+    "price": 3500.0,
+    "currency": "KES",
+    "trend": "up",
+    "updated_at": "2026-03-09 08:30:00"
+  },
+  {
+    "id": "-NlAbCdEfG4_5",
+    "commodity": "Beans (90kg)",
+    "region": "Western",
+    "price": 9200.0,
+    "currency": "KES",
+    "trend": "stable",
+    "updated_at": "2026-03-09 09:15:00"
+  }
+]</code></pre>
+                    </div>
+                </div>
+
+                <hr class="my-5">
+
+                <div id="errors" class="mb-5">
+                    <h3 class="fw-bold mb-3">Error Codes</h3>
+                    <table class="table table-striped align-middle">
+                        <tbody>
+                            <tr>
+                                <td><span class="badge bg-secondary">401 Unauthorized</span></td>
+                                <td class="text-muted small">No API token provided, or token is invalid.</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-warning text-dark">403 Forbidden</span></td>
+                                <td class="text-muted small">Valid token provided, but your account is not on the Enterprise tier.</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-danger">500 Server Error</span></td>
+                                <td class="text-muted small">An internal issue occurred connecting to the Farmerman Database.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+    // GSAP Animations
+    gsap.to(".docs-sidebar", { opacity: 1, x: 0, startAt: { x: -30 }, duration: 0.8, ease: "power2.out" });
+    gsap.to(".docs-content", { opacity: 1, y: 0, startAt: { y: 30 }, duration: 0.8, delay: 0.2, ease: "power2.out" });
+    gsap.to(".code-block-wrapper", { opacity: 1, y: 0, startAt: { y: 20 }, stagger: 0.2, duration: 0.6, delay: 0.5 });
+
+    // Copy to Clipboard Function
+    function copyText(elementId, btnElement) {
+        const text = document.getElementById(elementId).innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const originalHTML = btnElement.innerHTML;
+            btnElement.innerHTML = '<i class="bi bi-check2"></i> Copied!';
+            btnElement.classList.add('text-success');
+            setTimeout(() => {
+                btnElement.innerHTML = originalHTML;
+                btnElement.classList.remove('text-success');
+            }, 2000);
+        });
+    }
+
+    // Simple scroll spy for sidebar highlighting
+    const links = document.querySelectorAll('.docs-nav-link');
+    links.forEach(link => {
+        link.addEventListener('click', function() {
+            links.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+</script>
+{% endblock %}

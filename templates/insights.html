@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* Prevent FOUC for GSAP */
+    .insight-header, .insight-card { opacity: 0; }
+    
+    /* Premium Hover Effect */
+    .insight-card-wrap {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .insight-card-wrap:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="py-5 bg-white min-vh-100">
+    <div class="container py-4">
+        
+        <div class="text-center mb-5 insight-header">
+            <h1 class="fw-bold" style="color: var(--soil-brown);">Thought Leadership</h1>
+            <p class="lead text-muted max-w-75 mx-auto">Research, policy analysis, and market trends shaping the future of African agriculture.</p>
+        </div>
+
+        <div class="row g-4">
+            {% if articles %}
+                {% for article in articles %}
+                <div class="col-lg-4 col-md-6 insight-card">
+                    <div class="card h-100 shadow-sm border-0 insight-card-wrap" style="border-radius: 15px; overflow: hidden;">
+                        <img src="{{ article.img }}" class="card-img-top" alt="Article image" style="height: 200px; object-fit: cover;">
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="badge bg-success bg-opacity-10 text-success">{{ article.category }}</span>
+                                <small class="text-muted"><i class="bi bi-clock me-1"></i>{{ article.read_time }}</small>
+                            </div>
+                            <h5 class="card-title fw-bold text-dark mb-3">{{ article.title }}</h5>
+                            
+                            <p class="text-muted small mb-4 flex-grow-1">
+                                {{ article.summary | default("Click to read the full insight and analysis on this topic.") }}
+                            </p>
+                            
+                            <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
+                                <p class="text-muted small mb-0">{{ article.date }}</p>
+                                <a href="{{ url_for('read_insight', article_id=article.id) }}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold">Read Article</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12 text-center py-5 insight-card">
+                    <div class="p-5 border rounded-4 bg-light shadow-sm">
+                        <i class="bi bi-newspaper text-secondary display-1 mb-3 d-block opacity-50"></i>
+                        <h3 class="text-dark fw-bold">No Articles Published Yet</h3>
+                        <p class="text-muted lead max-w-75 mx-auto">Our intelligence team is currently compiling new research, policy analyses, and market trends. Check back soon for our latest publications.</p>
+                        
+                        {% if session.get('role') == 'admin' %}
+                            <a href="/admin/dashboard" class="btn btn-outline-info mt-3 fw-bold">Go to Admin Dashboard to Post an Article</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        {% if articles %}
+        <div class="text-center mt-5 insight-card">
+            <button class="btn btn-outline-success px-4 py-2 fw-bold">Load More Insights</button>
+        </div>
+        {% endif %}
+        
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+    // Reveal Animations
+    gsap.to(".insight-header", { opacity: 1, y: 0, startAt: { y: -20 }, duration: 0.8, ease: "power2.out" });
+    gsap.to(".insight-card", { opacity: 1, y: 0, startAt: { y: 30 }, stagger: 0.15, duration: 0.8, delay: 0.2, ease: "power2.out" });
+</script>
+{% endblock %}

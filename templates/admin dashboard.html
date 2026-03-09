@@ -55,7 +55,7 @@
             </div>
         </div>
 
-        <div class="row g-4">
+        <div class="row g-4 mb-5">
             <div class="col-md-4">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-dark text-white fw-bold">
@@ -117,6 +117,166 @@
                 </div>
             </div>
         </div>
+
+        <h4 class="fw-bold mb-3 mt-5">Enterprise Nexus Manager</h4>
+        
+        <div class="row g-4">
+            
+            <div class="col-lg-4 col-md-12">
+                <div class="card shadow-sm border-0 border-top border-warning border-4 h-100">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-briefcase text-warning me-2"></i>Publish Deal</h5>
+                        <form action="/admin/add-deal" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Project Title</label>
+                                <input type="text" name="title" class="form-control bg-light border-0" placeholder="e.g., Kakamega Dairy" required>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Ask (USD)</label>
+                                    <input type="text" name="ask" class="form-control bg-light border-0" placeholder="$50,000" required>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Est. ROI</label>
+                                    <input type="text" name="roi" class="form-control bg-light border-0" placeholder="14%" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Sector</label>
+                                <input type="text" name="sector" class="form-control bg-light border-0" placeholder="Agri-Tech" required>
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Risk Level</label>
+                                    <select name="risk" class="form-select bg-light border-0">
+                                        <option value="Low">Low</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="High">High</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Status</label>
+                                    <select name="status" class="form-select bg-light border-0">
+                                        <option value="Funding">Funding</option>
+                                        <option value="Reviewing">Reviewing</option>
+                                        <option value="Closed">Closed</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-warning w-100 fw-bold text-dark">Push to Deal Room</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-12">
+                <div class="card shadow-sm border-0 border-top border-info border-4 h-100">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-lightbulb text-info me-2"></i>Publish Insight</h5>
+                        
+                        <form action="/admin/add-insight" method="POST" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Article Title</label>
+                                <input type="text" name="title" class="form-control bg-light border-0" placeholder="Title..." required>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Category</label>
+                                    <select name="category" class="form-select bg-light border-0">
+                                        <option value="Strategy">Strategy</option>
+                                        <option value="Market Data">Market Data</option>
+                                        <option value="Finance">Finance</option>
+                                        <option value="Climate">Climate</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Read Time</label>
+                                    <input type="text" name="read_time" class="form-control bg-light border-0" placeholder="5 min" required>
+                                </div>
+                            </div>
+
+                            <div class="p-2 bg-light rounded border mb-3">
+                                <h6 class="fw-bold text-muted small mb-2">Media Uploads</h6>
+                                <div class="mb-2">
+                                    <label class="form-label small mb-0">Cover Image (Req)</label>
+                                    <input type="file" name="image_file" class="form-control form-control-sm border-0" accept="image/*" required>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small mb-0">Featured Video</label>
+                                    <input type="file" name="video_file" class="form-control form-control-sm border-0" accept="video/*">
+                                </div>
+                                <div>
+                                    <label class="form-label small mb-0">Podcast / Audio</label>
+                                    <input type="file" name="audio_file" class="form-control form-control-sm border-0" accept="audio/*">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Short Summary</label>
+                                <textarea name="summary" class="form-control bg-light border-0" rows="2" placeholder="Hook..." required></textarea>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold">Full Content</label>
+                                <textarea name="content" class="form-control bg-light border-0" rows="3" placeholder="Full article..." required></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-info text-white w-100 fw-bold">Upload & Publish</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-12">
+                <div class="card shadow-sm border-0 border-top border-primary border-4 h-100">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-cloud-sun text-primary me-2"></i>Publish Climate Alert</h5>
+                        <form action="/admin/add-climate-alert" method="POST">
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Region</label>
+                                    <input type="text" name="region" class="form-control bg-light border-0" placeholder="Kakamega, KE" required>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Weather</label>
+                                    <div class="input-group">
+                                        <input type="text" name="condition" class="form-control bg-light border-0 px-1" placeholder="Showers" required>
+                                        <input type="number" name="temp" class="form-control bg-light border-0 px-1" placeholder="°C" style="max-width: 45px;" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Humidity (%)</label>
+                                    <input type="number" name="humidity" class="form-control bg-light border-0" placeholder="85" required>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold">Wind (km/h)</label>
+                                    <input type="number" name="wind" class="form-control bg-light border-0" placeholder="12" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Alert Type</label>
+                                <select name="alert_type" class="form-select bg-light border-0">
+                                    <option value="success">Positive (e.g. Good to plant)</option>
+                                    <option value="warning">Warning (e.g. Disease risk)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Advice Title</label>
+                                <input type="text" name="title" class="form-control bg-light border-0" placeholder="e.g. Fertilizer App" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold">Detailed Advice</label>
+                                <textarea name="advice" class="form-control bg-light border-0" rows="3" placeholder="Light showers expected..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 fw-bold">Push to Climate Hub</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
     </div>
 </div>
 {% endblock %}

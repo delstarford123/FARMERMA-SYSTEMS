@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid chat-wrapper theme-green" id="chat-theme-wrapper">
+    <div class="row h-100 p-3">
+        
+        <div class="col-md-4 col-lg-3 h-100 bg-white rounded-start shadow-sm border-end d-flex flex-column p-0">
+            <div class="p-3 bg-theme-primary text-white d-flex justify-content-between align-items-center rounded-top-start">
+                <h5 class="mb-0 fw-bold">Messages</h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-palette"></i>
+                    </button>
+                    <ul class="dropdown-menu shadow">
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-green')">🟢 Agribusiness Green</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-blue')">🔵 Sky Blue</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-yellow')">🟡 Harvest Yellow</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="contact-list overflow-auto flex-grow-1 p-2" id="contact-list">
+                {% for contact in contacts %}
+                <div class="contact-card p-3 mb-2 rounded border-bottom" onclick="openChat('{{ contact.uid }}', '{{ contact.name }}')">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0 fw-bold">{{ contact.name }}</h6>
+                            <small class="text-muted">{{ contact.role | capitalize }}</small>
+                        </div>
+                        <span class="status-indicator offline" id="status-{{ contact.uid }}"></span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-8 col-lg-9 h-100 bg-theme-light rounded-end shadow-sm d-flex flex-column p-0 position-relative">
+            <div id="chat-blank-state" class="h-100 d-flex flex-column align-items-center justify-content-center text-muted">
+                <i class="bi bi-chat-dots display-1 mb-3"></i>
+                <h4>Select a contact to start chatting</h4>
+            </div>
+
+            <div id="chat-active-state" class="h-100 d-none flex-column">
+                <div class="p-3 bg-white border-bottom shadow-sm d-flex align-items-center rounded-top-end">
+                    <h5 class="mb-0 fw-bold" id="active-chat-name">Farmer Name</h5>
+                </div>
+                
+                <div class="chat-messages flex-grow-1 overflow-auto p-4" id="chat-messages">
+                    </div>
+
+                <div class="p-3 bg-white border-top rounded-bottom-end">
+                    <div class="input-group">
+                        <label class="btn btn-outline-secondary" style="cursor: pointer;">
+                            <i class="bi bi-paperclip"></i>
+                            <input type="file" id="media-upload" class="d-none" accept="image/*,video/*,audio/*">
+                        </label>
+                        <input type="text" id="chat-input" class="form-control" placeholder="Type a message...">
+                        <button class="btn btn-theme-primary" id="send-btn">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                    <small id="upload-status" class="text-success d-none mt-1">Uploading media...</small>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    // Pass Python variables to external JS securely
+    const CURRENT_USER_ID = "{{ current_uid }}";
+</script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

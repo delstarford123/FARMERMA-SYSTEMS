@@ -1,0 +1,62 @@
+/* --- THEME VARIABLES --- */
+.theme-green {
+    --theme-primary: #2E7D32;
+    --theme-light: #E8F5E9;
+    --bubble-sent: #DCF8C6;
+}
+.theme-blue {
+    --theme-primary: #0288D1;
+    --theme-light: #E1F5FE;
+    --bubble-sent: #B3E5FC;
+}
+.theme-yellow {
+    --theme-primary: #F57F17;
+    --theme-light: #FFFDE7;
+    --bubble-sent: #FFF59D;
+}
+
+/* --- UI STYLING --- */
+.chat-wrapper { height: 85vh; margin-top: -20px; }
+.bg-theme-primary { background-color: var(--theme-primary); color: white; }
+.bg-theme-light { background-color: var(--theme-light); }
+.btn-theme-primary { background-color: var(--theme-primary); color: white; }
+.btn-theme-primary:hover { background-color: var(--theme-primary); opacity: 0.9; color: white;}
+
+/* Contacts Sidebar */
+.contact-card { cursor: pointer; transition: background 0.2s; background: white;}
+.contact-card:hover { background-color: #f8f9fa; }
+.status-indicator { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.status-indicator.online { background-color: #4CAF50; box-shadow: 0 0 5px #4CAF50; }
+.status-indicator.offline { background-color: #9E9E9E; }
+
+/* Chat Bubbles (WhatsApp Style) */
+.chat-messages {
+    background-image: url('https://www.transparenttextures.com/patterns/cubes.png'); /* Subtle background pattern */
+}
+.msg-bubble {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    word-wrap: break-word;
+}
+.msg-sent {
+    background-color: var(--bubble-sent);
+    align-self: flex-end;
+    margin-left: auto;
+    border-bottom-right-radius: 0;
+}
+.msg-received {
+    background-color: #ffffff;
+    align-self: flex-start;
+    margin-right: auto;
+    border-bottom-left-radius: 0;
+}
+.msg-time { font-size: 0.7rem; color: #888; display: block; text-align: right; margin-top: 5px; }
+.chat-media { max-width: 100%; border-radius: 10px; margin-top: 5px; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }

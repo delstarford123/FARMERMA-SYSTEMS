@@ -120,6 +120,21 @@
                     <li class="nav-item"><a class="nav-link" href="/pricing">Pricing</a></li>
 
                     <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle fw-bold text-light" href="#" id="nexusDropdown" data-bs-toggle="dropdown">
+                            <i class="bi bi-globe-central-south-asia me-1"></i> Enterprise Nexus
+                        </a>
+                        <ul class="dropdown-menu shadow-sm border-0 mt-2">
+                            <li><h6 class="dropdown-header fw-bold text-uppercase" style="color: var(--plant-green);">Strategic Portals</h6></li>
+                            <li><a class="dropdown-item" href="/deal-room"><i class="bi bi-briefcase-fill me-2"></i>The Deal Room</a></li>
+                            <li><a class="dropdown-item" href="/climate"><i class="bi bi-cloud-sun-fill me-2"></i>Climate Intelligence</a></li>
+                            <li><a class="dropdown-item" href="/insights"><i class="bi bi-lightbulb-fill me-2"></i>Insights & Research</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header fw-bold text-uppercase text-muted">Developers</h6></li>
+                            <li><a class="dropdown-item" href="/api-docs"><i class="bi bi-code-slash me-2"></i>API Documentation</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle fw-bold text-warning" href="#" id="academyDropdown" data-bs-toggle="dropdown">
                             <i class="bi bi-mortarboard-fill me-1"></i> Academy
                         </a>
@@ -161,13 +176,23 @@
                         </ul>
                     </li>
 
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle fw-bold text-light" href="#" id="farsaapDropdown" data-bs-toggle="dropdown" style="background-color: rgba(255,255,255,0.1); border-radius: 20px; padding-left: 15px; padding-right: 15px;">
+                            <i class="bi bi-chat-dots-fill me-1"></i> Farsaap
+                        </a>
+                        <ul class="dropdown-menu shadow-sm border-0 mt-2">
+                            <li><h6 class="dropdown-header fw-bold text-uppercase" style="color: var(--plant-green);">Network</h6></li>
+                            <li><a class="dropdown-item" href="/chat"><i class="bi bi-whatsapp me-2 text-success"></i>Open Farsaap</a></li>
+                        </ul>
+                    </li>
+
                     {% if not session.get('user_id') %}
-                    <li class="nav-item ms-lg-4 mt-3 mt-lg-0"><a class="nav-link text-white fw-bold" href="/login">Log In</a></li>
+                    <li class="nav-item ms-lg-3 mt-3 mt-lg-0"><a class="nav-link text-white fw-bold" href="/login">Log In</a></li>
                     <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
                         <a class="btn btn-light fw-bold rounded-pill px-4 shadow-sm" href="/register" style="color: var(--plant-green);">Subscribe</a>
                     </li>
                     {% else %}
-                    <li class="nav-item ms-lg-4 mt-3 mt-lg-0"><a class="btn btn-sm btn-outline-light rounded-pill px-4" href="/logout">Logout</a></li>
+                    <li class="nav-item ms-lg-3 mt-3 mt-lg-0"><a class="btn btn-sm btn-outline-light rounded-pill px-4" href="/logout">Logout</a></li>
                     {% endif %}
                 </ul>
             </div>

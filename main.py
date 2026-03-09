@@ -5,10 +5,11 @@ import stripe
 import requests
 import threading
 import smtplib
+import time
+import uuid # <-- Essential for generating unique cloud filenames
 from datetime import datetime, timedelta
 from functools import wraps 
 from email.message import EmailMessage
-
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import NotFound
@@ -16,10 +17,11 @@ from werkzeug.exceptions import NotFound
 # Flask & Extensions
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, flash, send_from_directory, abort
 from flask_mail import Mail, Message
+from flask_socketio import SocketIO, emit, join_room, leave_room
 
 # Firebase Imports
 import firebase_admin
-from firebase_admin import credentials, auth, db as firebase_db
+from firebase_admin import credentials, auth, db as firebase_db, storage # <-- Essential: Added 'storage'
 
 # Internal Project Imports
 from models import db as sqlalchemy_db, User, MarketData, Transaction 
@@ -57,6 +59,16 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///farmerman.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 sqlalchemy_db.init_app(app)
 
+# Initialize SocketIO for real-time chat
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+
+# Dictionary to track who is currently online { 'user_id': 'socket_id' }
+online_users = {}
+
+# Folder for legacy chat media (Fallback if cloud fails)
+CHAT_MEDIA_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'chat_media')
+os.makedirs(CHAT_MEDIA_FOLDER, exist_ok=True)
+
 # ==========================================
 # CONSTANTS & UPLOAD CONFIGURATIONS
 # ==========================================
@@ -80,7 +92,8 @@ try:
     if not firebase_admin._apps:
         cred = credentials.Certificate(cert_path)
         firebase_admin.initialize_app(cred, {
-            'databaseURL': 'https://farmerman-systems-default-rtdb.firebaseio.com/'
+            'databaseURL': 'https://farmerman-systems-default-rtdb.firebaseio.com/',
+            'storageBucket': 'farmerman-systems.firebasestorage.app'
         })
     
     rtdb = firebase_db 
@@ -99,6 +112,36 @@ except Exception as e:
 with app.app_context():
     sqlalchemy_db.create_all()
 
+
+# ==========================================
+# FIREBASE CLOUD STORAGE UPLOADER (NEW!)
+# ==========================================
+def upload_to_firebase_storage(file_obj, folder_name):
+    """Uploads a file to Firebase Cloud Storage and returns an unguessable public URL."""
+    try:
+        bucket = storage.bucket()
+        
+        # 1. Generate a secure, unique filename (e.g., 123e4567-e89b.png)
+        extension = file_obj.filename.rsplit('.', 1)[1].lower()
+        unique_filename = f"{uuid.uuid4()}.{extension}"
+        blob_path = f"{folder_name}/{unique_filename}"
+        
+        # 2. Upload to Firebase
+        blob = bucket.blob(blob_path)
+        file_obj.seek(0) # Ensure we read from the beginning of the file
+        blob.upload_from_file(file_obj, content_type=file_obj.content_type)
+        
+        # 3. Make the file readable by the web browser
+        blob.make_public()
+        
+        # 4. Return the permanent cloud URL
+        return blob.public_url
+        
+    except Exception as e:
+        print(f"Firebase Storage Error: {e}")
+        return None
+
+
 # ==========================================
 # ASYNC EMAIL FUNCTIONS
 # ==========================================
@@ -108,7 +151,6 @@ def send_async_emails(user_email, admin_email, user_msg_html, admin_msg_html, na
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server: 
             server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
             
-            # Send to User
             user_msg = EmailMessage()
             user_msg['Subject'] = "We received your message - Farmerman Systems"
             user_msg['From'] = f"Farmerman Support <{app.config['MAIL_USERNAME']}>"
@@ -117,7 +159,6 @@ def send_async_emails(user_email, admin_email, user_msg_html, admin_msg_html, na
             user_msg.add_alternative(user_msg_html, subtype='html')
             server.send_message(user_msg)
             
-            # Send to Admin
             admin_msg = EmailMessage()
             admin_msg['Subject'] = f"🚨 {inquiry_subject} Inquiry from {name}"
             admin_msg['From'] = f"Farmerman Server <{app.config['MAIL_USERNAME']}>"
@@ -242,6 +283,7 @@ def token_admin_required(f):
         except Exception: return jsonify({"error": "Invalid token"}), 401
         return f(*args, **kwargs)
     return decorated_function
+
 
 # ==========================================
 # BACKGROUND EMAIL WORKER
@@ -1438,6 +1480,248 @@ def diagnostics():
     }
     return render_template('diagnostics.html', data=health_data)
 
+# ==========================================
+# REAL-TIME CHAT SYSTEM (Strict Privacy & Online-Only)
+# ==========================================
+@app.route('/chat')
+@login_required
+def chat_home():
+    """Renders the main WhatsApp-style chat UI, ONLY showing online users."""
+    current_uid = session.get('user_id')
+    
+    # Fetch all users from database
+    all_users = rtdb.reference('users').get() or {}
+    
+    contacts = []
+    for uid, data in all_users.items():
+        # PRIVACY & PRESENCE FILTER: 
+        # 1. Don't show yourself. 
+        # 2. ONLY show users whose IDs are currently in the active `online_users` dictionary.
+        if uid != current_uid and uid in online_users:
+            contacts.append({
+                'uid': uid,
+                'name': data.get('full_name', 'Farmer'),
+                'role': data.get('role', 'client')
+            })
+            
+    return render_template('chat/index.html', contacts=contacts, current_uid=current_uid)
+
+@app.route('/api/chat/upload', methods=['POST'])
+@login_required
+def upload_chat_media():
+    """Handles image, video, and audio uploads from the chat directly to Cloud Storage."""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file'}), 400
+        
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'Empty file'}), 400
+        
+    # Use the Firebase Storage uploader we built earlier!
+    file_url = upload_to_firebase_storage(file, 'chat_media')
+    
+    if file_url:
+        return jsonify({'url': file_url, 'type': file.content_type}), 200
+    else:
+        return jsonify({'error': 'Cloud upload failed'}), 500
+
+# --- SOCKET.IO EVENTS ---
+@socketio.on('connect')
+def handle_connect():
+    uid = session.get('user_id')
+    if uid:
+        online_users[uid] = request.sid
+        # Broadcast to everyone that this user is online
+        emit('user_status', {'uid': uid, 'status': 'online'}, broadcast=True)
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    uid = session.get('user_id')
+    if uid and uid in online_users:
+        del online_users[uid]
+        # Broadcast that user went offline
+        emit('user_status', {'uid': uid, 'status': 'offline'}, broadcast=True)
+
+@socketio.on('join_chat')
+def handle_join_chat(data):
+    """Creates an impenetrable private room for two users."""
+    uid1 = session.get('user_id')
+    uid2 = data.get('target_uid')
+    
+    # SECURITY: Using min() and max() ensures that whether User A clicks User B, 
+    # or User B clicks User A, they both generate the exact same hidden room key.
+    room = f"room_{min(uid1, uid2)}_{max(uid1, uid2)}"
+    join_room(room)
+    
+    # Fetch private chat history
+    history = rtdb.reference(f'chats/{room}').get() or {}
+    messages = [msg for msg in history.values()]
+    
+    emit('chat_history', messages)
+
+@socketio.on('send_message')
+def handle_send_message(data):
+    sender_id = session.get('user_id')
+    receiver_id = data.get('receiver_id')
+    text = data.get('text', '')
+    media_url = data.get('media_url', None)
+    media_type = data.get('media_type', None)
+    
+    room = f"room_{min(sender_id, receiver_id)}_{max(sender_id, receiver_id)}"
+    
+    message_data = {
+        'sender_id': sender_id,
+        'text': text,
+        'media_url': media_url,
+        'media_type': media_type,
+        'timestamp': datetime.now().strftime("%H:%M")
+    }
+    
+    # Save to Firebase Realtime Database
+    rtdb.reference(f'chats/{room}').push(message_data)
+    
+    # Broadcast to the private room ONLY
+    emit('receive_message', message_data, room=room)
+    
+    
+# ==========================================
+# ENTERPRISE EXPANSION HUBS (Live Database Integration)
+# ==========================================
+
+@app.route('/deal-room')
+@login_required
+@premium_required
+def deal_room():
+    """Exclusive portal for Gold/Investor tier to view bankable projects."""
+    # Fetch live deals from Firebase
+    deals_data = rtdb.reference('deals').get() or {}
+    deals = [{'id': k, **v} for k, v in deals_data.items()]
+    
+    return render_template('deal_room.html', deals=deals)
+
+@app.route('/api-docs')
+def api_docs():
+    """Developer documentation for Enterprise clients."""
+    return render_template('api_docs.html')
+
+@app.route('/climate')
+@login_required
+def climate_hub():
+    """Weather and Climate Smart Agriculture dashboard."""
+    # Fetch live climate alerts from Firebase
+    climate_data = rtdb.reference('climate_alerts').get() or {}
+    
+    # Convert dict to list and sort by timestamp (newest first)
+    alerts = [{'id': k, **v} for k, v in climate_data.items()]
+    alerts.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+    
+    # Grab the most recent alert for the main widget, if it exists
+    latest_weather = alerts[0] if alerts else {
+        'region': 'Kakamega, KE', 'temp': '22', 'condition': 'Light Showers', 
+        'humidity': '85', 'wind': '12', 'timestamp': datetime.now().strftime("%B %d")
+    }
+    
+    return render_template('climate.html', alerts=alerts, latest=latest_weather)
+
+@app.route('/admin/add-climate-alert', methods=['POST'])
+@admin_required
+def add_climate_alert():
+    """Admin route to publish new agronomic weather alerts."""
+    try:
+        rtdb.reference('climate_alerts').push({
+            'region': request.form.get('region'),
+            'temp': request.form.get('temp'),
+            'condition': request.form.get('condition'),
+            'humidity': request.form.get('humidity'),
+            'wind': request.form.get('wind'),
+            'alert_type': request.form.get('alert_type'), # 'warning' or 'success'
+            'title': request.form.get('title'),
+            'advice': request.form.get('advice'),
+            'timestamp': datetime.now().strftime("%B %d, %Y - %H:%M")
+        })
+        flash("Climate alert published to the Hub!", "success")
+    except Exception as e:
+        flash(f"Error publishing climate alert: {e}", "danger")
+        
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/insights')
+def insights():
+    """SEO-friendly thought leadership and market analysis blog."""
+    # Fetch live articles from Firebase
+    insights_data = rtdb.reference('insights').get() or {}
+    articles = [{'id': k, **v} for k, v in insights_data.items()]
+    
+    return render_template('insights.html', articles=articles) 
+@app.route('/insights/<article_id>')
+def read_insight(article_id):
+    """Fetches and displays a single full-length article."""
+    # Fetch the specific article from Firebase
+    article = rtdb.reference(f'insights/{article_id}').get()
+    
+    if not article:
+        flash("Article not found.", "warning")
+        return redirect(url_for('insights'))
+        
+    # Pass the data to the reader template
+    return render_template('read_article.html', article=article)
+
+# ==========================================
+# ADMIN POSTING ROUTES FOR ENTERPRISE HUBS
+# ==========================================
+@app.route('/admin/add-deal', methods=['POST'])
+@admin_required
+def add_deal():
+    """Admin route to publish new investment opportunities to the Deal Room."""
+    try:
+        rtdb.reference('deals').push({
+            'title': request.form.get('title'),
+            'ask': request.form.get('ask'),       # e.g., "$50,000"
+            'roi': request.form.get('roi'),       # e.g., "14%"
+            'sector': request.form.get('sector'), # e.g., "Agri-Tech"
+            'risk': request.form.get('risk'),     # e.g., "Low"
+            'status': request.form.get('status', 'Reviewing') # e.g., "Funding"
+        })
+        flash("New investment deal published to the Deal Room!", "success")
+    except Exception as e:
+        flash(f"Error posting deal: {e}", "danger")
+        
+    return redirect(url_for('admin_dashboard'))
+@app.route('/admin/add-insight', methods=['POST'])
+@admin_required
+def add_insight():
+    """Admin route to publish new Thought Leadership articles with Multimedia."""
+    try:
+        # 1. Grab files from the form
+        image_file = request.files.get('image_file')
+        video_file = request.files.get('video_file')
+        audio_file = request.files.get('audio_file')
+        
+        # 2. Upload to Firebase Storage (if the file was provided)
+        img_url = upload_to_firebase_storage(image_file, 'insights_media') if image_file and image_file.filename else "https://images.unsplash.com/photo-1592982537447-6f296cb31454?auto=format&fit=crop&w=600&q=80" # Fallback image
+        video_url = upload_to_firebase_storage(video_file, 'insights_media') if video_file and video_file.filename else None
+        audio_url = upload_to_firebase_storage(audio_file, 'insights_media') if audio_file and audio_file.filename else None
+
+        # 3. Save to Realtime Database
+        rtdb.reference('insights').push({
+            'title': request.form.get('title'),
+            'date': datetime.now().strftime("%B %d, %Y"),
+            'category': request.form.get('category'),
+            'read_time': request.form.get('read_time'), 
+            'img': img_url,
+            'video_url': video_url,
+            'audio_url': audio_url,
+            'summary': request.form.get('summary'),
+            'content': request.form.get('content')
+        })
+        flash("Thought Leadership article with media published successfully!", "success")
+    except Exception as e:
+        flash(f"Error publishing insight: {e}", "danger")
+        
+    return redirect(url_for('admin_dashboard'))
+
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
@@ -1445,4 +1729,9 @@ def page_not_found(e):
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    
+    # Add these two lines to create a clickable link in your terminal!
+    print(f"\n🌱 Farmerman Systems is LIVE!")
+    print(f"👉 Click here to open: http://127.0.0.1:{port}\n")
+    
+    socketio.run(app, host='0.0.0.0', port=port, debug=True)

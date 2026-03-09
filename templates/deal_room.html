@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* Prevent FOUC for GSAP */
+    .deal-header, .deal-card { opacity: 0; }
+    
+    /* Premium Hover Effect for Investor Cards */
+    .deal-card-wrap {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+    .deal-card-wrap:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5) !important;
+        border-color: var(--plant-green) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-dark min-vh-100 py-5">
+    <div class="container text-white py-4">
+        
+        <div class="d-flex justify-content-between align-items-center mb-5 border-bottom border-secondary pb-3 deal-header">
+            <div>
+                <span class="badge bg-warning text-dark mb-2 rounded-pill px-3 py-2"><i class="bi bi-lock-fill"></i> SECURE INVESTOR PORTAL</span>
+                <h1 class="fw-bold text-white">The Deal Room</h1>
+                <p class="text-muted mb-0">Vetted, bankable agribusiness projects ready for capital injection.</p>
+            </div>
+            <div class="text-end">
+                <button class="btn btn-outline-light"><i class="bi bi-funnel"></i> Filter Deals</button>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            {% if deals %}
+                {% for deal in deals %}
+                <div class="col-md-4 deal-card">
+                    <div class="card bg-secondary text-white shadow-lg h-100 deal-card-wrap" style="border-radius: 15px;">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="badge bg-light text-dark">{{ deal.sector }}</span>
+                                <span class="badge {% if deal.status == 'Funding' %}bg-success{% else %}bg-warning text-dark{% endif %}">{{ deal.status }}</span>
+                            </div>
+                            <h5 class="fw-bold mb-3">{{ deal.title }}</h5>
+                            <div class="row text-center mb-4 bg-dark rounded p-3 mx-0">
+                                <div class="col-6 border-end border-secondary">
+                                    <small class="text-muted d-block">Capital Ask</small>
+                                    <span class="fw-bold fs-5 text-success">{{ deal.ask }}</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Est. ROI</small>
+                                    <span class="fw-bold fs-5">{{ deal.roi }}</span>
+                                </div>
+                            </div>
+                            <ul class="list-unstyled small text-muted mb-4">
+                                <li><i class="bi bi-check2 text-success me-2"></i> Due Diligence Passed</li>
+                                <li><i class="bi bi-check2 text-success me-2"></i> Financial Model Verified</li>
+                                <li><i class="bi bi-shield-check text-success me-2"></i> Risk Profile: {{ deal.risk }}</li>
+                            </ul>
+                            <button class="btn btn-success w-100 fw-bold">Request Pitch Deck</button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12 text-center py-5 deal-card">
+                    <div class="p-5 border border-secondary rounded-4" style="background: rgba(255,255,255,0.02);">
+                        <i class="bi bi-briefcase text-secondary display-1 mb-3 d-block"></i>
+                        <h3 class="text-white fw-bold">No Active Deals</h3>
+                        <p class="text-muted lead max-w-75 mx-auto">Our financial analysts are currently vetting new agribusiness projects. Check back soon for new investment opportunities, or contact us to list a project.</p>
+                        {% if session.get('role') == 'admin' %}
+                            <a href="/admin/dashboard" class="btn btn-outline-warning mt-3">Go to Admin Dashboard to Post a Deal</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+    // Reveal Animations
+    gsap.to(".deal-header", { opacity: 1, y: 0, startAt: { y: -20 }, duration: 0.8, ease: "power2.out" });
+    gsap.to(".deal-card", { opacity: 1, y: 0, startAt: { y: 30 }, stagger: 0.15, duration: 0.8, delay: 0.2, ease: "power2.out" });
+</script>
+{% endblock %}

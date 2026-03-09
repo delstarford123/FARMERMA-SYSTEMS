@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid bg-light min-vh-100 pb-5">
+    
+    <div class="w-100 position-relative" style="height: 400px; background: url('{{ article.img }}') center/cover no-repeat;">
+        <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"></div>
+        <div class="container h-100 d-flex flex-column justify-content-end pb-5 position-relative z-index-1 text-white">
+            <span class="badge bg-success mb-3" style="width: fit-content;">{{ article.category }}</span>
+            <h1 class="display-4 fw-bold mb-3">{{ article.title }}</h1>
+            <p class="lead mb-0"><i class="bi bi-calendar3 me-2"></i>{{ article.date }} &nbsp;|&nbsp; <i class="bi bi-clock me-2"></i>{{ article.read_time }} Read</p>
+        </div>
+    </div>
+
+    <div class="container mt-n5 position-relative z-index-2">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-lg p-5" style="border-radius: 15px;">
+                    
+                    <p class="lead fw-bold text-muted mb-4" style="font-size: 1.25rem;">
+                        {{ article.summary }}
+                    </p>
+
+                    {% if article.video_url %}
+                    <div class="mb-4 rounded overflow-hidden shadow-sm bg-dark">
+                        <video controls class="w-100" style="max-height: 400px; object-fit: cover;">
+                            <source src="{{ article.video_url }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    {% endif %}
+
+                    {% if article.audio_url %}
+                    <div class="mb-4 p-3 bg-light rounded border d-flex align-items-center">
+                        <i class="bi bi-mic-fill fs-3 text-info me-3"></i>
+                        <div class="flex-grow-1">
+                            <p class="small fw-bold mb-1">Listen to the summary</p>
+                            <audio controls class="w-100">
+                                <source src="{{ article.audio_url }}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="article-body" style="font-size: 1.1rem; line-height: 1.8; color: #444;">
+                        {{ article.content | safe }}
+                    </div>
+                    
+                    <hr class="my-5">
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="/insights" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Back to Insights</a>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-light text-primary"><i class="bi bi-twitter"></i> Share</button>
+                            <button class="btn btn-light text-success"><i class="bi bi-whatsapp"></i> Share</button>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}
