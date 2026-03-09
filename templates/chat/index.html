@@ -3,11 +3,25 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
 <style>
-    body, html { height: 100%; overflow: hidden; overscroll-behavior-y: none; }
-    .chat-wrapper { height: calc(100dvh - 60px); transition: background-color 0.3s ease; } 
+    /* Absolute lockdown for mobile bouncing and keyboard adjustments */
+    body, html { 
+        height: 100%; 
+        width: 100%;
+        overflow: hidden !important; 
+        position: fixed; /* Prevents iOS/Android body bounce */
+        overscroll-behavior-y: none; 
+    }
+    
+    .chat-wrapper { 
+        height: 100%; /* Will be dynamically managed by JS Visual Viewport */
+        transition: background-color 0.3s ease; 
+        display: flex;
+        flex-direction: column;
+    } 
+
     #chat-active-state { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
     .chat-messages { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 20px; }
-    .chat-input-area { flex: 0 0 auto; background: #f0f2f5; width: 100%; }
+    .chat-input-area { flex: 0 0 auto; background: #f0f2f5; width: 100%; padding-bottom: env(safe-area-inset-bottom); }
     .status-indicator { flex-shrink: 0; }
 
     /* Theme Engine */
@@ -26,7 +40,7 @@
 
 {% block content %}
 <div class="container-fluid chat-wrapper theme-green p-0 p-md-3 theme-bg-color" id="chat-theme-wrapper">
-    <div class="row h-100 m-0 shadow-sm rounded bg-white overflow-hidden">
+    <div class="row h-100 m-0 shadow-sm rounded bg-white overflow-hidden flex-grow-1">
         
         <div id="chat-sidebar" class="col-12 col-md-4 col-lg-3 h-100 border-end d-flex flex-column p-0 bg-white">
             <div class="p-3 bg-theme-dynamic d-flex justify-content-between align-items-center z-1 shadow-sm">
@@ -36,26 +50,37 @@
                         <i class="bi bi-palette"></i> Theme
                     </button>
                     <ul class="dropdown-menu shadow border-0" style="border-radius: 12px;">
-                        <li><h6 class="dropdown-header">Select Appearance</h6></li>
                         <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-green')">🟢 WhatsApp Green</a></li>
                         <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-dark-green')">🌲 Dark Green</a></li>
                         <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-blue')">🔵 Sky Blue</a></li>
                         <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-dark-blue')">🌌 Dark Blue</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-yellow')">🟡 Harvest Yellow</a></li>
-                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-white')">⚪ Pure White</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-cream-white')">🥛 Cream White</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-smoke-white')">💨 Smoke White</a></li>
                     </ul>
+                </div>
+            </div>
+
+            <div class="p-2 bg-white border-bottom shadow-sm z-1">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0 rounded-start-pill text-muted px-3">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" id="contact-search" class="form-control bg-light border-start-0 rounded-end-pill py-2 shadow-none" placeholder="Search by name...">
                 </div>
             </div>
 
             <div class="contact-list overflow-auto flex-grow-1 p-0" id="contact-list">
                 {% for contact in contacts %}
-                <div class="contact-card p-3 border-bottom d-flex align-items-center transition-all hover-bg-light" onclick="openChatMobile('{{ contact.uid }}', '{{ contact.name }}')" style="cursor: pointer;">
+                <div class="contact-card contact-item p-3 border-bottom d-flex align-items-center transition-all hover-bg-light" onclick="openChatMobile('{{ contact.uid }}', '{{ contact.name }}')" style="cursor: pointer;">
                     <span class="status-indicator me-3 shadow-sm" id="status-{{ contact.uid }}" style="width: 12px; height: 12px; border-radius: 50%; background: {{ '#198754' if contact.is_online else '#6c757d' }};"></span>
                     <div class="flex-grow-1">
-                        <h6 class="mb-0 fw-bold text-dark">{{ contact.name }}</h6>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold text-dark contact-name">{{ contact.name }}</h6>
+                            {% if contact.has_talked %}
+                                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill border border-primary border-opacity-25" style="font-size: 0.65rem;">💬 Recent</span>
+                            {% elif contact.same_location %}
+                                <span class="badge bg-info bg-opacity-10 text-info rounded-pill border border-info border-opacity-25" style="font-size: 0.65rem;"><i class="bi bi-geo-alt-fill"></i> Local</span>
+                            {% endif %}
+                        </div>
                         <small class="text-muted">{{ contact.role | capitalize }}</small>
                     </div>
                 </div>
@@ -80,9 +105,21 @@
                             <small class="text-success fw-bold" style="font-size: 0.75rem;">Connected</small>
                         </div>
                     </div>
-                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="confirmClearChat()" title="Clear Chat History">
-                        <i class="bi bi-trash3-fill"></i> <span class="d-none d-sm-inline ms-1">Clear</span>
-                    </button>
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-outline-danger btn-sm rounded-pill px-3 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-trash3-fill"></i> <span class="d-none d-sm-inline ms-1">Clear</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" style="border-radius: 12px;">
+                            <li><a class="dropdown-item py-2" href="#" onclick="confirmClearChat('me')">
+                                <i class="bi bi-person-x me-2 text-muted"></i> Clear for me
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger py-2 fw-bold" href="#" onclick="confirmClearChat('all')">
+                                <i class="bi bi-trash-fill me-2"></i> Clear for everyone
+                            </a></li>
+                        </ul>
+                    </div>
                 </div>
                 
                 <div class="chat-messages p-3 p-md-4" id="chat-messages"></div>
@@ -108,12 +145,32 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-
 <script>
     window.CURRENT_USER_ID = "{{ current_uid }}";
     window.AUTO_OPEN_UID = "{{ auto_open_uid | default('') }}";
     window.AUTO_OPEN_NAME = "{{ auto_open_name | default('') }}";
-</script>
 
+    // Real-Time Local Search Filter
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('contact-search');
+        if(searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const contactCards = document.querySelectorAll('.contact-item');
+                
+                contactCards.forEach(card => {
+                    const name = card.querySelector('.contact-name').innerText.toLowerCase();
+                    if (name.includes(searchTerm)) {
+                        card.classList.remove('d-none');
+                        card.classList.add('d-flex');
+                    } else {
+                        card.classList.add('d-none');
+                        card.classList.remove('d-flex');
+                    }
+                });
+            });
+        }
+    });
+</script>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 {% endblock %}

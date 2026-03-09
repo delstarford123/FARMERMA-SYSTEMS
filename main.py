@@ -1511,31 +1511,47 @@ def chat_dashboard():
             
     # Pointing exactly to the file inside the chat folder
     return render_template('chat/dashboard.html', online_contacts=online_contacts)
-
 @app.route('/chat')
 @login_required
-# @premium_required # Uncomment if you want this protected
 def chat_home():
-    """Renders the main chat UI."""
+    """Renders the main chat UI with smart sorting."""
     current_uid = session.get('user_id')
     
-    # Catch the user we want to auto-open from the URL parameters
     auto_open_uid = request.args.get('target_uid')
     auto_open_name = request.args.get('target_name')
     
+    # Fetch data from Firebase
     all_users = rtdb.reference('users').get() or {}
+    all_chats = rtdb.reference('chats').get() or {}
+    
+    # 1. Get the current logged-in user's location
+    current_user_profile = all_users.get(current_uid, {})
+    my_location = current_user_profile.get('location', '').strip().lower()
     
     contacts = []
     for uid, data in all_users.items():
-        # WE NO LONGER FILTER OUT OFFLINE USERS HERE!
         if uid != current_uid:
+            
+            # 2. Check if they have talked before (does the room exist?)
+            room_id = f"room_{min(str(current_uid), str(uid))}_{max(str(current_uid), str(uid))}"
+            has_talked_before = 1 if room_id in all_chats else 0
+            
+            # 3. Check if they are in the same location
+            their_location = data.get('location', '').strip().lower()
+            is_same_location = 1 if (my_location and their_location == my_location) else 0
+
             contacts.append({
                 'uid': uid,
                 'name': data.get('full_name', 'Farmer'),
                 'role': data.get('role', 'client'),
-                # Pass the status so the dot can be grey or green
-                'is_online': uid in online_users
+                'is_online': uid in online_users,
+                'has_talked': has_talked_before,
+                'same_location': is_same_location
             })
+            
+    # 4. Smart Algorithm Sorting: 
+    # It sorts by: Has Talked (1st) -> Same Location (2nd) -> Is Online (3rd)
+    contacts.sort(key=lambda x: (x['has_talked'], x['same_location'], x['is_online']), reverse=True)
             
     return render_template(
         'chat/index.html', 
@@ -1596,9 +1612,44 @@ def handle_join_chat(data):
     join_room(room)
     
     history = rtdb.reference(f'chats/{room}').get() or {}
-    messages = list(history.values())
+    messages = []
+    
+    # SMART FETCH: Only send messages that the user hasn't deleted for themselves
+    for msg in history.values():
+        if uid1 not in msg.get('deleted_for', []):
+            messages.append(msg)
+            
     emit('chat_history', messages)
 
+@socketio.on('clear_chat')
+def handle_clear_chat(data):
+    uid = session.get('user_id')
+    target_uid = data.get('target_uid')
+    mode = data.get('mode', 'me') # Can be 'me' or 'all'
+    if not target_uid: return
+    
+    room = f"room_{min(str(uid), str(target_uid))}_{max(str(uid), str(target_uid))}"
+    
+    if mode == 'all':
+        # Wipe it completely from the database
+        rtdb.reference(f'chats/{room}').delete()
+        emit('chat_cleared', {'mode': 'all'}, room=room)
+    else:
+        # CLEAR FOR ME ONLY
+        messages_ref = rtdb.reference(f'chats/{room}')
+        messages = messages_ref.get() or {}
+        
+        # Loop through existing messages and tag them as hidden for this specific user
+        for msg_key, msg_data in messages.items():
+            deleted_for = msg_data.get('deleted_for', [])
+            if uid not in deleted_for:
+                deleted_for.append(uid)
+                messages_ref.child(msg_key).update({'deleted_for': deleted_for})
+                
+        # Emit the clear screen event ONLY to the person who clicked the button
+        emit('chat_cleared', {'mode': 'me'}, to=request.sid)
+        
+        
 @socketio.on('send_message')
 def handle_send_message(data):
     sender_id = session.get('user_id')
@@ -1632,15 +1683,7 @@ def handle_stop_typing(data):
     room = f"room_{min(str(sender_id), str(receiver_id))}_{max(str(sender_id), str(receiver_id))}"
     emit('hide_typing', {'sender_id': sender_id}, room=room, include_self=False)
 
-@socketio.on('clear_chat')
-def handle_clear_chat(data):
-    uid1 = session.get('user_id')
-    uid2 = data.get('target_uid')
-    if not uid2: return
-    room = f"room_{min(str(uid1), str(uid2))}_{max(str(uid1), str(uid2))}"
-    rtdb.reference(f'chats/{room}').delete()
-    emit('chat_cleared', room=room)
-    
+
 # ==========================================
 # ENTERPRISE EXPANSION HUBS (Live Database Integration)
 # ==========================================
