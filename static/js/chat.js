@@ -143,16 +143,18 @@ function scrollToBottom() {
 
 const chatInput = document.getElementById('chat-input');
 
-chatInput.addEventListener('input', () => {
-    if (currentActiveChatId) {
-        socket.emit('typing', { receiver_id: currentActiveChatId });
+if (chatInput) {
+    chatInput.addEventListener('input', () => {
+        if (currentActiveChatId) {
+            socket.emit('typing', { receiver_id: currentActiveChatId });
 
-        clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(() => {
-            socket.emit('stop_typing', { receiver_id: currentActiveChatId });
-        }, 2000);
-    }
-});
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                socket.emit('stop_typing', { receiver_id: currentActiveChatId });
+            }, 2000);
+        }
+    });
+}
 
 socket.on('display_typing', (data) => {
     // Only show typing indicator if it's the person we are currently viewing
@@ -194,10 +196,16 @@ function sendMessage() {
     }
 }
 
-document.getElementById('send-btn').addEventListener('click', sendMessage);
-chatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
-});
+const sendBtn = document.getElementById('send-btn');
+if (sendBtn) {
+    sendBtn.addEventListener('click', sendMessage);
+}
+
+if (chatInput) {
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+}
 
 // ==========================================
 // 6. CLEAR CHAT & MEDIA UPLOAD
@@ -214,34 +222,44 @@ socket.on('chat_cleared', () => {
         '<div class="text-center text-muted my-5"><em>Chat history has been cleared.</em></div>';
 });
 
-document.getElementById('media-upload').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file || !currentActiveChatId) return;
+const mediaUpload = document.getElementById('media-upload');
+if (mediaUpload) {
+    mediaUpload.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file || !currentActiveChatId) return;
 
-    const formData = new FormData();
-    formData.append('file', file);
-    const statusText = document.getElementById('upload-status');
-    
-    statusText.classList.remove('d-none');
-    statusText.innerText = "Uploading media...";
+        const formData = new FormData();
+        formData.append('file', file);
+        const statusText = document.getElementById('upload-status');
+        
+        if (statusText) {
+            statusText.classList.remove('d-none');
+            statusText.innerText = "Uploading media...";
+        }
 
-    fetch('/api/chat/upload', { method: 'POST', body: formData })
-    .then(res => {
-        if (!res.ok) throw new Error("Upload failed");
-        return res.json();
-    })
-    .then(data => {
-        statusText.classList.add('d-none');
-        socket.emit('send_message', {
-            receiver_id: currentActiveChatId,
-            text: '',
-            media_url: data.url,
-            media_type: data.type
+        fetch('/api/chat/upload', { method: 'POST', body: formData })
+        .then(res => {
+            if (!res.ok) throw new Error("Upload failed");
+            return res.json();
+        })
+        .then(data => {
+            if (statusText) statusText.classList.add('d-none');
+            socket.emit('send_message', {
+                receiver_id: currentActiveChatId,
+                text: '',
+                media_url: data.url,
+                media_type: data.type
+            });
+            // Clear input so same file can be uploaded again
+            e.target.value = '';
+        })
+        .catch(err => {
+            console.error("Upload error:", err);
+            if (statusText) {
+                statusText.innerText = "Upload failed. Try again.";
+                setTimeout(() => statusText.classList.add('d-none'), 3000);
+            }
+            e.target.value = '';
         });
-    })
-    .catch(err => {
-        console.error("Upload error:", err);
-        statusText.innerText = "Upload failed. Try again.";
-        setTimeout(() => statusText.classList.add('d-none'), 3000);
     });
-});
+}

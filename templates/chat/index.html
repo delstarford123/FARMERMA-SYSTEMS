@@ -3,35 +3,47 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
 <style>
-    /* KEYBOARD FIX: Use 'dvh' (dynamic viewport height) so it shrinks when keyboard appears */
+    /* KEYBOARD & RESPONSIVE FIXES */
+    
+    /* 1. Prevent the whole body from scrolling; force only specific elements to scroll */
     body, html { 
         height: 100%; 
         overflow: hidden; 
         overscroll-behavior-y: none; /* Prevents pull-to-refresh bouncing on mobile */
     }
     
-    /* Adjust height to account for your navigation bar. */
+    /* 2. Use 'dvh' (dynamic viewport height) so it shrinks automatically when keyboard appears */
     .chat-wrapper { 
+        /* Adjust 60px based on your actual navbar height. If you don't use a top navbar, set to 100dvh */
         height: calc(100dvh - 60px); 
     } 
 
-    /* Force the message area to scroll and push the input bar to the bottom */
+    /* 3. Force the active chat screen to a column flex layout */
     #chat-active-state {
         height: 100%;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
     }
     
+    /* 4. This area grows to take all space, but allows scrolling inside */
     .chat-messages {
-        flex: 1 1 auto;
-        overflow-y: auto;
+        flex: 1 1 auto; /* Grow and shrink as needed */
+        overflow-y: auto; /* Scroll inside here */
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
         padding-bottom: 20px;
     }
     
-    /* Lock input area to the bottom */
+    /* 5. Lock input area to the bottom. Flex-0 ensures it never shrinks. */
     .chat-input-area {
         flex: 0 0 auto;
-        background: #f0f2f5; /* WhatsApp light grey background */
+        background: #f0f2f5; /* Light grey styling similar to messenger apps */
+        width: 100%;
+    }
+
+    /* Keep status indicator from shrinking in flex layout */
+    .status-indicator {
+        flex-shrink: 0;
     }
 </style>
 {% endblock %}
@@ -57,7 +69,7 @@
 
             <div class="contact-list overflow-auto flex-grow-1 p-0" id="contact-list">
                 {% for contact in contacts %}
-                <div class="contact-card p-3 border-bottom d-flex align-items-center" onclick="openChat('{{ contact.uid }}', '{{ contact.name }}')" style="cursor: pointer;">
+                <div class="contact-card p-3 border-bottom d-flex align-items-center" onclick="openChatMobile('{{ contact.uid }}', '{{ contact.name }}')" style="cursor: pointer;">
                     
                     <span class="status-indicator online me-3" id="status-{{ contact.uid }}"></span>
                     
@@ -70,7 +82,7 @@
             </div>
         </div>
 
-        <div id="chat-main" class="col-12 col-md-8 col-lg-9 h-100 bg-theme-light d-none d-md-flex flex-column p-0 position-relative" style="background-image: url('{{ url_for('static', filename='images/chat-bg.png') }}'); background-size: cover;">
+        <div id="chat-main" class="col-12 col-md-8 col-lg-9 h-100 bg-theme-light d-none d-md-flex flex-column p-0 position-relative" style="background-image: url('{{ url_for('static', filename='chat-bg.png') }}'); background-size: cover; background-attachment: local;">
             
             <div id="chat-blank-state" class="h-100 d-flex flex-column align-items-center justify-content-center text-muted">
                 <i class="bi bi-whatsapp display-1 mb-3 opacity-25"></i>
@@ -78,7 +90,7 @@
             </div>
 
             <div id="chat-active-state" class="d-none">
-                <div class="p-3 bg-white border-bottom shadow-sm d-flex align-items-center justify-content-between z-1">
+                <div class="p-3 bg-white border-bottom shadow-sm d-flex align-items-center justify-content-between z-1 flex-0-0-auto">
                     <div class="d-flex align-items-center">
                         <button class="btn btn-light btn-sm d-md-none me-2" onclick="closeChatMobile()">
                             <i class="bi bi-arrow-left fs-5"></i>
@@ -125,11 +137,54 @@
     const chatInput = document.getElementById('chat-input');
     if (chatInput) {
         chatInput.addEventListener('focus', () => {
+            // Short delay to allow the dvh and flexbox to recalculate before scrolling
             setTimeout(() => {
                 const msgBox = document.getElementById('chat-messages');
                 if(msgBox) msgBox.scrollTop = msgBox.scrollHeight;
-            }, 300); // Wait for keyboard to fully rise
+            }, 300); // Wait 300ms for keyboard to fully rise
         });
+    }
+
+    // ==========================================
+    // RESPONSIVE MASTER-DETAIL LOGIC
+    // ==========================================
+    // This connects the contact list to the chat window on mobile.
+
+    function openChatMobile(uid, name) {
+        // 1. Call your original openChat function (assumed in chat.js)
+        // to handle socket rooms and loading messages.
+        if (typeof openChat === 'function') {
+            openChat(uid, name);
+        } else {
+            // Fallback UI toggles if chat.js isn't loaded yet
+            document.getElementById('chat-blank-state').classList.add('d-none');
+            const activeState = document.getElementById('chat-active-state');
+            activeState.classList.remove('d-none');
+            activeState.classList.add('d-flex');
+            document.getElementById('active-chat-name').innerText = name;
+        }
+
+        // 2. Handle Screen Swapping on Mobile
+        if (window.innerWidth < 768) { // Bootstrap 'md' breakpoint
+            // Hide Sidebar, Show Chat
+            document.getElementById('chat-sidebar').classList.add('d-none');
+            document.getElementById('chat-sidebar').classList.remove('d-flex');
+            
+            document.getElementById('chat-main').classList.remove('d-none');
+            document.getElementById('chat-main').classList.add('d-flex');
+        }
+    }
+
+    function closeChatMobile() {
+        // Reverse the swap: Show Sidebar, Hide Chat
+        document.getElementById('chat-main').classList.add('d-none');
+        document.getElementById('chat-main').classList.remove('d-flex');
+        document.getElementById('chat-sidebar').classList.remove('d-none');
+        
+        // Stop tracking typing/active processes in the background (assumed variable)
+        if (typeof currentActiveChatId !== 'undefined') {
+            currentActiveChatId = null; 
+        }
     }
 </script>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
