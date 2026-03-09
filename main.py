@@ -199,6 +199,13 @@ def inject_site_content():
             return None
     return dict(get_site_content=get_site_content)
 
+@app.context_processor
+def inject_global_vars():
+    """Injects secure .env variables globally into all Jinja templates (e.g., base.html)."""
+    return dict(
+        weather_api_key=os.environ.get('WEATHER_API_KEY')
+    )
+
 # ==========================================
 # ENTERPRISE SECURITY DECORATORS
 # ==========================================

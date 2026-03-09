@@ -255,7 +255,7 @@
     <script>
 document.addEventListener("DOMContentLoaded", function() {
     // Your active OpenWeather API key
-    const API_KEY = "6d3c856544d1870894340fc11468d0e4"; 
+    const API_KEY = "{{ weather_api_key }}";
 
     function fetchLiveWeather(lat, lon) {
         const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`;
