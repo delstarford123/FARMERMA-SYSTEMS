@@ -95,7 +95,11 @@
             <div class="contact-list overflow-auto flex-grow-1 p-0" id="contact-list">
                 {% for contact in contacts %}
                 <div class="contact-card p-3 border-bottom d-flex align-items-center transition-all hover-bg-light" onclick="openChatMobile('{{ contact.uid }}', '{{ contact.name }}')" style="cursor: pointer;">
-                    <span class="status-indicator online me-3 shadow-sm" id="status-{{ contact.uid }}" style="width: 12px; height: 12px; border-radius: 50%; background: #198754;"></span>
+                    
+                    <span class="status-indicator me-3 shadow-sm" id="status-{{ contact.uid }}" 
+                          style="width: 12px; height: 12px; border-radius: 50%; background: {{ '#198754' if contact.is_online else '#6c757d' }};">
+                    </span>
+                    
                     <div class="flex-grow-1">
                         <h6 class="mb-0 fw-bold text-dark">{{ contact.name }}</h6>
                         <small class="text-muted">{{ contact.role | capitalize }}</small>
@@ -121,7 +125,7 @@
                         </button>
                         <div>
                             <h5 class="mb-0 fw-bold text-dark" id="active-chat-name">Farmer Name</h5>
-                            <small class="text-success fw-bold" style="font-size: 0.75rem;">Online</small>
+                            <small class="text-success fw-bold" style="font-size: 0.75rem;">Connected</small>
                         </div>
                     </div>
                     

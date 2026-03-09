@@ -8,90 +8,82 @@ let typingTimeout;
 // 1. DYNAMIC SIDEBAR (Presence & List Management)
 // ==========================================
 
-// Handle sidebar updates for new logins/logouts
 socket.on('refresh_contacts', () => {
-    /* Since the Python backend filters the sidebar at the template level,
-       we must reload to see a NEW user join the list.
-       We only reload if the user isn't currently in a chat window.
-    */
+    // Reload only if the user is just browsing the contact list
     if (!currentActiveChatId) {
         window.location.reload(); 
-    } else {
-        console.log("Contact list update pending (waiting for chat close).");
     }
 });
 
-// Update status dots for users already visible in the sidebar
 socket.on('user_status', function(data) {
     const statusDot = document.getElementById(`status-${data.uid}`);
     if (statusDot) {
+        // Updated to match Bootstrap success/secondary classes
         if (data.status === 'online') {
-            statusDot.classList.replace('offline', 'online');
+            statusDot.style.background = '#198754';
         } else {
-            statusDot.classList.replace('online', 'offline');
+            statusDot.style.background = '#6c757d';
         }
     }
 });
 
 // ==========================================
-// 2. THEME & UI INITIALIZATION
+// 2. THEME INITIALIZATION
 // ==========================================
 function changeTheme(themeClass) {
     const wrapper = document.getElementById('chat-theme-wrapper');
     if (!wrapper) return;
-    wrapper.classList.remove('theme-green', 'theme-blue', 'theme-yellow');
+    
+    // Clear all possible themes
+    const allThemes = [
+        'theme-green', 'theme-dark-green', 'theme-blue', 'theme-dark-blue', 
+        'theme-white', 'theme-cream-white', 'theme-smoke-white', 'theme-yellow'
+    ];
+    wrapper.classList.remove(...allThemes);
+    
     wrapper.classList.add(themeClass);
     localStorage.setItem('farmerman_chat_theme', themeClass);
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('farmerman_chat_theme');
-    if (saved) changeTheme(saved);
-});
-
 // ==========================================
-// 3. CORE CHAT LOGIC (Rooms & Messaging)
+// 3. CORE CHAT LOGIC (Unified Mobile/Desktop)
 // ==========================================
 
-function openChat(targetUid, targetName) {
+function openChatMobile(targetUid, targetName) {
     currentActiveChatId = targetUid;
     
-    // UI Transitions
-    document.getElementById('chat-blank-state').classList.add('d-none');
+    // 1. UI Transitions
+    const blankState = document.getElementById('chat-blank-state');
     const activeState = document.getElementById('chat-active-state');
-    activeState.classList.remove('d-none');
-    activeState.classList.add('d-flex');
+    if(blankState) blankState.classList.add('d-none');
+    if(activeState) {
+        activeState.classList.remove('d-none');
+        activeState.classList.add('d-flex');
+    }
+    
     document.getElementById('active-chat-name').innerText = targetName;
     
-    // --> MOBILE SCREEN SWAP LOGIC <--
-    // If screen is smaller than 768px (Mobile), hide sidebar, show chat
+    // 2. Mobile Screen Swap
     if (window.innerWidth < 768) {
         document.getElementById('chat-sidebar').classList.add('d-none');
         document.getElementById('chat-sidebar').classList.remove('d-flex');
-        
         document.getElementById('chat-main').classList.remove('d-none');
         document.getElementById('chat-main').classList.add('d-flex');
     }
 
-    // Clear view and request history from server
+    // 3. Socket Communication
     document.getElementById('chat-messages').innerHTML = '';
     socket.emit('join_chat', { target_uid: targetUid });
 }
 
-// --> NEW: MOBILE BACK BUTTON LOGIC <--
 function closeChatMobile() {
-    // Hide the chat window, show the sidebar again
     document.getElementById('chat-main').classList.add('d-none');
     document.getElementById('chat-main').classList.remove('d-flex');
-    
     document.getElementById('chat-sidebar').classList.remove('d-none');
     document.getElementById('chat-sidebar').classList.add('d-flex');
-    
-    // Clear the active chat so background events don't trigger weirdly
     currentActiveChatId = null; 
 }
 
-// Render history when entering a room
 socket.on('chat_history', function(messages) {
     const msgBox = document.getElementById('chat-messages');
     msgBox.innerHTML = ''; 
@@ -99,10 +91,12 @@ socket.on('chat_history', function(messages) {
     scrollToBottom();
 });
 
-// Receive real-time message
 socket.on('receive_message', function(msg) {
     appendMessage(msg);
     scrollToBottom();
+    // Remove typing indicator when message arrives
+    const typingDiv = document.getElementById('typing-indicator');
+    if (typingDiv) typingDiv.remove();
 });
 
 function appendMessage(msg) {
@@ -111,21 +105,22 @@ function appendMessage(msg) {
     
     let mediaHtml = '';
     if (msg.media_url) {
-        if (msg.media_type.startsWith('image/')) {
-            mediaHtml = `<img src="${msg.media_url}" class="chat-media mb-2 rounded shadow-sm" style="max-width: 100%; cursor: pointer;" onclick="window.open(this.src)">`;
-        } else if (msg.media_type.startsWith('video/')) {
-            mediaHtml = `<video src="${msg.media_url}" controls class="chat-media mb-2 rounded" style="max-width: 100%;"></video>`;
-        } else if (msg.media_type.startsWith('audio/')) {
+        if (msg.media_type && msg.media_type.startsWith('image/')) {
+            mediaHtml = `<img src="${msg.media_url}" class="chat-media mb-2 rounded shadow-sm" style="max-width: 250px; cursor: pointer;" onclick="window.open(this.src)">`;
+        } else if (msg.media_type && msg.media_type.startsWith('video/')) {
+            mediaHtml = `<video src="${msg.media_url}" controls class="chat-media mb-2 rounded" style="max-width: 250px;"></video>`;
+        } else if (msg.media_type && msg.media_type.startsWith('audio/')) {
             mediaHtml = `<audio src="${msg.media_url}" controls class="chat-media mb-2 w-100"></audio>`;
         }
     }
 
     const html = `
         <div class="d-flex ${isSent ? 'justify-content-end' : 'justify-content-start'} mb-3">
-            <div class="msg-bubble ${isSent ? 'msg-sent' : 'msg-received'} shadow-sm">
+            <div class="msg-bubble ${isSent ? 'msg-sent' : 'msg-received'} shadow-sm p-3 rounded-4" 
+                 style="max-width: 75%; background: ${isSent ? 'var(--theme-primary)' : '#ffffff'}; color: ${isSent ? 'var(--theme-text)' : '#212529'};">
                 ${mediaHtml}
                 ${msg.text ? `<div class="msg-text">${msg.text}</div>` : ''}
-                <span class="msg-time d-block text-end mt-1">${msg.timestamp}</span>
+                <span class="msg-time d-block text-end mt-1 opacity-75" style="font-size: 0.7rem;">${msg.timestamp}</span>
             </div>
         </div>
     `;
@@ -134,20 +129,18 @@ function appendMessage(msg) {
 
 function scrollToBottom() {
     const msgBox = document.getElementById('chat-messages');
-    msgBox.scrollTop = msgBox.scrollHeight;
+    msgBox.scrollTo({ top: msgBox.scrollHeight, behavior: 'smooth' });
 }
 
 // ==========================================
-// 4. TYPING INDICATOR LOGIC
+// 4. TYPING INDICATOR (Backend: display_typing / hide_typing)
 // ==========================================
 
 const chatInput = document.getElementById('chat-input');
-
 if (chatInput) {
     chatInput.addEventListener('input', () => {
         if (currentActiveChatId) {
             socket.emit('typing', { receiver_id: currentActiveChatId });
-
             clearTimeout(typingTimeout);
             typingTimeout = setTimeout(() => {
                 socket.emit('stop_typing', { receiver_id: currentActiveChatId });
@@ -157,14 +150,13 @@ if (chatInput) {
 }
 
 socket.on('display_typing', (data) => {
-    // Only show typing indicator if it's the person we are currently viewing
     if (data.sender_id === currentActiveChatId) {
         let typingDiv = document.getElementById('typing-indicator');
         if (!typingDiv) {
             typingDiv = document.createElement('div');
             typingDiv.id = 'typing-indicator';
             typingDiv.className = 'text-muted small ps-3 mb-2 italic';
-            typingDiv.innerHTML = `<span class="spinner-grow spinner-grow-sm"></span> typing...`;
+            typingDiv.innerHTML = `<span class="spinner-grow spinner-grow-sm text-success"></span> someone is typing...`;
             document.getElementById('chat-messages').appendChild(typingDiv);
             scrollToBottom();
         }
@@ -197,9 +189,7 @@ function sendMessage() {
 }
 
 const sendBtn = document.getElementById('send-btn');
-if (sendBtn) {
-    sendBtn.addEventListener('click', sendMessage);
-}
+if (sendBtn) sendBtn.addEventListener('click', sendMessage);
 
 if (chatInput) {
     chatInput.addEventListener('keypress', (e) => {
@@ -212,14 +202,14 @@ if (chatInput) {
 // ==========================================
 
 function confirmClearChat() {
-    if (currentActiveChatId && confirm("Delete all messages in this chat? This cannot be undone.")) {
+    if (currentActiveChatId && confirm("Delete chat history permanently?")) {
         socket.emit('clear_chat', { target_uid: currentActiveChatId });
     }
 }
 
 socket.on('chat_cleared', () => {
     document.getElementById('chat-messages').innerHTML = 
-        '<div class="text-center text-muted my-5"><em>Chat history has been cleared.</em></div>';
+        '<div class="text-center text-muted my-5"><em>Chat history cleared.</em></div>';
 });
 
 const mediaUpload = document.getElementById('media-upload');
@@ -234,14 +224,11 @@ if (mediaUpload) {
         
         if (statusText) {
             statusText.classList.remove('d-none');
-            statusText.innerText = "Uploading media...";
+            statusText.innerText = "Encrypting & Uploading...";
         }
 
         fetch('/api/chat/upload', { method: 'POST', body: formData })
-        .then(res => {
-            if (!res.ok) throw new Error("Upload failed");
-            return res.json();
-        })
+        .then(res => res.json())
         .then(data => {
             if (statusText) statusText.classList.add('d-none');
             socket.emit('send_message', {
@@ -250,15 +237,10 @@ if (mediaUpload) {
                 media_url: data.url,
                 media_type: data.type
             });
-            // Clear input so same file can be uploaded again
             e.target.value = '';
         })
         .catch(err => {
-            console.error("Upload error:", err);
-            if (statusText) {
-                statusText.innerText = "Upload failed. Try again.";
-                setTimeout(() => statusText.classList.add('d-none'), 3000);
-            }
+            if (statusText) statusText.innerText = "Upload failed.";
             e.target.value = '';
         });
     });

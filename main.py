@@ -1486,26 +1486,27 @@ def diagnostics():
         "uptime": "99.9%" 
     }
     return render_template('diagnostics.html', data=health_data)
-
-
 # ==========================================
 # REAL-TIME CHAT SYSTEM (Strict Privacy & Online-Only)
 # ==========================================
 @app.route('/chat/dashboard')
 @login_required
-@premium_required # Keep this protected if your chat is protected!
+# @premium_required # Uncomment if you want this protected
 def chat_dashboard():
-    """Chat dashboard showing who is online right now."""
+    """Chat dashboard showing all users and their current online status."""
     current_uid = session.get('user_id')
     all_users = rtdb.reference('users').get() or {}
     
     online_contacts = []
     for uid, data in all_users.items():
-        if uid != current_uid and uid in online_users:
+        # WE NO LONGER FILTER OUT OFFLINE USERS HERE!
+        if uid != current_uid:
             online_contacts.append({
                 'uid': uid,
                 'name': data.get('full_name', 'Farmer'),
-                'role': data.get('role', 'client')
+                'role': data.get('role', 'client'),
+                # We pass the status to the frontend instead of filtering
+                'is_online': uid in online_users 
             })
             
     # Pointing exactly to the file inside the chat folder
@@ -1513,7 +1514,7 @@ def chat_dashboard():
 
 @app.route('/chat')
 @login_required
-@premium_required
+# @premium_required # Uncomment if you want this protected
 def chat_home():
     """Renders the main chat UI."""
     current_uid = session.get('user_id')
@@ -1526,11 +1527,14 @@ def chat_home():
     
     contacts = []
     for uid, data in all_users.items():
-        if uid != current_uid and uid in online_users:
+        # WE NO LONGER FILTER OUT OFFLINE USERS HERE!
+        if uid != current_uid:
             contacts.append({
                 'uid': uid,
                 'name': data.get('full_name', 'Farmer'),
-                'role': data.get('role', 'client')
+                'role': data.get('role', 'client'),
+                # Pass the status so the dot can be grey or green
+                'is_online': uid in online_users
             })
             
     return render_template(
@@ -1543,7 +1547,6 @@ def chat_home():
 
 @app.route('/api/chat/upload', methods=['POST'])
 @login_required
-@premium_required
 def upload_chat_media():
     """Handles image, video, and audio uploads to Cloud Storage."""
     if 'file' not in request.files:
@@ -1559,7 +1562,8 @@ def upload_chat_media():
         return jsonify({'url': file_url, 'type': file.content_type}), 200
     return jsonify({'error': 'Cloud upload failed'}), 500
 
-# --- SOCKET.IO EVENTS ---
+
+
 # --- SOCKET.IO EVENTS ---
 
 @socketio.on('connect')
