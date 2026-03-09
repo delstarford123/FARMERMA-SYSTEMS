@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* ==========================================
+       DASHBOARD UI & ANIMATIONS
+       ========================================== */
+    .dashboard-bg {
+        background-color: #f4f7f6;
+    }
+    
+    .hover-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.08) !important;
+        z-index: 1;
+    }
+
+    .contact-row {
+        border-left: 4px solid transparent;
+        transition: all 0.2s ease;
+    }
+    .contact-row:hover {
+        border-left-color: #198754; /* Success green indicator on hover */
+        background-color: #f8f9fa;
+    }
+
+    /* Subtle pulsing animation for the online dot */
+    @keyframes pulse-green {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(25, 135, 84, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
+    }
+    
+    .status-pulse {
+        animation: pulse-green 2s infinite;
+        border: 2px solid white;
+    }
+
+    .avatar-circle {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: white;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #00a884, #0b7a63);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-bg py-5 min-vh-100">
+    <div class="container">
+        
+        <div class="row mb-4 align-items-end">
+            <div class="col-md-8 mb-3 mb-md-0">
+                <h2 class="fw-bold text-dark mb-1">Communication Hub</h2>
+                <p class="text-muted mb-0">Connect instantly with verified farmers, experts, and investors.</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 rounded-pill shadow-sm">
+                    <i class="bi bi-broadcast me-1"></i> System Online
+                </span>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            
+            <div class="col-12 col-lg-5">
+                <div class="card shadow-sm border-0 h-100 rounded-4 overflow-hidden d-flex flex-column">
+                    
+                    <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0 text-dark">
+                            <i class="bi bi-people-fill text-primary me-2"></i> Active Network
+                        </h5>
+                        <span class="badge bg-primary rounded-pill">{{ online_contacts|length if online_contacts else 0 }}</span>
+                    </div>
+                    
+                    <div class="list-group list-group-flush flex-grow-1 overflow-auto" style="max-height: 500px;">
+                        {% if online_contacts %}
+                            {% for user in online_contacts %}
+                                <a href="{{ url_for('chat_home', target_uid=user.uid, target_name=user.name) }}" class="list-group-item list-group-item-action p-3 contact-row text-decoration-none">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        
+                                        <div class="d-flex align-items-center">
+                                            <div class="position-relative me-3">
+                                                <div class="avatar-circle shadow-sm">
+                                                    {{ user.name[0] | upper }}
+                                                </div>
+                                                <span class="position-absolute bottom-0 end-0 bg-success rounded-circle status-pulse" style="width: 14px; height: 14px; right: -2px; bottom: -2px;"></span>
+                                            </div>
+                                            
+                                            <div>
+                                                <h6 class="mb-0 fw-bold text-dark">{{ user.name }}</h6>
+                                                <small class="text-muted d-flex align-items-center">
+                                                    <i class="bi bi-person-badge me-1"></i> {{ user.role | capitalize }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="btn btn-sm btn-light rounded-circle text-primary shadow-sm" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="bi bi-chat-left-text-fill"></i>
+                                        </div>
+                                        
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted p-5 d-flex flex-column justify-content-center h-100">
+                                <i class="bi bi-moon-stars display-4 mb-3 opacity-25 text-primary"></i>
+                                <h6 class="fw-bold">Network is quiet</h6>
+                                <p class="small mb-0">No one else is currently online. Check back later.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-7">
+                 <div class="card shadow-sm border-0 h-100 rounded-4 overflow-hidden position-relative">
+                     
+                     <div class="position-absolute top-0 end-0 opacity-10 p-4" style="transform: scale(2) translate(10%, -10%); pointer-events: none;">
+                         <i class="bi bi-shield-check text-success display-1"></i>
+                     </div>
+
+                     <div class="card-body p-4 p-md-5 d-flex flex-column justify-content-center">
+                         
+                         <div class="mb-4">
+                             <div class="d-inline-block bg-success bg-opacity-10 text-success rounded-3 p-3 mb-3 shadow-sm">
+                                 <i class="bi bi-shield-lock-fill fs-3"></i>
+                             </div>
+                             <h3 class="fw-bold text-dark">Secure Enterprise Chat</h3>
+                             <p class="text-muted fs-6">
+                                 Select an active user from the network panel to initiate a private, real-time conversation. Your communications are protected and synchronized across your devices.
+                             </p>
+                         </div>
+
+                         <div class="row g-3 mt-2">
+                             <div class="col-md-6">
+                                 <div class="d-flex align-items-start hover-lift p-3 rounded-3 border bg-white h-100">
+                                     <i class="bi bi-lightning-charge-fill text-warning fs-4 me-3 mt-1"></i>
+                                     <div>
+                                         <h6 class="fw-bold mb-1">Real-Time Sync</h6>
+                                         <small class="text-muted">Messages appear instantly without refreshing.</small>
+                                     </div>
+                                 </div>
+                             </div>
+                             <div class="col-md-6">
+                                 <div class="d-flex align-items-start hover-lift p-3 rounded-3 border bg-white h-100">
+                                     <i class="bi bi-cloud-arrow-up-fill text-primary fs-4 me-3 mt-1"></i>
+                                     <div>
+                                         <h6 class="fw-bold mb-1">Media Sharing</h6>
+                                         <small class="text-muted">Securely upload images, audio, and documents.</small>
+                                     </div>
+                                 </div>
+                             </div>
+                             <div class="col-md-6">
+                                 <div class="d-flex align-items-start hover-lift p-3 rounded-3 border bg-white h-100">
+                                     <i class="bi bi-phone-vibrate-fill text-dark fs-4 me-3 mt-1"></i>
+                                     <div>
+                                         <h6 class="fw-bold mb-1">Mobile Optimized</h6>
+                                         <small class="text-muted">A seamless App-like experience on any screen.</small>
+                                     </div>
+                                 </div>
+                             </div>
+                             <div class="col-md-6">
+                                 <div class="d-flex align-items-start hover-lift p-3 rounded-3 border bg-white h-100">
+                                     <i class="bi bi-clock-history text-danger fs-4 me-3 mt-1"></i>
+                                     <div>
+                                         <h6 class="fw-bold mb-1">Persistent History</h6>
+                                         <small class="text-muted">Pick up exactly where you left off yesterday.</small>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                         
+                     </div>
+                 </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

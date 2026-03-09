@@ -11,6 +11,9 @@ firebase_admin.initialize_app(cred, {
 email = "delstarfordisaiah@gmail.com"
 password = "Delstarford123"
 full_name = "Delstarford Isaiah"
+email = "mira@gmail.com"
+password = "12345678910"
+full_name = "Mira"
 
 try:
     print(f"Attempting to create user {email}...")

@@ -1491,18 +1491,41 @@ def diagnostics():
 # ==========================================
 # REAL-TIME CHAT SYSTEM (Strict Privacy & Online-Only)
 # ==========================================
+@app.route('/chat/dashboard')
+@login_required
+@premium_required # Keep this protected if your chat is protected!
+def chat_dashboard():
+    """Chat dashboard showing who is online right now."""
+    current_uid = session.get('user_id')
+    all_users = rtdb.reference('users').get() or {}
+    
+    online_contacts = []
+    for uid, data in all_users.items():
+        if uid != current_uid and uid in online_users:
+            online_contacts.append({
+                'uid': uid,
+                'name': data.get('full_name', 'Farmer'),
+                'role': data.get('role', 'client')
+            })
+            
+    # Pointing exactly to the file inside the chat folder
+    return render_template('chat/dashboard.html', online_contacts=online_contacts)
 
 @app.route('/chat')
 @login_required
 @premium_required
 def chat_home():
-    """Renders the main chat UI, ONLY showing users currently active/online."""
+    """Renders the main chat UI."""
     current_uid = session.get('user_id')
+    
+    # Catch the user we want to auto-open from the URL parameters
+    auto_open_uid = request.args.get('target_uid')
+    auto_open_name = request.args.get('target_name')
+    
     all_users = rtdb.reference('users').get() or {}
     
     contacts = []
     for uid, data in all_users.items():
-        # ONLY show users currently in the global 'online_users' dictionary
         if uid != current_uid and uid in online_users:
             contacts.append({
                 'uid': uid,
@@ -1510,7 +1533,13 @@ def chat_home():
                 'role': data.get('role', 'client')
             })
             
-    return render_template('chat/index.html', contacts=contacts, current_uid=current_uid)
+    return render_template(
+        'chat/index.html', 
+        contacts=contacts, 
+        current_uid=current_uid,
+        auto_open_uid=auto_open_uid,   
+        auto_open_name=auto_open_name  
+    )
 
 @app.route('/api/chat/upload', methods=['POST'])
 @login_required

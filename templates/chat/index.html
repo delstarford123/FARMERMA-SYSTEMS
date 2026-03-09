@@ -3,22 +3,21 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
 <style>
-    /* KEYBOARD & RESPONSIVE FIXES */
-    
-    /* 1. Prevent the whole body from scrolling; force only specific elements to scroll */
+    /* ==========================================
+       1. ADVANCED RESPONSIVE & KEYBOARD FIXES
+       ========================================== */
     body, html { 
         height: 100%; 
-        overflow: hidden; 
-        overscroll-behavior-y: none; /* Prevents pull-to-refresh bouncing on mobile */
+        overflow: hidden; /* Prevents the entire website from scrolling */
+        overscroll-behavior-y: none; /* Stops iOS pull-to-refresh bounce */
     }
     
-    /* 2. Use 'dvh' (dynamic viewport height) so it shrinks automatically when keyboard appears */
     .chat-wrapper { 
-        /* Adjust 60px based on your actual navbar height. If you don't use a top navbar, set to 100dvh */
-        height: calc(100dvh - 60px); 
+        /* dvh ensures the box shrinks exactly to fit above the mobile keyboard */
+        height: calc(100dvh - 60px); /* Adjust 60px to match your top navbar height */
+        transition: background-color 0.3s ease;
     } 
 
-    /* 3. Force the active chat screen to a column flex layout */
     #chat-active-state {
         height: 100%;
         display: flex;
@@ -26,53 +25,77 @@
         overflow: hidden;
     }
     
-    /* 4. This area grows to take all space, but allows scrolling inside */
     .chat-messages {
-        flex: 1 1 auto; /* Grow and shrink as needed */
-        overflow-y: auto; /* Scroll inside here */
-        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        flex: 1 1 auto; /* Pushes the input bar to the bottom */
+        overflow-y: auto; /* Allows only messages to scroll */
+        -webkit-overflow-scrolling: touch; 
         padding-bottom: 20px;
     }
     
-    /* 5. Lock input area to the bottom. Flex-0 ensures it never shrinks. */
     .chat-input-area {
-        flex: 0 0 auto;
-        background: #f0f2f5; /* Light grey styling similar to messenger apps */
+        flex: 0 0 auto; /* Locks to the bottom, never shrinks */
+        background: #f0f2f5; 
         width: 100%;
     }
 
-    /* Keep status indicator from shrinking in flex layout */
-    .status-indicator {
-        flex-shrink: 0;
+    .status-indicator { flex-shrink: 0; }
+
+    /* ==========================================
+       2. DYNAMIC THEME ENGINE
+       ========================================== */
+    /* Define the color palettes for all your requested themes */
+    .theme-green { --theme-primary: #00a884; --theme-text: #ffffff; --chat-bg: #efeae2; }
+    .theme-dark-green { --theme-primary: #125e3e; --theme-text: #ffffff; --chat-bg: #d7e3dd; }
+    .theme-blue { --theme-primary: #007bff; --theme-text: #ffffff; --chat-bg: #e6f0ff; }
+    .theme-dark-blue { --theme-primary: #0a2540; --theme-text: #ffffff; --chat-bg: #e1e6eb; }
+    .theme-white { --theme-primary: #ffffff; --theme-text: #212529; --chat-bg: #f8f9fa; }
+    .theme-cream-white { --theme-primary: #FFFDD0; --theme-text: #212529; --chat-bg: #fcfbf4; }
+    .theme-smoke-white { --theme-primary: #F5F5F5; --theme-text: #212529; --chat-bg: #fafafa; }
+    .theme-yellow { --theme-primary: #ffc107; --theme-text: #212529; --chat-bg: #fff9e6; }
+
+    /* Apply the CSS Variables automatically */
+    .bg-theme-dynamic { 
+        background-color: var(--theme-primary) !important; 
+        color: var(--theme-text) !important;
+        transition: all 0.3s ease;
+    }
+    .theme-bg-color {
+        background-color: var(--chat-bg) !important;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid chat-wrapper theme-green p-0 p-md-3" id="chat-theme-wrapper">
-    <div class="row h-100 m-0 bg-white shadow-sm rounded">
+<div class="container-fluid chat-wrapper theme-green p-0 p-md-3 theme-bg-color" id="chat-theme-wrapper">
+    <div class="row h-100 m-0 shadow-sm rounded bg-white overflow-hidden">
         
-        <div id="chat-sidebar" class="col-12 col-md-4 col-lg-3 h-100 border-end d-flex flex-column p-0">
-            <div class="p-3 bg-theme-primary text-white d-flex justify-content-between align-items-center">
+        <div id="chat-sidebar" class="col-12 col-md-4 col-lg-3 h-100 border-end d-flex flex-column p-0 bg-white">
+            
+            <div class="p-3 bg-theme-dynamic d-flex justify-content-between align-items-center z-1 shadow-sm">
                 <h5 class="mb-0 fw-bold">Chats</h5>
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-palette"></i>
+                    <button class="btn btn-sm btn-light dropdown-toggle rounded-pill" type="button" data-bs-toggle="dropdown" style="opacity: 0.9;">
+                        <i class="bi bi-palette"></i> Theme
                     </button>
-                    <ul class="dropdown-menu shadow">
-                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-green')">🟢 Agribusiness Green</a></li>
+                    <ul class="dropdown-menu shadow border-0" style="border-radius: 12px;">
+                        <li><h6 class="dropdown-header">Select Appearance</h6></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-green')">🟢 WhatsApp Green</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-dark-green')">🌲 Dark Green</a></li>
                         <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-blue')">🔵 Sky Blue</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-dark-blue')">🌌 Dark Blue</a></li>
                         <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-yellow')">🟡 Harvest Yellow</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-white')">⚪ Pure White</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-cream-white')">🥛 Cream White</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-smoke-white')">💨 Smoke White</a></li>
                     </ul>
                 </div>
             </div>
 
             <div class="contact-list overflow-auto flex-grow-1 p-0" id="contact-list">
                 {% for contact in contacts %}
-                <div class="contact-card p-3 border-bottom d-flex align-items-center" onclick="openChatMobile('{{ contact.uid }}', '{{ contact.name }}')" style="cursor: pointer;">
-                    
-                    <span class="status-indicator online me-3" id="status-{{ contact.uid }}"></span>
-                    
+                <div class="contact-card p-3 border-bottom d-flex align-items-center transition-all hover-bg-light" onclick="openChatMobile('{{ contact.uid }}', '{{ contact.name }}')" style="cursor: pointer;">
+                    <span class="status-indicator online me-3 shadow-sm" id="status-{{ contact.uid }}" style="width: 12px; height: 12px; border-radius: 50%; background: #198754;"></span>
                     <div class="flex-grow-1">
                         <h6 class="mb-0 fw-bold text-dark">{{ contact.name }}</h6>
                         <small class="text-muted">{{ contact.role | capitalize }}</small>
@@ -82,44 +105,48 @@
             </div>
         </div>
 
-        <div id="chat-main" class="col-12 col-md-8 col-lg-9 h-100 bg-theme-light d-none d-md-flex flex-column p-0 position-relative" style="background-image: url('{{ url_for('static', filename='chat-bg.png') }}'); background-size: cover; background-attachment: local;">
+        <div id="chat-main" class="col-12 col-md-8 col-lg-9 h-100 d-none d-md-flex flex-column p-0 position-relative theme-bg-color" style="background-image: url('{{ url_for('static', filename='chat-bg.png') }}'); background-size: cover; background-attachment: fixed;">
             
             <div id="chat-blank-state" class="h-100 d-flex flex-column align-items-center justify-content-center text-muted">
-                <i class="bi bi-whatsapp display-1 mb-3 opacity-25"></i>
-                <h4>Select a contact to start chatting</h4>
+                <i class="bi bi-chat-square-text display-1 mb-3 opacity-25"></i>
+                <h4 class="fw-light">Select a contact to start messaging</h4>
             </div>
 
             <div id="chat-active-state" class="d-none">
+                
                 <div class="p-3 bg-white border-bottom shadow-sm d-flex align-items-center justify-content-between z-1 flex-0-0-auto">
                     <div class="d-flex align-items-center">
-                        <button class="btn btn-light btn-sm d-md-none me-2" onclick="closeChatMobile()">
+                        <button class="btn btn-light btn-sm d-md-none me-3 rounded-circle shadow-sm" onclick="closeChatMobile()" style="width: 36px; height: 36px;">
                             <i class="bi bi-arrow-left fs-5"></i>
                         </button>
-                        <h5 class="mb-0 fw-bold" id="active-chat-name">Farmer Name</h5>
+                        <div>
+                            <h5 class="mb-0 fw-bold text-dark" id="active-chat-name">Farmer Name</h5>
+                            <small class="text-success fw-bold" style="font-size: 0.75rem;">Online</small>
+                        </div>
                     </div>
                     
-                    <button class="btn btn-outline-danger btn-sm" onclick="confirmClearChat()" title="Clear Chat History">
-                        <i class="bi bi-trash3-fill"></i>
+                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="confirmClearChat()" title="Clear Chat History">
+                        <i class="bi bi-trash3-fill"></i> <span class="d-none d-sm-inline ms-1">Clear</span>
                     </button>
                 </div>
                 
                 <div class="chat-messages p-3 p-md-4" id="chat-messages">
                     </div>
 
-                <div class="p-2 p-md-3 border-top chat-input-area z-1">
+                <div class="p-2 p-md-3 border-top chat-input-area z-1 shadow-sm">
                     <div class="input-group align-items-center">
-                        <label class="btn btn-link text-muted p-2 m-0" style="cursor: pointer;">
+                        <label class="btn btn-link text-muted p-2 m-0 transition-all hover-opacity" style="cursor: pointer;">
                             <i class="bi bi-paperclip fs-4"></i>
                             <input type="file" id="media-upload" class="d-none" accept="image/*,video/*,audio/*">
                         </label>
                         
-                        <input type="text" id="chat-input" class="form-control form-control-lg rounded-pill mx-2 border-0 shadow-sm" placeholder="Message" style="background: white;">
+                        <input type="text" id="chat-input" class="form-control form-control-lg rounded-pill mx-2 border-0 shadow-sm px-4" placeholder="Type a message..." style="background: white;">
                         
-                        <button class="btn btn-success rounded-circle shadow-sm d-flex justify-content-center align-items-center" id="send-btn" style="width: 45px; height: 45px; background-color: #00a884; border: none;">
-                            <i class="bi bi-send-fill text-white"></i>
+                        <button class="btn btn-primary rounded-circle shadow-sm d-flex justify-content-center align-items-center bg-theme-dynamic border-0 transition-all" id="send-btn" style="width: 48px; height: 48px;">
+                            <i class="bi bi-send-fill text-white fs-5 ms-1"></i>
                         </button>
                     </div>
-                    <small id="upload-status" class="text-success d-none mt-1 ms-5">Uploading media...</small>
+                    <small id="upload-status" class="text-success fw-bold d-none mt-1 ms-5 ps-2">Uploading secure media...</small>
                 </div>
             </div>
             
@@ -131,32 +158,70 @@
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <script>
+    // ==========================================
+    // 1. INITIALIZATION & THEMES
+    // ==========================================
     const CURRENT_USER_ID = "{{ current_uid }}";
     
-    // Tiny UI script to help mobile keyboards
+    // Array of all available themes
+    const allThemes = [
+        'theme-green', 'theme-dark-green', 'theme-blue', 'theme-dark-blue', 
+        'theme-white', 'theme-cream-white', 'theme-smoke-white', 'theme-yellow'
+    ];
+
+    // Theme Switcher Logic
+    function changeTheme(themeClass) {
+        const wrapper = document.getElementById('chat-theme-wrapper');
+        if (!wrapper) return;
+        
+        // Remove all existing themes, then add the selected one
+        wrapper.classList.remove(...allThemes);
+        wrapper.classList.add(themeClass);
+        
+        // Save to browser memory so it remembers next time
+        localStorage.setItem('farmerman_chat_theme', themeClass);
+    }
+
+    // Load saved theme on boot
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('farmerman_chat_theme');
+        if (savedTheme && allThemes.includes(savedTheme)) {
+            changeTheme(savedTheme);
+        } else {
+            changeTheme('theme-green'); // Default fallback
+        }
+    });
+
+    // ==========================================
+    // 2. DASHBOARD REDIRECT AUTO-OPEN
+    // ==========================================
+    {% if auto_open_uid and auto_open_name %}
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                openChatMobile('{{ auto_open_uid }}', '{{ auto_open_name }}');
+            }, 300);
+        });
+    {% endif %}
+
+    // ==========================================
+    // 3. MOBILE RESPONSIVE BEHAVIOR
+    // ==========================================
     const chatInput = document.getElementById('chat-input');
     if (chatInput) {
+        // When keyboard opens, force chat to scroll to latest message
         chatInput.addEventListener('focus', () => {
-            // Short delay to allow the dvh and flexbox to recalculate before scrolling
             setTimeout(() => {
                 const msgBox = document.getElementById('chat-messages');
                 if(msgBox) msgBox.scrollTop = msgBox.scrollHeight;
-            }, 300); // Wait 300ms for keyboard to fully rise
+            }, 300);
         });
     }
 
-    // ==========================================
-    // RESPONSIVE MASTER-DETAIL LOGIC
-    // ==========================================
-    // This connects the contact list to the chat window on mobile.
-
     function openChatMobile(uid, name) {
-        // 1. Call your original openChat function (assumed in chat.js)
-        // to handle socket rooms and loading messages.
+        // Trigger socket join (requires your chat.js file to be loaded)
         if (typeof openChat === 'function') {
             openChat(uid, name);
         } else {
-            // Fallback UI toggles if chat.js isn't loaded yet
             document.getElementById('chat-blank-state').classList.add('d-none');
             const activeState = document.getElementById('chat-active-state');
             activeState.classList.remove('d-none');
@@ -164,9 +229,8 @@
             document.getElementById('active-chat-name').innerText = name;
         }
 
-        // 2. Handle Screen Swapping on Mobile
-        if (window.innerWidth < 768) { // Bootstrap 'md' breakpoint
-            // Hide Sidebar, Show Chat
+        // Execute mobile swap if screen is small
+        if (window.innerWidth < 768) { 
             document.getElementById('chat-sidebar').classList.add('d-none');
             document.getElementById('chat-sidebar').classList.remove('d-flex');
             
@@ -176,16 +240,18 @@
     }
 
     function closeChatMobile() {
-        // Reverse the swap: Show Sidebar, Hide Chat
+        // Reverse swap: Back to contacts list
         document.getElementById('chat-main').classList.add('d-none');
         document.getElementById('chat-main').classList.remove('d-flex');
-        document.getElementById('chat-sidebar').classList.remove('d-none');
         
-        // Stop tracking typing/active processes in the background (assumed variable)
+        document.getElementById('chat-sidebar').classList.remove('d-none');
+        document.getElementById('chat-sidebar').classList.add('d-flex');
+        
         if (typeof currentActiveChatId !== 'undefined') {
             currentActiveChatId = null; 
         }
     }
 </script>
+
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 {% endblock %}
