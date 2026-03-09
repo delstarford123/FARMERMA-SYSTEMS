@@ -2,75 +2,22 @@
 
 {% block extra_css %}
 <style>
-    /* ==========================================
-       DASHBOARD UI & ANIMATIONS
-       ========================================== */
-    .dashboard-bg {
-        background-color: #f4f7f6;
-    }
-    
-    /* Smooth hover lift for feature cards */
-    .hover-lift {
-        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
-    }
-    .hover-lift:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 .5rem 1rem rgba(0,0,0,.08) !important;
-        z-index: 1;
-    }
-
-    /* Contact list row styling */
-    .contact-row {
-        border-left: 4px solid transparent;
-        transition: all 0.2s ease;
-    }
-    .contact-row:hover {
-        border-left-color: #198754; 
-        background-color: #f8f9fa;
-    }
-
-    /* Subtle pulsing animation for the online dot */
+    .dashboard-bg { background-color: #f4f7f6; }
+    .hover-lift { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease; }
+    .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.08) !important; z-index: 1; }
+    .contact-row { border-left: 4px solid transparent; transition: all 0.2s ease; }
+    .contact-row:hover { border-left-color: #198754; background-color: #f8f9fa; }
     @keyframes pulse-green {
         0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7); }
         70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(25, 135, 84, 0); }
         100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
     }
-    
-    .status-pulse {
-        animation: pulse-green 2s infinite;
-        border: 2px solid white;
-    }
-
-    /* Professional Avatar Generator */
-    .avatar-circle {
-        width: 48px;
-        height: 48px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: white;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #00a884, #0b7a63);
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-    }
-    
-    /* Scrollbar styling for the contact list */
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: #f1f1f1; 
-        border-radius: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #c1c1c1; 
-        border-radius: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8; 
-    }
+    .status-pulse { animation: pulse-green 2s infinite; border: 2px solid white; }
+    .avatar-circle { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700; color: white; border-radius: 50%; background: linear-gradient(135deg, #00a884, #0b7a63); text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
 </style>
 {% endblock %}
 
@@ -94,14 +41,9 @@
             
             <div class="col-12 col-lg-5">
                 <div class="card shadow-sm border-0 h-100 rounded-4 overflow-hidden d-flex flex-column">
-                    
                     <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
-                        <h5 class="fw-bold mb-0 text-dark">
-                            <i class="bi bi-people-fill text-success me-2"></i> User Directory
-                        </h5>
-                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill border border-success border-opacity-25 px-3 py-1">
-                            {{ online_contacts|length if online_contacts else 0 }} Total
-                        </span>
+                        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-people-fill text-success me-2"></i> User Directory</h5>
+                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill border border-success border-opacity-25 px-3 py-1">{{ online_contacts|length if online_contacts else 0 }} Total</span>
                     </div>
                     
                     <div class="list-group list-group-flush flex-grow-1 custom-scrollbar overflow-auto" style="max-height: 600px;">
@@ -109,35 +51,24 @@
                             {% for user in online_contacts %}
                                 <a href="{{ url_for('chat_home', target_uid=user.uid, target_name=user.name) }}" class="list-group-item list-group-item-action p-3 contact-row text-decoration-none">
                                     <div class="d-flex align-items-center justify-content-between">
-                                        
                                         <div class="d-flex align-items-center">
                                             <div class="position-relative me-3">
-                                                <div class="avatar-circle shadow-sm">
-                                                    {{ user.name[0] | upper }}
-                                                </div>
-                                                <span class="position-absolute bottom-0 end-0 rounded-circle {{ 'status-pulse' if user.is_online else '' }}" 
+                                                <div class="avatar-circle shadow-sm">{{ user.name[0] | upper }}</div>
+                                                
+                                                <span id="status-{{ user.uid }}" class="position-absolute bottom-0 end-0 rounded-circle {{ 'status-pulse' if user.is_online else '' }}" 
                                                       style="width: 14px; height: 14px; right: -2px; bottom: -2px; background-color: {{ '#198754' if user.is_online else '#6c757d' }}; border: 2px solid white; z-index: 2;">
                                                 </span>
                                             </div>
-                                            
                                             <div>
                                                 <h6 class="mb-0 fw-bold text-dark">{{ user.name }}</h6>
                                                 <small class="text-muted d-flex align-items-center mt-1">
                                                     <i class="bi bi-person-badge me-1"></i> {{ user.role | capitalize }}
-                                                    <span class="mx-2">•</span>
-                                                    {% if user.is_online %}
-                                                        <span class="text-success fw-semibold">Active Now</span>
-                                                    {% else %}
-                                                        <span>Offline</span>
-                                                    {% endif %}
                                                 </small>
                                             </div>
                                         </div>
-                                        
                                         <div class="btn btn-sm btn-light rounded-circle text-success shadow-sm" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
                                             <i class="bi bi-chat-left-text-fill"></i>
                                         </div>
-                                        
                                     </div>
                                 </a>
                             {% endfor %}
@@ -149,19 +80,15 @@
                             </div>
                         {% endif %}
                     </div>
-                    
                 </div>
             </div>
 
             <div class="col-12 col-lg-7">
                  <div class="card shadow-sm border-0 h-100 rounded-4 overflow-hidden position-relative" style="background: linear-gradient(to bottom right, #ffffff, #f8f9fa);">
-                     
                      <div class="position-absolute top-0 end-0 opacity-10 p-4" style="transform: scale(2) translate(10%, -10%); pointer-events: none;">
                          <i class="bi bi-shield-check text-success display-1"></i>
                      </div>
-
                      <div class="card-body p-4 p-md-5 d-flex flex-column justify-content-center h-100">
-                         
                          <div class="mb-5">
                              <div class="d-inline-block bg-success bg-opacity-10 text-success rounded-4 p-3 mb-3 shadow-sm border border-success border-opacity-25">
                                  <i class="bi bi-shield-lock-fill fs-2"></i>
@@ -171,54 +98,12 @@
                                  Select a user from the directory to initiate a private, real-time conversation. Your communications are end-to-end encrypted and synchronized perfectly across all your devices.
                              </p>
                          </div>
-
                          <div class="row g-3">
-                             <div class="col-sm-6">
-                                 <div class="d-flex align-items-start hover-lift p-3 rounded-4 border bg-white h-100 shadow-sm">
-                                     <div class="bg-warning bg-opacity-10 text-warning rounded-circle p-2 me-3">
-                                         <i class="bi bi-lightning-charge-fill fs-5"></i>
-                                     </div>
-                                     <div>
-                                         <h6 class="fw-bold mb-1 text-dark">Real-Time Sync</h6>
-                                         <small class="text-muted">Messages appear instantly without refreshing.</small>
-                                     </div>
-                                 </div>
-                             </div>
-                             <div class="col-sm-6">
-                                 <div class="d-flex align-items-start hover-lift p-3 rounded-4 border bg-white h-100 shadow-sm">
-                                     <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-3">
-                                         <i class="bi bi-cloud-arrow-up-fill fs-5"></i>
-                                     </div>
-                                     <div>
-                                         <h6 class="fw-bold mb-1 text-dark">Media Sharing</h6>
-                                         <small class="text-muted">Securely upload images, audio, and documents.</small>
-                                     </div>
-                                 </div>
-                             </div>
-                             <div class="col-sm-6">
-                                 <div class="d-flex align-items-start hover-lift p-3 rounded-4 border bg-white h-100 shadow-sm">
-                                     <div class="bg-dark bg-opacity-10 text-dark rounded-circle p-2 me-3">
-                                         <i class="bi bi-phone-vibrate-fill fs-5"></i>
-                                     </div>
-                                     <div>
-                                         <h6 class="fw-bold mb-1 text-dark">Mobile Optimized</h6>
-                                         <small class="text-muted">A seamless App-like experience on any screen.</small>
-                                     </div>
-                                 </div>
-                             </div>
-                             <div class="col-sm-6">
-                                 <div class="d-flex align-items-start hover-lift p-3 rounded-4 border bg-white h-100 shadow-sm">
-                                     <div class="bg-danger bg-opacity-10 text-danger rounded-circle p-2 me-3">
-                                         <i class="bi bi-clock-history fs-5"></i>
-                                     </div>
-                                     <div>
-                                         <h6 class="fw-bold mb-1 text-dark">Persistent History</h6>
-                                         <small class="text-muted">Pick up exactly where you left off yesterday.</small>
-                                     </div>
-                                 </div>
-                             </div>
+                             <div class="col-sm-6"><div class="d-flex align-items-start hover-lift p-3 rounded-4 border bg-white h-100 shadow-sm"><div class="bg-warning bg-opacity-10 text-warning rounded-circle p-2 me-3"><i class="bi bi-lightning-charge-fill fs-5"></i></div><div><h6 class="fw-bold mb-1 text-dark">Real-Time Sync</h6><small class="text-muted">Messages appear instantly without refreshing.</small></div></div></div>
+                             <div class="col-sm-6"><div class="d-flex align-items-start hover-lift p-3 rounded-4 border bg-white h-100 shadow-sm"><div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-3"><i class="bi bi-cloud-arrow-up-fill fs-5"></i></div><div><h6 class="fw-bold mb-1 text-dark">Media Sharing</h6><small class="text-muted">Securely upload images, audio, and documents.</small></div></div></div>
+                             <div class="col-sm-6"><div class="d-flex align-items-start hover-lift p-3 rounded-4 border bg-white h-100 shadow-sm"><div class="bg-dark bg-opacity-10 text-dark rounded-circle p-2 me-3"><i class="bi bi-phone-vibrate-fill fs-5"></i></div><div><h6 class="fw-bold mb-1 text-dark">Mobile Optimized</h6><small class="text-muted">A seamless App-like experience on any screen.</small></div></div></div>
+                             <div class="col-sm-6"><div class="d-flex align-items-start hover-lift p-3 rounded-4 border bg-white h-100 shadow-sm"><div class="bg-danger bg-opacity-10 text-danger rounded-circle p-2 me-3"><i class="bi bi-clock-history fs-5"></i></div><div><h6 class="fw-bold mb-1 text-dark">Persistent History</h6><small class="text-muted">Pick up exactly where you left off yesterday.</small></div></div></div>
                          </div>
-                         
                      </div>
                  </div>
             </div>
@@ -226,4 +111,13 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    // Set global user ID for the dashboard
+    window.CURRENT_USER_ID = "{{ current_uid }}";
+</script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 {% endblock %}

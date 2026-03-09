@@ -1,16 +1,74 @@
-// Connect to WebSocket Server
+// Connect to WebSocket Server globally
 const socket = io();
 
 let currentActiveChatId = null;
 let typingTimeout;
 
 // ==========================================
-// 1. DYNAMIC SIDEBAR (Presence & List Management)
+// 1. INITIALIZATION & THEMES
 // ==========================================
+const allThemes = [
+    'theme-green', 'theme-dark-green', 'theme-blue', 'theme-dark-blue', 
+    'theme-white', 'theme-cream-white', 'theme-smoke-white', 'theme-yellow'
+];
 
+function changeTheme(themeClass) {
+    const wrapper = document.getElementById('chat-theme-wrapper');
+    if (!wrapper) return;
+    
+    wrapper.classList.remove(...allThemes);
+    wrapper.classList.add(themeClass);
+    localStorage.setItem('farmerman_chat_theme', themeClass);
+}
+
+// Run on page load
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Load Theme
+    const savedTheme = localStorage.getItem('farmerman_chat_theme');
+    if (savedTheme && allThemes.includes(savedTheme)) {
+        changeTheme(savedTheme);
+    } else {
+        changeTheme('theme-green'); // Default fallback
+    }
+
+    // 2. Auto-Open Chat (if coming from dashboard)
+    if (window.AUTO_OPEN_UID && window.AUTO_OPEN_NAME) {
+        setTimeout(() => {
+            openChatMobile(window.AUTO_OPEN_UID, window.AUTO_OPEN_NAME);
+        }, 300);
+    }
+
+    // 3. Mobile Keyboard Scroll Fix
+    const chatInput = document.getElementById('chat-input');
+    if (chatInput) {
+        chatInput.addEventListener('focus', () => {
+            setTimeout(() => {
+                const msgBox = document.getElementById('chat-messages');
+                if (msgBox) msgBox.scrollTop = msgBox.scrollHeight;
+            }, 300);
+        });
+        
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    }
+
+    // 4. Send Button Listener
+    const sendBtn = document.getElementById('send-btn');
+    if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+    
+    // 5. Media Upload Listener
+    const mediaUpload = document.getElementById('media-upload');
+    if (mediaUpload) mediaUpload.addEventListener('change', handleMediaUpload);
+});
+
+
+// ==========================================
+// 2. REAL-TIME PRESENCE (Dots turning green/grey)
+// ==========================================
 socket.on('refresh_contacts', () => {
-    // Reload only if the user is just browsing the contact list
-    if (!currentActiveChatId) {
+    // Reload only if the user is just browsing the contact list (no active chat)
+    if (!currentActiveChatId && !window.location.pathname.includes('dashboard')) {
         window.location.reload(); 
     }
 });
@@ -18,41 +76,23 @@ socket.on('refresh_contacts', () => {
 socket.on('user_status', function(data) {
     const statusDot = document.getElementById(`status-${data.uid}`);
     if (statusDot) {
-        // Updated to match Bootstrap success/secondary classes
         if (data.status === 'online') {
             statusDot.style.background = '#198754';
+            statusDot.classList.add('status-pulse'); // Adds pulse effect if on dashboard
         } else {
             statusDot.style.background = '#6c757d';
+            statusDot.classList.remove('status-pulse'); // Removes pulse
         }
     }
 });
 
 // ==========================================
-// 2. THEME INITIALIZATION
+// 3. UI TRANSITIONS & MOBILE SWAP
 // ==========================================
-function changeTheme(themeClass) {
-    const wrapper = document.getElementById('chat-theme-wrapper');
-    if (!wrapper) return;
-    
-    // Clear all possible themes
-    const allThemes = [
-        'theme-green', 'theme-dark-green', 'theme-blue', 'theme-dark-blue', 
-        'theme-white', 'theme-cream-white', 'theme-smoke-white', 'theme-yellow'
-    ];
-    wrapper.classList.remove(...allThemes);
-    
-    wrapper.classList.add(themeClass);
-    localStorage.setItem('farmerman_chat_theme', themeClass);
-}
-
-// ==========================================
-// 3. CORE CHAT LOGIC (Unified Mobile/Desktop)
-// ==========================================
-
 function openChatMobile(targetUid, targetName) {
     currentActiveChatId = targetUid;
     
-    // 1. UI Transitions
+    // UI Transitions
     const blankState = document.getElementById('chat-blank-state');
     const activeState = document.getElementById('chat-active-state');
     if(blankState) blankState.classList.add('d-none');
@@ -61,32 +101,39 @@ function openChatMobile(targetUid, targetName) {
         activeState.classList.add('d-flex');
     }
     
-    document.getElementById('active-chat-name').innerText = targetName;
+    const nameLabel = document.getElementById('active-chat-name');
+    if(nameLabel) nameLabel.innerText = targetName;
     
-    // 2. Mobile Screen Swap
+    // Mobile Screen Swap
     if (window.innerWidth < 768) {
-        document.getElementById('chat-sidebar').classList.add('d-none');
-        document.getElementById('chat-sidebar').classList.remove('d-flex');
-        document.getElementById('chat-main').classList.remove('d-none');
-        document.getElementById('chat-main').classList.add('d-flex');
+        const sidebar = document.getElementById('chat-sidebar');
+        const mainChat = document.getElementById('chat-main');
+        if (sidebar) { sidebar.classList.add('d-none'); sidebar.classList.remove('d-flex'); }
+        if (mainChat) { mainChat.classList.remove('d-none'); mainChat.classList.add('d-flex'); }
     }
 
-    // 3. Socket Communication
-    document.getElementById('chat-messages').innerHTML = '';
+    // Socket Communication
+    const msgBox = document.getElementById('chat-messages');
+    if (msgBox) msgBox.innerHTML = '';
     socket.emit('join_chat', { target_uid: targetUid });
 }
 
 function closeChatMobile() {
-    document.getElementById('chat-main').classList.add('d-none');
-    document.getElementById('chat-main').classList.remove('d-flex');
-    document.getElementById('chat-sidebar').classList.remove('d-none');
-    document.getElementById('chat-sidebar').classList.add('d-flex');
+    const sidebar = document.getElementById('chat-sidebar');
+    const mainChat = document.getElementById('chat-main');
+    
+    if (mainChat) { mainChat.classList.add('d-none'); mainChat.classList.remove('d-flex'); }
+    if (sidebar) { sidebar.classList.remove('d-none'); sidebar.classList.add('d-flex'); }
+    
     currentActiveChatId = null; 
 }
 
+// ==========================================
+// 4. MESSAGING LOGIC
+// ==========================================
 socket.on('chat_history', function(messages) {
     const msgBox = document.getElementById('chat-messages');
-    msgBox.innerHTML = ''; 
+    if(msgBox) msgBox.innerHTML = ''; 
     messages.forEach(msg => appendMessage(msg));
     scrollToBottom();
 });
@@ -94,14 +141,15 @@ socket.on('chat_history', function(messages) {
 socket.on('receive_message', function(msg) {
     appendMessage(msg);
     scrollToBottom();
-    // Remove typing indicator when message arrives
     const typingDiv = document.getElementById('typing-indicator');
     if (typingDiv) typingDiv.remove();
 });
 
 function appendMessage(msg) {
     const msgBox = document.getElementById('chat-messages');
-    const isSent = msg.sender_id === CURRENT_USER_ID;
+    if (!msgBox) return;
+    
+    const isSent = msg.sender_id === window.CURRENT_USER_ID;
     
     let mediaHtml = '';
     if (msg.media_url) {
@@ -129,16 +177,26 @@ function appendMessage(msg) {
 
 function scrollToBottom() {
     const msgBox = document.getElementById('chat-messages');
-    msgBox.scrollTo({ top: msgBox.scrollHeight, behavior: 'smooth' });
+    if(msgBox) msgBox.scrollTo({ top: msgBox.scrollHeight, behavior: 'smooth' });
+}
+
+function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    
+    if (text !== '' && currentActiveChatId) {
+        socket.emit('send_message', { receiver_id: currentActiveChatId, text: text });
+        input.value = '';
+        socket.emit('stop_typing', { receiver_id: currentActiveChatId });
+    }
 }
 
 // ==========================================
-// 4. TYPING INDICATOR (Backend: display_typing / hide_typing)
+// 5. TYPING INDICATORS
 // ==========================================
-
-const chatInput = document.getElementById('chat-input');
-if (chatInput) {
-    chatInput.addEventListener('input', () => {
+const inputField = document.getElementById('chat-input');
+if (inputField) {
+    inputField.addEventListener('input', () => {
         if (currentActiveChatId) {
             socket.emit('typing', { receiver_id: currentActiveChatId });
             clearTimeout(typingTimeout);
@@ -156,7 +214,7 @@ socket.on('display_typing', (data) => {
             typingDiv = document.createElement('div');
             typingDiv.id = 'typing-indicator';
             typingDiv.className = 'text-muted small ps-3 mb-2 italic';
-            typingDiv.innerHTML = `<span class="spinner-grow spinner-grow-sm text-success"></span> someone is typing...`;
+            typingDiv.innerHTML = `<span class="spinner-grow spinner-grow-sm text-success"></span> typing...`;
             document.getElementById('chat-messages').appendChild(typingDiv);
             scrollToBottom();
         }
@@ -171,36 +229,8 @@ socket.on('hide_typing', (data) => {
 });
 
 // ==========================================
-// 5. SENDING MESSAGES
+// 6. MEDIA UPLOAD & CLEAR CHAT
 // ==========================================
-
-function sendMessage() {
-    const input = document.getElementById('chat-input');
-    const text = input.value.trim();
-    
-    if (text !== '' && currentActiveChatId) {
-        socket.emit('send_message', {
-            receiver_id: currentActiveChatId,
-            text: text
-        });
-        input.value = '';
-        socket.emit('stop_typing', { receiver_id: currentActiveChatId });
-    }
-}
-
-const sendBtn = document.getElementById('send-btn');
-if (sendBtn) sendBtn.addEventListener('click', sendMessage);
-
-if (chatInput) {
-    chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
-}
-
-// ==========================================
-// 6. CLEAR CHAT & MEDIA UPLOAD
-// ==========================================
-
 function confirmClearChat() {
     if (currentActiveChatId && confirm("Delete chat history permanently?")) {
         socket.emit('clear_chat', { target_uid: currentActiveChatId });
@@ -208,40 +238,37 @@ function confirmClearChat() {
 }
 
 socket.on('chat_cleared', () => {
-    document.getElementById('chat-messages').innerHTML = 
-        '<div class="text-center text-muted my-5"><em>Chat history cleared.</em></div>';
+    const msgBox = document.getElementById('chat-messages');
+    if (msgBox) msgBox.innerHTML = '<div class="text-center text-muted my-5"><em>Chat history cleared.</em></div>';
 });
 
-const mediaUpload = document.getElementById('media-upload');
-if (mediaUpload) {
-    mediaUpload.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file || !currentActiveChatId) return;
+function handleMediaUpload(e) {
+    const file = e.target.files[0];
+    if (!file || !currentActiveChatId) return;
 
-        const formData = new FormData();
-        formData.append('file', file);
-        const statusText = document.getElementById('upload-status');
-        
-        if (statusText) {
-            statusText.classList.remove('d-none');
-            statusText.innerText = "Encrypting & Uploading...";
-        }
+    const formData = new FormData();
+    formData.append('file', file);
+    const statusText = document.getElementById('upload-status');
+    
+    if (statusText) {
+        statusText.classList.remove('d-none');
+        statusText.innerText = "Encrypting & Uploading...";
+    }
 
-        fetch('/api/chat/upload', { method: 'POST', body: formData })
-        .then(res => res.json())
-        .then(data => {
-            if (statusText) statusText.classList.add('d-none');
-            socket.emit('send_message', {
-                receiver_id: currentActiveChatId,
-                text: '',
-                media_url: data.url,
-                media_type: data.type
-            });
-            e.target.value = '';
-        })
-        .catch(err => {
-            if (statusText) statusText.innerText = "Upload failed.";
-            e.target.value = '';
+    fetch('/api/chat/upload', { method: 'POST', body: formData })
+    .then(res => res.json())
+    .then(data => {
+        if (statusText) statusText.classList.add('d-none');
+        socket.emit('send_message', {
+            receiver_id: currentActiveChatId,
+            text: '',
+            media_url: data.url,
+            media_type: data.type
         });
+        e.target.value = '';
+    })
+    .catch(err => {
+        if (statusText) statusText.innerText = "Upload failed.";
+        e.target.value = '';
     });
 }
