@@ -15,7 +15,7 @@
         </h1>
         
         <p class="lead mb-5 text-dark hero-lead" style="max-width: 800px; margin: 0 auto; font-weight: 500; opacity: 0;">
-            {{ hero.body if hero else "Supporting governments, investors, and agribusiness leaders to build competitive agricultural economies across Africa. [cite: 48]" }}
+            {{ hero.body if hero else "Supporting governments, investors, and agribusiness leaders to build competitive agricultural economies across Africa." }}
         </p>
         
         <div class="d-flex justify-content-center gap-3 hero-btns" style="opacity: 0;">
@@ -248,7 +248,7 @@
     gsap.from(".hero-badge", { y: -100, opacity: 0, duration: 1.5, ease: "elastic.out(1, 0.3)" });
 
     // 2. Typewriter (CMS Title or Default)
-    const heroTitle = "{{ hero.title if hero else 'Transforming African Agriculture Through Intelligence, Investment, and Systems Design' }}";
+    const heroTitle = "{{ hero.title if hero else 'Transforming African Agribusiness Through Intelligence, Investment, and Systems Design' }}";
     gsap.to("#hero-typewriter", { text: heroTitle, duration: 3, delay: 0.5, ease: "none" });
 
     // 3. Hero Sequential Entrances

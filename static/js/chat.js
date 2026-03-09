@@ -63,9 +63,32 @@ function openChat(targetUid, targetName) {
     activeState.classList.add('d-flex');
     document.getElementById('active-chat-name').innerText = targetName;
     
+    // --> MOBILE SCREEN SWAP LOGIC <--
+    // If screen is smaller than 768px (Mobile), hide sidebar, show chat
+    if (window.innerWidth < 768) {
+        document.getElementById('chat-sidebar').classList.add('d-none');
+        document.getElementById('chat-sidebar').classList.remove('d-flex');
+        
+        document.getElementById('chat-main').classList.remove('d-none');
+        document.getElementById('chat-main').classList.add('d-flex');
+    }
+
     // Clear view and request history from server
     document.getElementById('chat-messages').innerHTML = '';
     socket.emit('join_chat', { target_uid: targetUid });
+}
+
+// --> NEW: MOBILE BACK BUTTON LOGIC <--
+function closeChatMobile() {
+    // Hide the chat window, show the sidebar again
+    document.getElementById('chat-main').classList.add('d-none');
+    document.getElementById('chat-main').classList.remove('d-flex');
+    
+    document.getElementById('chat-sidebar').classList.remove('d-none');
+    document.getElementById('chat-sidebar').classList.add('d-flex');
+    
+    // Clear the active chat so background events don't trigger weirdly
+    currentActiveChatId = null; 
 }
 
 // Render history when entering a room
