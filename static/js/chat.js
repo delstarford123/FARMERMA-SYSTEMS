@@ -2,8 +2,14 @@ const socket = io();
 let currentActiveChatId = null;
 let typingTimeout;
 
-// --- 1. KEYBOARD FIX & THEMES ---
-const allThemes = ['theme-green', 'theme-dark-green', 'theme-blue', 'theme-dark-blue', 'theme-white', 'theme-cream-white', 'theme-smoke-white', 'theme-yellow'];
+// --- 1. KEYBOARD FIX & 20 THEMES ---
+const allThemes = [
+    'theme-green', 'theme-dark-green', 'theme-light-green', 
+    'theme-blue', 'theme-dark-blue', 'theme-cyan', 'theme-teal', 'theme-midnight',
+    'theme-orange', 'theme-crimson', 'theme-yellow', 'theme-brown',
+    'theme-purple', 'theme-dark-purple', 'theme-pink', 'theme-magenta', 'theme-rose',
+    'theme-white', 'theme-cream-white', 'theme-slate'
+];
 
 function changeTheme(themeClass) {
     const wrapper = document.getElementById('chat-theme-wrapper');
@@ -16,10 +22,9 @@ function changeTheme(themeClass) {
 document.addEventListener('DOMContentLoaded', () => {
     changeTheme(localStorage.getItem('farmerman_chat_theme') || 'theme-green');
 
-    // Visual Viewport API: The ultimate Android/iOS Keyboard fix
+    // Visual Viewport API: Keeps input exactly above the Android/iOS keyboard
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', () => {
-            // Shrinks the body to the EXACT height above the keyboard
             document.body.style.height = window.visualViewport.height + 'px';
             scrollToBottom();
         });
@@ -80,7 +85,6 @@ socket.on('receive_message', function(msg) {
     if (typingDiv) typingDiv.remove();
 });
 
-// --- NEW: Handing the split Delete Logic ---
 socket.on('chat_cleared', (data) => {
     const msgBox = document.getElementById('chat-messages');
     if (msgBox) {
@@ -117,8 +121,12 @@ function openChatMobile(targetUid, targetName) {
     currentActiveChatId = targetUid;
     
     document.getElementById('chat-blank-state').classList.add('d-none');
-    document.getElementById('chat-active-state').classList.remove('d-none');
-    document.getElementById('chat-active-state').classList.add('d-flex');
+    
+    // IMPORTANT: Adds d-flex to activate the column layout
+    const activeState = document.getElementById('chat-active-state');
+    activeState.classList.remove('d-none');
+    activeState.classList.add('d-flex'); 
+    
     document.getElementById('active-chat-name').innerText = targetName;
     
     if (window.innerWidth < 768) {
@@ -172,7 +180,10 @@ function appendMessage(msg) {
 
 function scrollToBottom() {
     const msgBox = document.getElementById('chat-messages');
-    if(msgBox) msgBox.scrollTo({ top: msgBox.scrollHeight, behavior: 'smooth' });
+    if(msgBox) {
+        // Enforce the scroll top
+        msgBox.scrollTop = msgBox.scrollHeight;
+    }
 }
 
 function sendMessage() {
@@ -187,7 +198,6 @@ function sendMessage() {
     }
 }
 
-// --- NEW: Advanced Deletion Dispatcher ---
 function confirmClearChat(mode) {
     if (!currentActiveChatId) return;
     

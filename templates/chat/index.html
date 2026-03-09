@@ -3,36 +3,73 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
 <style>
-    /* Absolute lockdown for mobile bouncing and keyboard adjustments */
+    /* ==========================================
+       1. IRONCLAD LAYOUT & KEYBOARD FIXES
+       ========================================== */
     body, html { 
-        height: 100%; 
-        width: 100%;
-        overflow: hidden !important; 
-        position: fixed; /* Prevents iOS/Android body bounce */
+        height: 100%; width: 100%; 
+        overflow: hidden !important; /* Absolute lockdown on body scrolling */
+        position: fixed; 
         overscroll-behavior-y: none; 
     }
     
     .chat-wrapper { 
-        height: 100%; /* Will be dynamically managed by JS Visual Viewport */
+        height: calc(100dvh - 60px); /* 60px is your navbar height */
+        display: flex; flex-direction: column; 
         transition: background-color 0.3s ease; 
-        display: flex;
-        flex-direction: column;
     } 
 
-    #chat-active-state { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
-    .chat-messages { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 20px; }
-    .chat-input-area { flex: 0 0 auto; background: #f0f2f5; width: 100%; padding-bottom: env(safe-area-inset-bottom); }
+    /* The fix for disappearing inputs: strict flex boundaries */
+    #chat-main { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+    #chat-active-state { display: flex; flex-direction: column; height: 100%; overflow: hidden; width: 100%; }
+    
+    .chat-messages { 
+        flex: 1 1 0; /* Forces it to take available space but NEVER expand past it */
+        overflow-y: auto; 
+        -webkit-overflow-scrolling: touch; 
+        padding-bottom: 20px; 
+    }
+    
+    .chat-input-area { 
+        flex: 0 0 auto; /* 0 shrink, 0 grow. Locks it permanently to the bottom */
+        background: #f0f2f5; width: 100%; 
+        padding-bottom: env(safe-area-inset-bottom); 
+    }
+    
     .status-indicator { flex-shrink: 0; }
 
-    /* Theme Engine */
+    /* Scrollable Theme Menu */
+    .theme-dropdown-menu { max-height: 350px; overflow-y: auto; }
+
+    /* ==========================================
+       2. 20-COLOR DYNAMIC THEME ENGINE
+       ========================================== */
+    /* Base */
     .theme-green { --theme-primary: #00a884; --theme-text: #ffffff; --chat-bg: #efeae2; }
     .theme-dark-green { --theme-primary: #125e3e; --theme-text: #ffffff; --chat-bg: #d7e3dd; }
+    .theme-light-green { --theme-primary: #8bc34a; --theme-text: #212529; --chat-bg: #f1f8e9; }
+    /* Blues */
     .theme-blue { --theme-primary: #007bff; --theme-text: #ffffff; --chat-bg: #e6f0ff; }
     .theme-dark-blue { --theme-primary: #0a2540; --theme-text: #ffffff; --chat-bg: #e1e6eb; }
+    .theme-cyan { --theme-primary: #0dcaf0; --theme-text: #212529; --chat-bg: #e0f7fa; }
+    .theme-teal { --theme-primary: #20c997; --theme-text: #ffffff; --chat-bg: #e6fcf5; }
+    .theme-midnight { --theme-primary: #191970; --theme-text: #ffffff; --chat-bg: #eaecf0; }
+    /* Warm Colors */
+    .theme-orange { --theme-primary: #fd7e14; --theme-text: #ffffff; --chat-bg: #fff0e6; }
+    .theme-crimson { --theme-primary: #dc3545; --theme-text: #ffffff; --chat-bg: #fdf5f6; }
+    .theme-yellow { --theme-primary: #ffc107; --theme-text: #212529; --chat-bg: #fff9e6; }
+    .theme-brown { --theme-primary: #795548; --theme-text: #ffffff; --chat-bg: #efebe9; }
+    /* Purples & Pinks */
+    .theme-purple { --theme-primary: #6f42c1; --theme-text: #ffffff; --chat-bg: #f3e8fd; }
+    .theme-dark-purple { --theme-primary: #3b167a; --theme-text: #ffffff; --chat-bg: #e9e3f4; }
+    .theme-pink { --theme-primary: #d63384; --theme-text: #ffffff; --chat-bg: #fce4ec; }
+    .theme-magenta { --theme-primary: #e83e8c; --theme-text: #ffffff; --chat-bg: #fdf2f7; }
+    .theme-rose { --theme-primary: #ff8080; --theme-text: #212529; --chat-bg: #fff0f0; }
+    /* Neutrals */
     .theme-white { --theme-primary: #ffffff; --theme-text: #212529; --chat-bg: #f8f9fa; }
     .theme-cream-white { --theme-primary: #FFFDD0; --theme-text: #212529; --chat-bg: #fcfbf4; }
-    .theme-smoke-white { --theme-primary: #F5F5F5; --theme-text: #212529; --chat-bg: #fafafa; }
-    .theme-yellow { --theme-primary: #ffc107; --theme-text: #212529; --chat-bg: #fff9e6; }
+    .theme-slate { --theme-primary: #708090; --theme-text: #ffffff; --chat-bg: #f0f2f5; }
+
     .bg-theme-dynamic { background-color: var(--theme-primary) !important; color: var(--theme-text) !important; transition: all 0.3s ease; }
     .theme-bg-color { background-color: var(--chat-bg) !important; }
 </style>
@@ -49,12 +86,36 @@
                     <button class="btn btn-sm btn-light dropdown-toggle rounded-pill" type="button" data-bs-toggle="dropdown" style="opacity: 0.9;">
                         <i class="bi bi-palette"></i> Theme
                     </button>
-                    <ul class="dropdown-menu shadow border-0" style="border-radius: 12px;">
+                    <ul class="dropdown-menu theme-dropdown-menu shadow border-0" style="border-radius: 12px;">
+                        <li><h6 class="dropdown-header text-success">Greens</h6></li>
                         <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-green')">🟢 WhatsApp Green</a></li>
                         <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-dark-green')">🌲 Dark Green</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-light-green')">🌿 Light Green</a></li>
+                        
+                        <li><h6 class="dropdown-header text-primary mt-2">Blues</h6></li>
                         <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-blue')">🔵 Sky Blue</a></li>
                         <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-dark-blue')">🌌 Dark Blue</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-cyan')">💎 Cyan</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-teal')">🌊 Teal</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-midnight')">🌃 Midnight</a></li>
+                        
+                        <li><h6 class="dropdown-header text-warning mt-2">Warm</h6></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-orange')">🍊 Orange</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-crimson')">🩸 Crimson Red</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-yellow')">🟡 Harvest Yellow</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-brown')">🟤 Earth Brown</a></li>
+                        
+                        <li><h6 class="dropdown-header text-danger mt-2">Vibrant</h6></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-purple')">🟣 Royal Purple</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-dark-purple')">🔮 Dark Purple</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-pink')">🎀 Soft Pink</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-magenta')">🌺 Magenta</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-rose')">🌹 Rose</a></li>
+                        
+                        <li><h6 class="dropdown-header text-secondary mt-2">Neutrals</h6></li>
                         <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-white')">⚪ Pure White</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-cream-white')">🥛 Cream White</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeTheme('theme-slate')">🪨 Slate Grey</a></li>
                     </ul>
                 </div>
             </div>
@@ -89,13 +150,15 @@
         </div>
 
         <div id="chat-main" class="col-12 col-md-8 col-lg-9 h-100 d-none d-md-flex flex-column p-0 position-relative theme-bg-color" style="background-image: url('{{ url_for('static', filename='chat-bg.png') }}'); background-size: cover; background-attachment: fixed;">
-            <div id="chat-blank-state" class="h-100 d-flex flex-column align-items-center justify-content-center text-muted">
+            
+            <div id="chat-blank-state" class="h-100 w-100 d-flex flex-column align-items-center justify-content-center text-muted">
                 <i class="bi bi-chat-square-text display-1 mb-3 opacity-25"></i>
                 <h4 class="fw-light">Select a contact to start messaging</h4>
             </div>
 
-            <div id="chat-active-state" class="d-none">
-                <div class="p-3 bg-white border-bottom shadow-sm d-flex align-items-center justify-content-between z-1 flex-0-0-auto">
+            <div id="chat-active-state" class="d-none h-100 flex-column w-100">
+                
+                <div class="p-3 bg-white border-bottom shadow-sm d-flex align-items-center justify-content-between z-1 flex-shrink-0">
                     <div class="d-flex align-items-center">
                         <button class="btn btn-light btn-sm d-md-none me-3 rounded-circle shadow-sm" onclick="closeChatMobile()" style="width: 36px; height: 36px;">
                             <i class="bi bi-arrow-left fs-5"></i>
@@ -122,9 +185,9 @@
                     </div>
                 </div>
                 
-                <div class="chat-messages p-3 p-md-4" id="chat-messages"></div>
+                <div class="chat-messages flex-grow-1 overflow-auto p-3 p-md-4" id="chat-messages"></div>
 
-                <div class="p-2 p-md-3 border-top chat-input-area z-1 shadow-sm">
+                <div class="p-2 p-md-3 border-top chat-input-area z-1 shadow-sm flex-shrink-0">
                     <div class="input-group align-items-center">
                         <label class="btn btn-link text-muted p-2 m-0 transition-all hover-opacity" style="cursor: pointer;">
                             <i class="bi bi-paperclip fs-4"></i>
@@ -137,6 +200,7 @@
                     </div>
                     <small id="upload-status" class="text-success fw-bold d-none mt-1 ms-5 ps-2">Uploading secure media...</small>
                 </div>
+                
             </div>
         </div>
     </div>
