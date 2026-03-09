@@ -3,19 +3,46 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
 <style>
-    /* Make the chat fill the mobile screen perfectly without scrolling the body */
-    body, html { height: 100%; overflow: hidden; }
-    .chat-wrapper { height: calc(100vh - 56px); } /* Adjust 56px based on your actual navbar height */
+    /* KEYBOARD FIX: Use 'dvh' (dynamic viewport height) so it shrinks when keyboard appears */
+    body, html { 
+        height: 100%; 
+        overflow: hidden; 
+        overscroll-behavior-y: none; /* Prevents pull-to-refresh bouncing on mobile */
+    }
+    
+    /* Adjust height to account for your navigation bar. */
+    .chat-wrapper { 
+        height: calc(100dvh - 60px); 
+    } 
+
+    /* Force the message area to scroll and push the input bar to the bottom */
+    #chat-active-state {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-messages {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding-bottom: 20px;
+    }
+    
+    /* Lock input area to the bottom */
+    .chat-input-area {
+        flex: 0 0 auto;
+        background: #f0f2f5; /* WhatsApp light grey background */
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid chat-wrapper theme-green p-0 p-md-3" id="chat-theme-wrapper">
-    <div class="row h-100 m-0">
+    <div class="row h-100 m-0 bg-white shadow-sm rounded">
         
-        <div id="chat-sidebar" class="col-12 col-md-4 col-lg-3 h-100 bg-white shadow-sm border-end d-flex flex-column p-0">
+        <div id="chat-sidebar" class="col-12 col-md-4 col-lg-3 h-100 border-end d-flex flex-column p-0">
             <div class="p-3 bg-theme-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold">Messages</h5>
+                <h5 class="mb-0 fw-bold">Chats</h5>
                 <div class="dropdown">
                     <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <i class="bi bi-palette"></i>
@@ -28,67 +55,82 @@
                 </div>
             </div>
 
-            <div class="contact-list overflow-auto flex-grow-1 p-2" id="contact-list">
+            <div class="contact-list overflow-auto flex-grow-1 p-0" id="contact-list">
                 {% for contact in contacts %}
-                <div class="contact-card p-3 mb-2 rounded border-bottom" onclick="openChat('{{ contact.uid }}', '{{ contact.name }}')" style="cursor: pointer;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-0 fw-bold">{{ contact.name }}</h6>
-                            <small class="text-muted">{{ contact.role | capitalize }}</small>
-                        </div>
-                        <span class="status-indicator online" id="status-{{ contact.uid }}"></span>
+                <div class="contact-card p-3 border-bottom d-flex align-items-center" onclick="openChat('{{ contact.uid }}', '{{ contact.name }}')" style="cursor: pointer;">
+                    
+                    <span class="status-indicator online me-3" id="status-{{ contact.uid }}"></span>
+                    
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0 fw-bold text-dark">{{ contact.name }}</h6>
+                        <small class="text-muted">{{ contact.role | capitalize }}</small>
                     </div>
                 </div>
                 {% endfor %}
             </div>
         </div>
 
-        <div id="chat-main" class="col-12 col-md-8 col-lg-9 h-100 bg-theme-light shadow-sm d-none d-md-flex flex-column p-0 position-relative">
+        <div id="chat-main" class="col-12 col-md-8 col-lg-9 h-100 bg-theme-light d-none d-md-flex flex-column p-0 position-relative" style="background-image: url('{{ url_for('static', filename='images/chat-bg.png') }}'); background-size: cover;">
             
             <div id="chat-blank-state" class="h-100 d-flex flex-column align-items-center justify-content-center text-muted">
-                <i class="bi bi-whatsapp display-1 mb-3 opacity-50"></i>
+                <i class="bi bi-whatsapp display-1 mb-3 opacity-25"></i>
                 <h4>Select a contact to start chatting</h4>
             </div>
 
-            <div id="chat-active-state" class="h-100 d-none flex-column">
-                <div class="p-3 bg-white border-bottom shadow-sm d-flex align-items-center justify-content-between">
+            <div id="chat-active-state" class="d-none">
+                <div class="p-3 bg-white border-bottom shadow-sm d-flex align-items-center justify-content-between z-1">
                     <div class="d-flex align-items-center">
-                        <button class="btn btn-light btn-sm d-md-none me-3" onclick="closeChatMobile()">
+                        <button class="btn btn-light btn-sm d-md-none me-2" onclick="closeChatMobile()">
                             <i class="bi bi-arrow-left fs-5"></i>
                         </button>
                         <h5 class="mb-0 fw-bold" id="active-chat-name">Farmer Name</h5>
                     </div>
                     
                     <button class="btn btn-outline-danger btn-sm" onclick="confirmClearChat()" title="Clear Chat History">
-                        <i class="bi bi-trash3-fill"></i> <span class="d-none d-sm-inline">Clear</span>
+                        <i class="bi bi-trash3-fill"></i>
                     </button>
                 </div>
                 
-                <div class="chat-messages flex-grow-1 overflow-auto p-3 p-md-4" id="chat-messages">
+                <div class="chat-messages p-3 p-md-4" id="chat-messages">
                     </div>
 
-                <div class="p-2 p-md-3 bg-white border-top">
-                    <div class="input-group">
-                        <label class="btn btn-outline-secondary d-flex align-items-center" style="cursor: pointer;">
-                            <i class="bi bi-paperclip fs-5"></i>
+                <div class="p-2 p-md-3 border-top chat-input-area z-1">
+                    <div class="input-group align-items-center">
+                        <label class="btn btn-link text-muted p-2 m-0" style="cursor: pointer;">
+                            <i class="bi bi-paperclip fs-4"></i>
                             <input type="file" id="media-upload" class="d-none" accept="image/*,video/*,audio/*">
                         </label>
-                        <input type="text" id="chat-input" class="form-control form-control-lg rounded-pill mx-2" placeholder="Message...">
-                        <button class="btn btn-theme-primary rounded-circle" id="send-btn" style="width: 45px; height: 45px;">
-                            <i class="bi bi-send-fill"></i>
+                        
+                        <input type="text" id="chat-input" class="form-control form-control-lg rounded-pill mx-2 border-0 shadow-sm" placeholder="Message" style="background: white;">
+                        
+                        <button class="btn btn-success rounded-circle shadow-sm d-flex justify-content-center align-items-center" id="send-btn" style="width: 45px; height: 45px; background-color: #00a884; border: none;">
+                            <i class="bi bi-send-fill text-white"></i>
                         </button>
                     </div>
                     <small id="upload-status" class="text-success d-none mt-1 ms-5">Uploading media...</small>
                 </div>
             </div>
+            
         </div>
-
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-<script>const CURRENT_USER_ID = "{{ current_uid }}";</script>
+<script>
+    const CURRENT_USER_ID = "{{ current_uid }}";
+    
+    // Tiny UI script to help mobile keyboards
+    const chatInput = document.getElementById('chat-input');
+    if (chatInput) {
+        chatInput.addEventListener('focus', () => {
+            setTimeout(() => {
+                const msgBox = document.getElementById('chat-messages');
+                if(msgBox) msgBox.scrollTop = msgBox.scrollHeight;
+            }, 300); // Wait for keyboard to fully rise
+        });
+    }
+</script>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 {% endblock %}
