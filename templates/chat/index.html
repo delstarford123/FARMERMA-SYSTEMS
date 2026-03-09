@@ -22,7 +22,7 @@
                     </ul>
                 </div>
             </div>
-            
+
             <div class="contact-list overflow-auto flex-grow-1 p-2" id="contact-list">
                 {% for contact in contacts %}
                 <div class="contact-card p-3 mb-2 rounded border-bottom" onclick="openChat('{{ contact.uid }}', '{{ contact.name }}')">
@@ -31,7 +31,7 @@
                             <h6 class="mb-0 fw-bold">{{ contact.name }}</h6>
                             <small class="text-muted">{{ contact.role | capitalize }}</small>
                         </div>
-                        <span class="status-indicator offline" id="status-{{ contact.uid }}"></span>
+                        <span class="status-indicator online" id="status-{{ contact.uid }}"></span>
                     </div>
                 </div>
                 {% endfor %}
@@ -39,14 +39,18 @@
         </div>
 
         <div class="col-md-8 col-lg-9 h-100 bg-theme-light rounded-end shadow-sm d-flex flex-column p-0 position-relative">
+            
             <div id="chat-blank-state" class="h-100 d-flex flex-column align-items-center justify-content-center text-muted">
                 <i class="bi bi-chat-dots display-1 mb-3"></i>
                 <h4>Select a contact to start chatting</h4>
             </div>
 
             <div id="chat-active-state" class="h-100 d-none flex-column">
-                <div class="p-3 bg-white border-bottom shadow-sm d-flex align-items-center rounded-top-end">
+                <div class="p-3 bg-white border-bottom shadow-sm d-flex align-items-center justify-content-between rounded-top-end">
                     <h5 class="mb-0 fw-bold" id="active-chat-name">Farmer Name</h5>
+                    <button class="btn btn-outline-danger btn-sm" onclick="confirmClearChat()" title="Clear Chat History">
+                        <i class="bi bi-trash3-fill"></i> Clear
+                    </button>
                 </div>
                 
                 <div class="chat-messages flex-grow-1 overflow-auto p-4" id="chat-messages">
@@ -74,9 +78,6 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-<script>
-    // Pass Python variables to external JS securely
-    const CURRENT_USER_ID = "{{ current_uid }}";
-</script>
+<script>const CURRENT_USER_ID = "{{ current_uid }}";</script>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 {% endblock %}

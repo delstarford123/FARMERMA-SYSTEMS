@@ -1479,24 +1479,20 @@ def diagnostics():
         "uptime": "99.9%" 
     }
     return render_template('diagnostics.html', data=health_data)
-
 # ==========================================
 # REAL-TIME CHAT SYSTEM (Strict Privacy & Online-Only)
 # ==========================================
+
 @app.route('/chat')
 @login_required
 def chat_home():
-    """Renders the main WhatsApp-style chat UI, ONLY showing online users."""
+    """Renders the main chat UI, ONLY showing users currently active/online."""
     current_uid = session.get('user_id')
-    
-    # Fetch all users from database
     all_users = rtdb.reference('users').get() or {}
     
     contacts = []
     for uid, data in all_users.items():
-        # PRIVACY & PRESENCE FILTER: 
-        # 1. Don't show yourself. 
-        # 2. ONLY show users whose IDs are currently in the active `online_users` dictionary.
+        # ONLY show users currently in the global 'online_users' dictionary
         if uid != current_uid and uid in online_users:
             contacts.append({
                 'uid': uid,
@@ -1509,7 +1505,7 @@ def chat_home():
 @app.route('/api/chat/upload', methods=['POST'])
 @login_required
 def upload_chat_media():
-    """Handles image, video, and audio uploads from the chat directly to Cloud Storage."""
+    """Handles image, video, and audio uploads to Cloud Storage."""
     if 'file' not in request.files:
         return jsonify({'error': 'No file'}), 400
         
@@ -1517,73 +1513,89 @@ def upload_chat_media():
     if file.filename == '':
         return jsonify({'error': 'Empty file'}), 400
         
-    # Use the Firebase Storage uploader we built earlier!
     file_url = upload_to_firebase_storage(file, 'chat_media')
     
     if file_url:
         return jsonify({'url': file_url, 'type': file.content_type}), 200
-    else:
-        return jsonify({'error': 'Cloud upload failed'}), 500
+    return jsonify({'error': 'Cloud upload failed'}), 500
 
 # --- SOCKET.IO EVENTS ---
+# --- SOCKET.IO EVENTS ---
+
 @socketio.on('connect')
 def handle_connect():
     uid = session.get('user_id')
     if uid:
         online_users[uid] = request.sid
-        # Broadcast to everyone that this user is online
+        # 1. Update the green dots for everyone
         emit('user_status', {'uid': uid, 'status': 'online'}, broadcast=True)
+        # 2. IMPORTANT: Tell everyone to refresh their sidebar to show the new online user
+        emit('refresh_contacts', broadcast=True, include_self=False)
 
 @socketio.on('disconnect')
 def handle_disconnect():
     uid = session.get('user_id')
     if uid and uid in online_users:
         del online_users[uid]
-        # Broadcast that user went offline
+        # 1. Turn the dot grey for everyone
         emit('user_status', {'uid': uid, 'status': 'offline'}, broadcast=True)
+        # 2. Tell everyone to refresh sidebar to remove the user who logged out
+        emit('refresh_contacts', broadcast=True)
 
 @socketio.on('join_chat')
 def handle_join_chat(data):
-    """Creates an impenetrable private room for two users."""
     uid1 = session.get('user_id')
     uid2 = data.get('target_uid')
-    
-    # SECURITY: Using min() and max() ensures that whether User A clicks User B, 
-    # or User B clicks User A, they both generate the exact same hidden room key.
-    room = f"room_{min(uid1, uid2)}_{max(uid1, uid2)}"
+    if not uid2: return
+
+    room = f"room_{min(str(uid1), str(uid2))}_{max(str(uid1), str(uid2))}"
     join_room(room)
     
-    # Fetch private chat history
     history = rtdb.reference(f'chats/{room}').get() or {}
-    messages = [msg for msg in history.values()]
-    
+    messages = list(history.values())
     emit('chat_history', messages)
 
 @socketio.on('send_message')
 def handle_send_message(data):
     sender_id = session.get('user_id')
     receiver_id = data.get('receiver_id')
-    text = data.get('text', '')
-    media_url = data.get('media_url', None)
-    media_type = data.get('media_type', None)
-    
-    room = f"room_{min(sender_id, receiver_id)}_{max(sender_id, receiver_id)}"
+    if not receiver_id: return
+
+    room = f"room_{min(str(sender_id), str(receiver_id))}_{max(str(sender_id), str(receiver_id))}"
     
     message_data = {
         'sender_id': sender_id,
-        'text': text,
-        'media_url': media_url,
-        'media_type': media_type,
+        'text': data.get('text', ''),
+        'media_url': data.get('media_url'),
+        'media_type': data.get('media_type'),
         'timestamp': datetime.now().strftime("%H:%M")
     }
     
-    # Save to Firebase Realtime Database
     rtdb.reference(f'chats/{room}').push(message_data)
-    
-    # Broadcast to the private room ONLY
     emit('receive_message', message_data, room=room)
-    
-    
+
+@socketio.on('typing')
+def handle_typing(data):
+    receiver_id = data.get('receiver_id')
+    sender_id = session.get('user_id')
+    room = f"room_{min(str(sender_id), str(receiver_id))}_{max(str(sender_id), str(receiver_id))}"
+    emit('display_typing', {'sender_id': sender_id}, room=room, include_self=False)
+
+@socketio.on('stop_typing')
+def handle_stop_typing(data):
+    receiver_id = data.get('receiver_id')
+    sender_id = session.get('user_id')
+    room = f"room_{min(str(sender_id), str(receiver_id))}_{max(str(sender_id), str(receiver_id))}"
+    emit('hide_typing', {'sender_id': sender_id}, room=room, include_self=False)
+
+@socketio.on('clear_chat')
+def handle_clear_chat(data):
+    uid1 = session.get('user_id')
+    uid2 = data.get('target_uid')
+    if not uid2: return
+    room = f"room_{min(str(uid1), str(uid2))}_{max(str(uid1), str(uid2))}"
+    rtdb.reference(f'chats/{room}').delete()
+    emit('chat_cleared', room=room)
 # ==========================================
 # ENTERPRISE EXPANSION HUBS (Live Database Integration)
 # ==========================================
@@ -1731,7 +1743,7 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     
     # Add these two lines to create a clickable link in your terminal!
-    print(f"\n🌱 Farmerman Systems is LIVE!")
-    print(f"👉 Click here to open: http://127.0.0.1:{port}\n")
+    print(f"\n Farmerman Systems is LIVE!")
+    print(f" Click here to open: http://127.0.0.1:{port}\n")
     
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
