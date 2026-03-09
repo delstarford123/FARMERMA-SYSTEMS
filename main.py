@@ -13,7 +13,7 @@ from email.message import EmailMessage
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import NotFound
-
+from logic import analyze_weather_and_generate_alerts, update_firebase_alerts
 # Flask & Extensions
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, flash, send_from_directory, abort
 from flask_mail import Mail, Message
@@ -1479,12 +1479,15 @@ def diagnostics():
         "uptime": "99.9%" 
     }
     return render_template('diagnostics.html', data=health_data)
+
+
 # ==========================================
 # REAL-TIME CHAT SYSTEM (Strict Privacy & Online-Only)
 # ==========================================
 
 @app.route('/chat')
 @login_required
+@premium_required
 def chat_home():
     """Renders the main chat UI, ONLY showing users currently active/online."""
     current_uid = session.get('user_id')
@@ -1504,6 +1507,7 @@ def chat_home():
 
 @app.route('/api/chat/upload', methods=['POST'])
 @login_required
+@premium_required
 def upload_chat_media():
     """Handles image, video, and audio uploads to Cloud Storage."""
     if 'file' not in request.files:
@@ -1596,6 +1600,7 @@ def handle_clear_chat(data):
     room = f"room_{min(str(uid1), str(uid2))}_{max(str(uid1), str(uid2))}"
     rtdb.reference(f'chats/{room}').delete()
     emit('chat_cleared', room=room)
+    
 # ==========================================
 # ENTERPRISE EXPANSION HUBS (Live Database Integration)
 # ==========================================
@@ -1612,29 +1617,68 @@ def deal_room():
     return render_template('deal_room.html', deals=deals)
 
 @app.route('/api-docs')
+@premium_required
 def api_docs():
     """Developer documentation for Enterprise clients."""
     return render_template('api_docs.html')
-
+# In main.py
 @app.route('/climate')
 @login_required
+@premium_required
 def climate_hub():
     """Weather and Climate Smart Agriculture dashboard."""
-    # Fetch live climate alerts from Firebase
-    climate_data = rtdb.reference('climate_alerts').get() or {}
+    user_id = session.get('user_id')
     
-    # Convert dict to list and sort by timestamp (newest first)
-    alerts = [{'id': k, **v} for k, v in climate_data.items()]
+    # Fetch ONLY this user's personal alerts from Firebase
+    climate_data = rtdb.reference(f'climate_alerts/{user_id}').get()
+    
+    # Format the data depending on how Firebase returned it
+    alerts = []
+    if isinstance(climate_data, dict):
+        alerts = [{'id': k, **v} for k, v in climate_data.items()]
+    elif isinstance(climate_data, list):
+        # Firebase sometimes stores .set() lists as actual arrays
+        alerts = [a for a in climate_data if a is not None]
+        
+    # Sort newest first
     alerts.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
     
-    # Grab the most recent alert for the main widget, if it exists
-    latest_weather = alerts[0] if alerts else {
-        'region': 'Kakamega, KE', 'temp': '22', 'condition': 'Light Showers', 
-        'humidity': '85', 'wind': '12', 'timestamp': datetime.now().strftime("%B %d")
-    }
-    
-    return render_template('climate.html', alerts=alerts, latest=latest_weather)
+    return render_template('climate.html', alerts=alerts)
 
+# Make sure you have these imports at the top of your main.py!
+from flask import request, jsonify
+from logic import analyze_weather_and_generate_alerts, update_firebase_alerts
+# In main.py
+@app.route('/api/climate/analyze', methods=['POST'])
+@login_required
+@premium_required
+def analyze_climate():
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"status": "error", "message": "Invalid JSON"}), 400
+    
+    try:
+        # Get the currently logged-in user's ID
+        user_id = session.get('user_id')
+        
+        temp = float(data.get('temp', 0))
+        humidity = float(data.get('humidity', 0))
+        wind = float(data.get('wind', 0))
+        condition = str(data.get('condition', ''))
+        region = str(data.get('region', 'Unknown Region'))
+        
+        # Generate the alerts
+        new_alerts = analyze_weather_and_generate_alerts(temp, humidity, wind, condition, region)
+        
+        # Save them ONLY to this user's profile!
+        update_firebase_alerts(user_id, new_alerts)
+        
+        return jsonify({"status": "success", "message": "Updated personal alerts!"}), 200
+        
+    except Exception as e:
+        print(f"Engine Error: {e}")
+        return jsonify({"status": "error", "message": "Failed to analyze"}), 500
+    
 @app.route('/admin/add-climate-alert', methods=['POST'])
 @admin_required
 def add_climate_alert():
@@ -1659,6 +1703,7 @@ def add_climate_alert():
 
 
 @app.route('/insights')
+@premium_required
 def insights():
     """SEO-friendly thought leadership and market analysis blog."""
     # Fetch live articles from Firebase

@@ -3,7 +3,7 @@
 <div class="container-fluid bg-light py-5 min-vh-100">
     <div class="container">
         <div class="text-center mb-5">
-            <h1 class="fw-bold" style="color: #0288D1;"><i class="bi bi-cloud-sun me-2"></i>Climate Intelligence Hub</h1>
+            <h1 class="fw-bold" style="color: #b9c5cc;"><i class="bi bi-cloud-sun me-2"></i>Climate Intelligence Hub</h1>
             <p class="text-muted lead">Location-based weather forecasts paired with real-time agronomic advice.</p>
         </div>
 
@@ -12,62 +12,79 @@
             <div class="col-md-5">
                 <div class="card border-0 shadow-lg h-100" style="background: linear-gradient(135deg, #0288D1, #0277BD); color: white; border-radius: 20px;">
                     <div class="card-body p-5 text-center">
-                        <h4 class="fw-bold">{{ latest.region }}</h4>
-                        <p class="mb-4 opacity-75">Last Updated: {{ latest.timestamp }}</p>
+                        <h4 class="fw-bold" id="weather-region">
+                            <span class="spinner-border spinner-border-sm me-2"></span>Locating...
+                        </h4>
+                        <p class="mb-4 opacity-75" id="weather-timestamp">Awaiting GPS signal...</p>
                         
-                        {% if 'Rain' in latest.condition or 'Showers' in latest.condition %}
-                            <i class="bi bi-cloud-drizzle display-1 mb-3 d-block"></i>
-                        {% elif 'Sun' in latest.condition or 'Clear' in latest.condition %}
-                            <i class="bi bi-sun display-1 mb-3 d-block text-warning"></i>
-                        {% else %}
-                            <i class="bi bi-cloud display-1 mb-3 d-block"></i>
-                        {% endif %}
+                        <i id="weather-icon" class="bi bi-cloud-sun display-1 mb-3 d-block"></i>
                         
-                        <h1 class="display-2 fw-bold mb-0">{{ latest.temp }}°C</h1>
-                        <p class="fs-5">{{ latest.condition }}</p>
+                        <h1 class="display-2 fw-bold mb-0"><span id="weather-temp">--</span>°C</h1>
+                        <p class="fs-5" id="weather-condition">Fetching live weather...</p>
                         
                         <div class="d-flex justify-content-between mt-4 pt-4 border-top border-light border-opacity-25">
-                            <div><i class="bi bi-droplet me-1"></i> Humidity: {{ latest.humidity }}%</div>
-                            <div><i class="bi bi-wind me-1"></i> Wind: {{ latest.wind }} km/h</div>
+                            <div><i class="bi bi-droplet me-1"></i> Humidity: <span id="weather-humidity">--</span>%</div>
+                            <div><i class="bi bi-wind me-1"></i> Wind: <span id="weather-wind">--</span> km/h</div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="col-md-7">
-                <div class="card border-0 shadow-sm h-100" style="border-radius: 20px;">
-                    <div class="card-body p-5 overflow-auto" style="max-height: 500px;">
-                        <h4 class="fw-bold text-dark mb-4"><i class="bi bi-shield-check text-success me-2"></i>Agronomic Recommendations</h4>
+    <div class="card border-0 shadow-sm h-100" style="border-radius: 20px;">
+        <div class="card-body p-5 overflow-auto" style="max-height: 500px;">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold text-dark mb-0"><i class="bi bi-shield-check text-success me-2"></i>Agronomic Advice</h4>
+                <button onclick="window.location.reload();" class="btn btn-sm btn-outline-success transition-all" id="refresh-alerts-btn">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+            
+            {% if alerts %}
+                {% for alert in alerts %}
+                    <div class="alert {% if alert.alert_type == 'warning' %}alert-warning{% else %}alert-success bg-success bg-opacity-10 text-dark{% endif %} border-0 shadow-sm d-flex align-items-start mb-4">
                         
-                        {% if alerts %}
-                            {% for alert in alerts %}
-                                <div class="alert {% if alert.alert_type == 'warning' %}alert-warning{% else %}alert-success bg-success bg-opacity-10 text-dark{% endif %} border-0 shadow-sm d-flex align-items-start mb-4">
-                                    
-                                    {% if alert.alert_type == 'warning' %}
-                                        <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
-                                    {% else %}
-                                        <i class="bi bi-info-circle-fill fs-4 me-3 text-success"></i>
-                                    {% endif %}
-                                    
-                                    <div>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <h6 class="fw-bold mb-1">{{ alert.title }}</h6>
-                                            <small class="text-muted" style="font-size: 0.7rem;">{{ alert.timestamp }}</small>
-                                        </div>
-                                        <p class="mb-0 small">{{ alert.advice }}</p>
-                                    </div>
-                                </div>
-                            {% endfor %}
+                        {% if alert.alert_type == 'warning' %}
+                            <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
                         {% else %}
-                            <div class="text-center text-muted py-5">
-                                <i class="bi bi-inbox display-4 mb-3 d-block"></i>
-                                <p>No active agronomic alerts for your region.</p>
-                            </div>
+                            <i class="bi bi-info-circle-fill fs-4 me-3 text-success"></i>
                         {% endif %}
                         
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="fw-bold mb-1">{{ alert.title }}</h6>
+                                <small class="text-muted" style="font-size: 0.7rem;">{{ alert.timestamp }}</small>
+                            </div>
+                            <p class="mb-0 small">{{ alert.advice }}</p>
+                        </div>
                     </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-inbox display-4 mb-3 d-block"></i>
+                    <p>No active agronomic alerts for your region.</p>
                 </div>
+            {% endif %}
+            
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="alertsToast" class="toast align-items-center text-bg-success border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-check-circle me-2"></i><strong>New weather analyzed!</strong><br>
+                <span class="small">Fresh agronomic alerts have been generated for your location.</span>
+                <button class="btn btn-sm btn-light mt-2 d-block w-100 fw-bold" onclick="window.location.reload();">
+                    <i class="bi bi-arrow-clockwise"></i> Load New Alerts
+                </button>
             </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
             
         </div>
     </div>

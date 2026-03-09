@@ -252,7 +252,98 @@
             }, 3000);
         });
     </script>
+    <script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Your active OpenWeather API key
+    const API_KEY = "6d3c856544d1870894340fc11468d0e4"; 
 
+    function fetchLiveWeather(lat, lon) {
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`;
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error("Weather API failed");
+                return response.json();
+            })
+            .then(data => {
+                // SAFETY CHECK: Only update the DOM if the weather card actually exists on this page
+                if (document.getElementById('weather-region')) {
+                    
+                    // 1. Update UI with live weather data
+                    document.getElementById('weather-region').innerText = data.name + ", " + data.sys.country;
+                    document.getElementById('weather-temp').innerText = Math.round(data.main.temp);
+                    document.getElementById('weather-condition').innerText = data.weather[0].main;
+                    document.getElementById('weather-humidity').innerText = data.main.humidity;
+                    
+                    // Convert wind speed from m/s to km/h
+                    const windKmh = (data.wind.speed * 3.6).toFixed(1);
+                    document.getElementById('weather-wind').innerText = windKmh;
+
+                    const now = new Date();
+                    document.getElementById('weather-timestamp').innerText = "Live: " + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+                    // Dynamic Weather Icons
+                    const condition = data.weather[0].main.toLowerCase();
+                    const iconEl = document.getElementById('weather-icon');
+                    iconEl.className = "display-1 mb-3 d-block bi "; 
+                    
+                    if (condition.includes('rain') || condition.includes('drizzle')) iconEl.className += "bi-cloud-drizzle";
+                    else if (condition.includes('clear')) iconEl.className += "bi-sun text-warning";
+                    else if (condition.includes('cloud')) iconEl.className += "bi-cloud";
+                    else if (condition.includes('thunder')) iconEl.className += "bi-cloud-lightning-rain";
+                    else iconEl.className += "bi-cloud-sun";
+
+                    // ========================================================
+                    // 2. SEND LIVE DATA TO FLASK TO GENERATE AGRONOMIC ALERTS
+                    // ========================================================
+                    fetch('/api/climate/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            temp: data.main.temp,
+                            humidity: data.main.humidity,
+                            wind: parseFloat(windKmh),
+                            condition: data.weather[0].main,
+                            region: data.name
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(response => {
+                        console.log("Agronomic engine success:", response);
+                        
+                        // TRIGGER THE UI UPDATES
+                        // 1. Show the Toast sliding in
+                        const toastEl = document.getElementById('alertsToast');
+                        if (toastEl) {
+                            const toast = new bootstrap.Toast(toastEl, { delay: 10000 }); // Stays for 10 seconds
+                            toast.show();
+                        }
+                        
+                        // 2. Highlight the Refresh Button on the card
+                        const refreshBtn = document.getElementById('refresh-alerts-btn');
+                        if (refreshBtn) {
+                            refreshBtn.classList.remove('btn-outline-success');
+                            refreshBtn.classList.add('btn-success', 'text-white', 'fw-bold', 'shadow');
+                            refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> New Alerts Ready!';
+                        }
+                    })
+                    .catch(err => console.error("Error communicating with logic engine:", err));
+                }
+            })
+            .catch(error => {
+                console.error("Using fallback Jinja data.", error);
+            });
+    }
+
+    // Ask browser for location
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => { fetchLiveWeather(position.coords.latitude, position.coords.longitude); },
+            (error) => { console.warn("Location access denied."); }
+        );
+    }
+});
+</script>
     {% block extra_js %}{% endblock %}
 
 </body>
