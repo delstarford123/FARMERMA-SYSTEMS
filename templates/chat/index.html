@@ -4,74 +4,69 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
 <style>
     /* ==========================================
-       1. IRONCLAD LAYOUT & KEYBOARD FIXES
+       IRONCLAD LAYOUT & KEYBOARD FIXES
        ========================================== */
     body, html { 
         height: 100%; width: 100%; 
-        overflow: hidden !important; /* Absolute lockdown on body scrolling */
+        overflow: hidden !important; 
         position: fixed; 
         overscroll-behavior-y: none; 
     }
-    
     .chat-wrapper { 
-        height: calc(100dvh - 60px); /* 60px is your navbar height */
+        height: calc(100dvh - 60px); 
         display: flex; flex-direction: column; 
         transition: background-color 0.3s ease; 
     } 
-
-    /* The fix for disappearing inputs: strict flex boundaries */
     #chat-main { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
     #chat-active-state { display: flex; flex-direction: column; height: 100%; overflow: hidden; width: 100%; }
-    
     .chat-messages { 
-        flex: 1 1 0; /* Forces it to take available space but NEVER expand past it */
+        flex: 1 1 0; 
         overflow-y: auto; 
         -webkit-overflow-scrolling: touch; 
         padding-bottom: 20px; 
     }
-    
     .chat-input-area { 
-        flex: 0 0 auto; /* 0 shrink, 0 grow. Locks it permanently to the bottom */
+        flex: 0 0 auto; 
         background: #f0f2f5; width: 100%; 
         padding-bottom: env(safe-area-inset-bottom); 
     }
-    
     .status-indicator { flex-shrink: 0; }
-
-    /* Scrollable Theme Menu */
     .theme-dropdown-menu { max-height: 350px; overflow-y: auto; }
 
-    /* ==========================================
-       2. 20-COLOR DYNAMIC THEME ENGINE
-       ========================================== */
-    /* Base */
+    /* Theme Engine Base */
     .theme-green { --theme-primary: #00a884; --theme-text: #ffffff; --chat-bg: #efeae2; }
     .theme-dark-green { --theme-primary: #125e3e; --theme-text: #ffffff; --chat-bg: #d7e3dd; }
     .theme-light-green { --theme-primary: #8bc34a; --theme-text: #212529; --chat-bg: #f1f8e9; }
-    /* Blues */
     .theme-blue { --theme-primary: #007bff; --theme-text: #ffffff; --chat-bg: #e6f0ff; }
     .theme-dark-blue { --theme-primary: #0a2540; --theme-text: #ffffff; --chat-bg: #e1e6eb; }
     .theme-cyan { --theme-primary: #0dcaf0; --theme-text: #212529; --chat-bg: #e0f7fa; }
     .theme-teal { --theme-primary: #20c997; --theme-text: #ffffff; --chat-bg: #e6fcf5; }
     .theme-midnight { --theme-primary: #191970; --theme-text: #ffffff; --chat-bg: #eaecf0; }
-    /* Warm Colors */
     .theme-orange { --theme-primary: #fd7e14; --theme-text: #ffffff; --chat-bg: #fff0e6; }
     .theme-crimson { --theme-primary: #dc3545; --theme-text: #ffffff; --chat-bg: #fdf5f6; }
     .theme-yellow { --theme-primary: #ffc107; --theme-text: #212529; --chat-bg: #fff9e6; }
     .theme-brown { --theme-primary: #795548; --theme-text: #ffffff; --chat-bg: #efebe9; }
-    /* Purples & Pinks */
     .theme-purple { --theme-primary: #6f42c1; --theme-text: #ffffff; --chat-bg: #f3e8fd; }
     .theme-dark-purple { --theme-primary: #3b167a; --theme-text: #ffffff; --chat-bg: #e9e3f4; }
     .theme-pink { --theme-primary: #d63384; --theme-text: #ffffff; --chat-bg: #fce4ec; }
     .theme-magenta { --theme-primary: #e83e8c; --theme-text: #ffffff; --chat-bg: #fdf2f7; }
     .theme-rose { --theme-primary: #ff8080; --theme-text: #212529; --chat-bg: #fff0f0; }
-    /* Neutrals */
     .theme-white { --theme-primary: #ffffff; --theme-text: #212529; --chat-bg: #f8f9fa; }
     .theme-cream-white { --theme-primary: #FFFDD0; --theme-text: #212529; --chat-bg: #fcfbf4; }
     .theme-slate { --theme-primary: #708090; --theme-text: #ffffff; --chat-bg: #f0f2f5; }
-
     .bg-theme-dynamic { background-color: var(--theme-primary) !important; color: var(--theme-text) !important; transition: all 0.3s ease; }
     .theme-bg-color { background-color: var(--chat-bg) !important; }
+
+    /* Premium Badge Animation */
+    .unread-badge {
+        font-size: 0.7rem;
+        font-weight: 700;
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.4);
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .badge-pop {
+        transform: scale(1.3);
+    }
 </style>
 {% endblock %}
 
@@ -131,9 +126,9 @@
 
             <div class="contact-list overflow-auto flex-grow-1 p-0" id="contact-list">
                 {% for contact in contacts %}
-                <div class="contact-card contact-item p-3 border-bottom d-flex align-items-center transition-all hover-bg-light" onclick="openChatMobile('{{ contact.uid }}', '{{ contact.name }}')" style="cursor: pointer;">
+                <div class="contact-card contact-item p-3 border-bottom d-flex align-items-center transition-all hover-bg-light position-relative" onclick="openChatMobile('{{ contact.uid }}', '{{ contact.name }}')" style="cursor: pointer;">
                     <span class="status-indicator me-3 shadow-sm" id="status-{{ contact.uid }}" style="width: 12px; height: 12px; border-radius: 50%; background: {{ '#198754' if contact.is_online else '#6c757d' }};"></span>
-                    <div class="flex-grow-1">
+                    <div class="flex-grow-1 pe-4">
                         <div class="d-flex justify-content-between align-items-center">
                             <h6 class="mb-0 fw-bold text-dark contact-name">{{ contact.name }}</h6>
                             {% if contact.has_talked %}
@@ -144,6 +139,12 @@
                         </div>
                         <small class="text-muted">{{ contact.role | capitalize }}</small>
                     </div>
+                    
+                    <span class="badge bg-danger rounded-circle position-absolute top-50 translate-middle-y unread-badge {{ 'd-none' if contact.unread == 0 else '' }}" 
+                          id="unread-badge-{{ contact.uid }}" 
+                          style="right: 15px; padding: 0.4em 0.6em;">
+                        {{ contact.unread }}
+                    </span>
                 </div>
                 {% endfor %}
             </div>
@@ -235,6 +236,22 @@
             });
         }
     });
+
+    // OVERRIDE FOR OPEN CHAT TO RESET BADGES INSTANTLY ON CLICK
+    const originalOpenChatMobile = window.openChatMobile; // Backup original function if needed
+    window.openChatMobile = function(targetUid, targetName) {
+        // Reset the badge visually immediately
+        const badge = document.getElementById(`unread-badge-${targetUid}`);
+        if(badge) {
+            badge.innerText = '0';
+            badge.classList.add('d-none');
+        }
+        
+        // Execute the standard openChatMobile from chat.js
+        if (typeof openChatMobileInternal === 'function') {
+            openChatMobileInternal(targetUid, targetName);
+        }
+    };
 </script>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 {% endblock %}

@@ -1562,35 +1562,35 @@ def chat_dashboard():
             
     # Pointing exactly to the file inside the chat folder
     return render_template('chat/dashboard.html', online_contacts=online_contacts)
+
 @app.route('/chat')
 @login_required
-@premium_required
 def chat_home():
-    """Renders the main chat UI with smart sorting."""
+    """Renders the main chat UI with smart sorting and unread badges."""
     current_uid = session.get('user_id')
     
     auto_open_uid = request.args.get('target_uid')
     auto_open_name = request.args.get('target_name')
     
-    # Fetch data from Firebase
     all_users = rtdb.reference('users').get() or {}
     all_chats = rtdb.reference('chats').get() or {}
     
-    # 1. Get the current logged-in user's location
+    # FETCH UNREAD COUNTS FOR THE CURRENT USER
+    my_unread_counts = rtdb.reference(f'unread_counts/{current_uid}').get() or {}
+    
     current_user_profile = all_users.get(current_uid, {})
     my_location = current_user_profile.get('location', '').strip().lower()
     
     contacts = []
     for uid, data in all_users.items():
         if uid != current_uid:
-            
-            # 2. Check if they have talked before (does the room exist?)
             room_id = f"room_{min(str(current_uid), str(uid))}_{max(str(current_uid), str(uid))}"
             has_talked_before = 1 if room_id in all_chats else 0
-            
-            # 3. Check if they are in the same location
             their_location = data.get('location', '').strip().lower()
             is_same_location = 1 if (my_location and their_location == my_location) else 0
+            
+            # Extract the specific unread count for this contact
+            unread_count = my_unread_counts.get(uid, 0)
 
             contacts.append({
                 'uid': uid,
@@ -1598,12 +1598,12 @@ def chat_home():
                 'role': data.get('role', 'client'),
                 'is_online': uid in online_users,
                 'has_talked': has_talked_before,
-                'same_location': is_same_location
+                'same_location': is_same_location,
+                'unread': unread_count # <-- NEW DATA POINT
             })
             
-    # 4. Smart Algorithm Sorting: 
-    # It sorts by: Has Talked (1st) -> Same Location (2nd) -> Is Online (3rd)
-    contacts.sort(key=lambda x: (x['has_talked'], x['same_location'], x['is_online']), reverse=True)
+    # Sort logic: Unread messages float to the very top, then Talked, then Location, then Online
+    contacts.sort(key=lambda x: (x['unread'] > 0, x['has_talked'], x['same_location'], x['is_online']), reverse=True)
             
     return render_template(
         'chat/index.html', 
@@ -1612,7 +1612,7 @@ def chat_home():
         auto_open_uid=auto_open_uid,   
         auto_open_name=auto_open_name  
     )
-
+    
 @app.route('/api/chat/upload', methods=['POST'])
 @login_required
 @premium_required
@@ -1632,7 +1632,6 @@ def upload_chat_media():
     return jsonify({'error': 'Cloud upload failed'}), 500
 
 
-
 # --- SOCKET.IO EVENTS ---
 
 @socketio.on('connect')
@@ -1640,9 +1639,15 @@ def handle_connect():
     uid = session.get('user_id')
     if uid:
         online_users[uid] = request.sid
+        
+        # NEW: Join a personal room using the user's ID. 
+        # This allows the server to send global notifications (like unread badges) 
+        # directly to this user, regardless of what chat they are looking at.
+        join_room(uid) 
+        
         # 1. Update the green dots for everyone
         emit('user_status', {'uid': uid, 'status': 'online'}, broadcast=True)
-        # 2. IMPORTANT: Tell everyone to refresh their sidebar to show the new online user
+        # 2. Tell everyone to refresh their sidebar
         emit('refresh_contacts', broadcast=True, include_self=False)
 
 @socketio.on('disconnect')
@@ -1652,7 +1657,7 @@ def handle_disconnect():
         del online_users[uid]
         # 1. Turn the dot grey for everyone
         emit('user_status', {'uid': uid, 'status': 'offline'}, broadcast=True)
-        # 2. Tell everyone to refresh sidebar to remove the user who logged out
+        # 2. Tell everyone to refresh sidebar
         emit('refresh_contacts', broadcast=True)
 
 @socketio.on('join_chat')
@@ -1671,6 +1676,10 @@ def handle_join_chat(data):
     for msg in history.values():
         if uid1 not in msg.get('deleted_for', []):
             messages.append(msg)
+            
+    # NEW: RESET UNREAD COUNTER
+    # Since the user just opened this chat, set their unread count from this sender to 0
+    rtdb.reference(f'unread_counts/{uid1}/{uid2}').set(0)
             
     emit('chat_history', messages)
 
@@ -1701,8 +1710,7 @@ def handle_clear_chat(data):
                 
         # Emit the clear screen event ONLY to the person who clicked the button
         emit('chat_cleared', {'mode': 'me'}, to=request.sid)
-        
-        
+
 @socketio.on('send_message')
 def handle_send_message(data):
     sender_id = session.get('user_id')
@@ -1719,8 +1727,25 @@ def handle_send_message(data):
         'timestamp': datetime.now().strftime("%H:%M")
     }
     
+    # 1. Save Message to Database
     rtdb.reference(f'chats/{room}').push(message_data)
+    
+    # 2. NEW: INCREMENT UNREAD COUNTER
+    # Add +1 to the receiver's unread count from this sender
+    unread_ref = rtdb.reference(f'unread_counts/{receiver_id}/{sender_id}')
+    current_unread = unread_ref.get() or 0
+    new_unread_count = current_unread + 1
+    unread_ref.set(new_unread_count)
+    
+    # 3. Broadcast the message to the active chat room
     emit('receive_message', message_data, room=room)
+    
+    # 4. NEW: Global UI Notification
+    # Ping the receiver's personal room so their sidebar badge updates instantly
+    emit('update_unread_badge', {
+        'sender_id': sender_id, 
+        'count': new_unread_count
+    }, room=receiver_id)
 
 @socketio.on('typing')
 def handle_typing(data):
@@ -1735,8 +1760,6 @@ def handle_stop_typing(data):
     sender_id = session.get('user_id')
     room = f"room_{min(str(sender_id), str(receiver_id))}_{max(str(sender_id), str(receiver_id))}"
     emit('hide_typing', {'sender_id': sender_id}, room=room, include_self=False)
-
-
 # ==========================================
 # ENTERPRISE EXPANSION HUBS (Live Database Integration)
 # ==========================================

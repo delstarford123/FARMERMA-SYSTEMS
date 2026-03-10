@@ -85,6 +85,25 @@ socket.on('receive_message', function(msg) {
     if (typingDiv) typingDiv.remove();
 });
 
+// NEW: Listener for Real-Time Unread Badges
+socket.on('update_unread_badge', function(data) {
+    // If we are ALREADY looking at this exact chat, ignore the badge update
+    // (Because we are reading it right now)
+    if (currentActiveChatId === data.sender_id) return;
+    
+    const badge = document.getElementById(`unread-badge-${data.sender_id}`);
+    if (badge) {
+        // Update the number inside the red bubble
+        badge.innerText = data.count;
+        // Make the bubble visible
+        badge.classList.remove('d-none');
+        
+        // Add a quick visual "pop" animation using CSS classes
+        badge.classList.add('badge-pop');
+        setTimeout(() => badge.classList.remove('badge-pop'), 300);
+    }
+});
+
 socket.on('chat_cleared', (data) => {
     const msgBox = document.getElementById('chat-messages');
     if (msgBox) {
@@ -120,6 +139,13 @@ socket.on('hide_typing', (data) => {
 function openChatMobile(targetUid, targetName) {
     currentActiveChatId = targetUid;
     
+    // NEW: Instantly hide the red unread badge when you click their name
+    const badge = document.getElementById(`unread-badge-${targetUid}`);
+    if (badge) {
+        badge.innerText = '0';
+        badge.classList.add('d-none');
+    }
+    
     document.getElementById('chat-blank-state').classList.add('d-none');
     
     // IMPORTANT: Adds d-flex to activate the column layout
@@ -137,6 +163,8 @@ function openChatMobile(targetUid, targetName) {
     }
 
     document.getElementById('chat-messages').innerHTML = '';
+    
+    // This tells the backend you entered the room (and the backend will reset the DB count to 0)
     socket.emit('join_chat', { target_uid: targetUid });
 }
 
