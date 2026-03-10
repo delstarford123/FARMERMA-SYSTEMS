@@ -310,6 +310,9 @@ def send_welcome_email(user_email, name, role):
         except Exception as e:
             print(f"Failed to send welcome email: {e}")
 
+
+
+
 # ==========================================
 # ROBUST AUTHENTICATION ROUTES
 # ==========================================
@@ -321,10 +324,10 @@ def register():
         full_name = request.form.get('fullName').strip()
         organization = request.form.get('organization', '').strip()
         
-        # 1. SECURITY: Capture and sanitize the role
-        selected_role = request.form.get('role', 'client').strip().lower()
-        if selected_role not in ['client', 'tutor']:
-            selected_role = 'client'
+        # 1. SECURITY: Capture and sanitize the role (UPDATED FOR BUYER/SELLER/TUTOR)
+        selected_role = request.form.get('role', 'buyer').strip().lower()
+        if selected_role not in ['buyer', 'seller', 'tutor']:
+            selected_role = 'buyer'
 
         try:
             # 2. Create Auth User
@@ -417,6 +420,9 @@ def login():
             flash("System error during login. Check server console.", "danger")
             
     return render_template('login.html')
+
+
+
 
 @app.route('/reset-password', methods=['GET', 'POST'])
 def reset_password():
