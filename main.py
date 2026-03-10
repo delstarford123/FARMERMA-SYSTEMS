@@ -7,7 +7,7 @@ import threading
 import smtplib
 import time
 import uuid # <-- Essential for generating unique cloud filenames
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps 
 from email.message import EmailMessage
 from dotenv import load_dotenv
@@ -1710,7 +1710,7 @@ def handle_clear_chat(data):
                 
         # Emit the clear screen event ONLY to the person who clicked the button
         emit('chat_cleared', {'mode': 'me'}, to=request.sid)
-
+        
 @socketio.on('send_message')
 def handle_send_message(data):
     sender_id = session.get('user_id')
@@ -1719,19 +1719,22 @@ def handle_send_message(data):
 
     room = f"room_{min(str(sender_id), str(receiver_id))}_{max(str(sender_id), str(receiver_id))}"
     
+    # NEW: Define East Africa Time (UTC+3)
+    eat_timezone = timezone(timedelta(hours=3))
+    
     message_data = {
         'sender_id': sender_id,
         'text': data.get('text', ''),
         'media_url': data.get('media_url'),
         'media_type': data.get('media_type'),
-        'timestamp': datetime.now().strftime("%H:%M")
+        # NEW: Apply the timezone to the current time
+        'timestamp': datetime.now(eat_timezone).strftime("%H:%M")
     }
     
     # 1. Save Message to Database
     rtdb.reference(f'chats/{room}').push(message_data)
     
-    # 2. NEW: INCREMENT UNREAD COUNTER
-    # Add +1 to the receiver's unread count from this sender
+    # 2. INCREMENT UNREAD COUNTER
     unread_ref = rtdb.reference(f'unread_counts/{receiver_id}/{sender_id}')
     current_unread = unread_ref.get() or 0
     new_unread_count = current_unread + 1
@@ -1740,13 +1743,12 @@ def handle_send_message(data):
     # 3. Broadcast the message to the active chat room
     emit('receive_message', message_data, room=room)
     
-    # 4. NEW: Global UI Notification
-    # Ping the receiver's personal room so their sidebar badge updates instantly
+    # 4. Global UI Notification
     emit('update_unread_badge', {
         'sender_id': sender_id, 
         'count': new_unread_count
     }, room=receiver_id)
-
+    
 @socketio.on('typing')
 def handle_typing(data):
     receiver_id = data.get('receiver_id')
