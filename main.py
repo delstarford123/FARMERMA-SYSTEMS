@@ -1541,6 +1541,7 @@ def diagnostics():
 # ==========================================
 @app.route('/chat/dashboard')
 @login_required
+@premium_required
 # @premium_required # Uncomment if you want this protected
 def chat_dashboard():
     """Chat dashboard showing all users and their current online status."""
@@ -1563,6 +1564,7 @@ def chat_dashboard():
     return render_template('chat/dashboard.html', online_contacts=online_contacts)
 @app.route('/chat')
 @login_required
+@premium_required
 def chat_home():
     """Renders the main chat UI with smart sorting."""
     current_uid = session.get('user_id')
@@ -1613,6 +1615,7 @@ def chat_home():
 
 @app.route('/api/chat/upload', methods=['POST'])
 @login_required
+@premium_required
 def upload_chat_media():
     """Handles image, video, and audio uploads to Cloud Storage."""
     if 'file' not in request.files:
