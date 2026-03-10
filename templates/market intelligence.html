@@ -8,66 +8,99 @@
         --sky-blue: #0288D1;
         --glass-bg: rgba(255, 255, 255, 0.8);
     }
+    
     .text-success { color: var(--plant-green) !important; }
     .bg-success { background-color: var(--plant-green) !important; }
     .btn-success { background-color: var(--plant-green); border-color: var(--plant-green); }
     .btn-outline-success { color: var(--plant-green); border-color: var(--plant-green); }
     .btn-outline-success:hover { background-color: var(--plant-green); color: white; }
     
-    /* Reveal animations pre-states */
+    .hero-section {
+        background: linear-gradient(135deg, var(--soil-brown) 0%, #3e2723 100%);
+        position: relative;
+    }
+    .hero-pattern {
+        position: absolute; inset: 0; opacity: 0.05;
+        background-image: radial-gradient(#ffffff 1px, transparent 1px);
+        background-size: 20px 20px;
+    }
+
     .intel-lead, .intel-btns, .risk-item, .preview-item-card, .cta-title, .cta-text, .cta-btn, .solution-card {
         opacity: 0;
     }
 
-    /* Locked overlay styling */
-    .locked-overlay {
-        backdrop-filter: blur(8px);
-        background: rgba(255, 255, 255, 0.4);
-        border-radius: 10px;
-        transition: all 0.3s ease;
-    }
-
     .preview-item-card, .solution-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease;
     }
     .preview-item-card:hover, .solution-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        transform: translateY(-8px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.08) !important;
+    }
+
+    .locked-overlay {
+        position: absolute; inset: 0;
+        backdrop-filter: blur(6px);
+        background: rgba(255, 255, 255, 0.6);
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        border-radius: 0 0 10px 10px;
+        z-index: 10;
+    }
+
+    /* THE FIX: Advanced text clamping to prevent layout blowouts */
+    .text-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        word-break: break-word;
+    }
+    .text-clamp-1 {
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<section class="py-5 overflow-hidden text-white text-center" style="background-color: var(--soil-brown);">
-    <div class="container py-5">
-        <h1 class="display-5 fw-bold text-success mb-3 intel-title">Market Intelligence & Trade Analytics</h1>
-        <p class="lead max-w-75 mx-auto text-light intel-lead">Turning market data into strategic decisions for agribusinesses, governments, investors, and farmers across Africa.</p>
-        <div class="mt-4 intel-btns">
-            <a href="/pricing" class="btn btn-success btn-lg px-4 me-3 shadow magnetic-btn">View Subscription Plans</a>
-            <a href="/register" class="btn btn-outline-light btn-lg px-4 magnetic-btn">Create Free Account</a>
+<section class="py-5 overflow-hidden text-white text-center hero-section">
+    <div class="hero-pattern"></div>
+    <div class="container py-5 position-relative z-1">
+        <div class="badge bg-white text-success mb-3 px-3 py-2 rounded-pill shadow-sm fw-bold">ENTERPRISE ANALYTICS</div>
+        <h1 class="display-4 fw-bold mb-3 intel-title" style="color: #a5d6a7;">Market Intelligence & Trade Analytics</h1>
+        <p class="lead max-w-75 mx-auto text-light intel-lead opacity-75">Turning raw market data into strategic decisions for agribusinesses, buyers, sellers, and investors across Africa.</p>
+        <div class="mt-5 intel-btns">
+            <a href="/pricing" class="btn btn-success btn-lg px-5 py-3 me-3 shadow magnetic-btn rounded-pill fw-bold">View Subscription Plans</a>
+            <a href="/register" class="btn btn-outline-light btn-lg px-5 py-3 magnetic-btn rounded-pill fw-bold">Create Free Account</a>
         </div>
     </div>
 </section>
 
 <section class="py-5 bg-light overflow-hidden">
-    <div class="container">
+    <div class="container py-4">
         <div class="row align-items-center g-5">
             <div class="col-lg-6">
-                <h2 class="fw-bold mb-4 risk-heading" style="color: var(--soil-brown);">Why Market Intelligence Matters</h2>
-                <p class="lead text-muted">Agricultural markets in Africa are often fragmented, opaque, and unpredictable. Many producers and businesses operate without reliable information on prices, demand, or trade flows — leading to wasted resources, weak negotiating positions, and missed opportunities.</p>
-                <p class="text-muted">Farmerman Systems provides agricultural market intelligence that helps stakeholders make data-driven decisions with confidence. Our services are designed to reduce risk, increase competitiveness, and support profitable agribusiness outcomes.</p>
+                <div class="pe-lg-4">
+                    <h2 class="fw-bold mb-4 risk-heading display-6" style="color: var(--soil-brown);">Why Market Intelligence Matters</h2>
+                    <p class="lead text-muted" style="line-height: 1.8;">Agricultural markets in Africa are often fragmented, opaque, and unpredictable. Many producers and businesses operate without reliable information on prices, demand, or trade flows — leading to wasted resources and missed opportunities.</p>
+                    <p class="text-muted" style="line-height: 1.8;">Farmerman Systems provides verified agricultural market intelligence that helps stakeholders make data-driven decisions. Our services are designed to reduce risk, increase competitiveness, and support profitable agribusiness outcomes.</p>
+                </div>
             </div>
             
             <div class="col-lg-6">
-                <div class="card border-0 shadow-lg preview-card p-4 bg-white" style="border-radius: 20px;">
-                    <h5 class="fw-bold text-dark mb-4 border-bottom pb-2">Who This Service Is For</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> Governments and policymakers</li>
-                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> Agribusiness companies</li>
-                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> Exporters and traders</li>
-                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> Investors and financial institutions</li>
-                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> Farmer cooperatives and producer organizations</li>
-                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> Development partners and NGOs</li>
+                <div class="card border-0 shadow-lg preview-card p-4 p-md-5 bg-white" style="border-radius: 20px;">
+                    <h5 class="fw-bold text-dark mb-4 border-bottom pb-3"><i class="bi bi-people-fill text-success me-2"></i> Who This Service Is For</h5>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> <span class="fw-medium text-dark">Buyers & Sellers</span></li>
+                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> <span class="fw-medium text-dark">Agribusiness Companies</span></li>
+                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> <span class="fw-medium text-dark">Exporters and Traders</span></li>
+                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> <span class="fw-medium text-dark">Investors and Financial Institutions</span></li>
+                        <li class="mb-3 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> <span class="fw-medium text-dark">Farmer Cooperatives</span></li>
+                        <li class="mb-0 d-flex align-items-center risk-item"><i class="bi bi-check-circle-fill text-success me-3 fs-5"></i> <span class="fw-medium text-dark">Development Partners & NGOs</span></li>
                     </ul>
                 </div>
             </div>
@@ -78,77 +111,68 @@
 <section class="py-5 bg-white overflow-hidden">
     <div class="container py-4">
         <div class="text-center mb-5">
-            <h2 class="fw-bold" style="color: var(--soil-brown);">Our Market Intelligence Solutions</h2>
+            <span class="text-success fw-bold text-uppercase small tracking-wide">Features</span>
+            <h2 class="fw-bold mt-2" style="color: var(--soil-brown);">Our Intelligence Solutions</h2>
             <p class="text-muted">Comprehensive data and analytics to drive your agricultural strategy.</p>
         </div>
         
         <div class="row g-4">
             <div class="col-md-6 col-lg-4 solution-card">
-                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
-                    <div class="card-body p-4">
-                        <div class="fs-1 mb-3"></div>
-                        <h5 class="fw-bold">1. Agricultural Market Research</h5>
-                        <p class="small text-muted mb-3">In-depth analysis of supply, demand, and price behavior across agricultural commodities.</p>
-                        <ul class="small text-muted list-unstyled mb-0">
-                            <li><i class="bi bi-dash text-success"></i> Market sizing and trend analysis</li>
-                            <li><i class="bi bi-dash text-success"></i> Demand drivers and growth forecasts</li>
-                        </ul>
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4 bg-light">
+                    <div class="card-body p-4 p-xl-5">
+                        <div class="bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm mb-4" style="width: 60px; height: 60px;">
+                            <i class="bi bi-search text-success fs-4"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark">1. Market Research</h5>
+                        <p class="small text-muted mb-0 mt-3">In-depth analysis of supply, demand, and price behavior across agricultural commodities.</p>
                     </div>
                 </div>
             </div>
             
             <div class="col-md-6 col-lg-4 solution-card">
-                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
-                    <div class="card-body p-4">
-                        <div class="fs-1 mb-3"></div>
-                        <h5 class="fw-bold">2. Price Monitoring Systems</h5>
-                        <p class="small text-muted mb-3">Real-time tracking of key commodity prices across major markets.</p>
-                        <ul class="small text-muted list-unstyled mb-0">
-                            <li><i class="bi bi-dash text-success"></i> Daily/weekly price reports</li>
-                            <li><i class="bi bi-dash text-success"></i> Local and regional price comparisons</li>
-                        </ul>
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4 bg-light">
+                    <div class="card-body p-4 p-xl-5">
+                        <div class="bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm mb-4" style="width: 60px; height: 60px;">
+                            <i class="bi bi-graph-up text-success fs-4"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark">2. Price Monitoring</h5>
+                        <p class="small text-muted mb-0 mt-3">Real-time tracking of key commodity prices across major regional and national markets.</p>
                     </div>
                 </div>
             </div>
             
             <div class="col-md-6 col-lg-4 solution-card">
-                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
-                    <div class="card-body p-4">
-                        <div class="fs-1 mb-3"></div>
-                        <h5 class="fw-bold">3. Cross-Border Trade Analysis</h5>
-                        <p class="small text-muted mb-3">Optimizing trade strategy with reliable regional trade data and analysis.</p>
-                        <ul class="small text-muted list-unstyled mb-0">
-                            <li><i class="bi bi-dash text-success"></i> Export and import trend reports</li>
-                            <li><i class="bi bi-dash text-success"></i> Tariff and non-tariff barrier reviews</li>
-                        </ul>
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4 bg-light">
+                    <div class="card-body p-4 p-xl-5">
+                        <div class="bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm mb-4" style="width: 60px; height: 60px;">
+                            <i class="bi bi-globe-americas text-success fs-4"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark">3. Trade Analysis</h5>
+                        <p class="small text-muted mb-0 mt-3">Optimizing trade strategy with reliable regional trade data, tariff reviews, and export trends.</p>
                     </div>
                 </div>
             </div>
 
             <div class="col-md-6 col-lg-6 solution-card">
-                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
-                    <div class="card-body p-4">
-                        <div class="fs-1 mb-3"></div>
-                        <h5 class="fw-bold">4. Demand Forecasting & Predictive Analytics</h5>
-                        <p class="small text-muted mb-3">Understanding future demand is essential for production planning and investment.</p>
-                        <ul class="small text-muted list-unstyled mb-0">
-                            <li><i class="bi bi-dash text-success"></i> Short-term & long-term forecasting models</li>
-                            <li><i class="bi bi-dash text-success"></i> Risk assessments for demand shocks</li>
-                        </ul>
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4 bg-light">
+                    <div class="card-body p-4 p-xl-5">
+                        <div class="bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm mb-4" style="width: 60px; height: 60px;">
+                            <i class="bi bi-magic text-success fs-4"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark">4. Predictive Analytics</h5>
+                        <p class="small text-muted mb-0 mt-3">Understanding future demand is essential. Access our short-term & long-term forecasting models to mitigate risk.</p>
                     </div>
                 </div>
             </div>
 
             <div class="col-md-6 col-lg-6 solution-card">
-                <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
-                    <div class="card-body p-4">
-                        <div class="fs-1 mb-3"></div>
-                        <h5 class="fw-bold">5. Market Linkage Platforms</h5>
-                        <p class="small text-muted mb-3">We help connect producers directly with buyers, processors, and investors.</p>
-                        <ul class="small text-muted list-unstyled mb-0">
-                            <li><i class="bi bi-dash text-success"></i> Buyer-seller mapping</li>
-                            <li><i class="bi bi-dash text-success"></i> Regional market access facilitation</li>
-                        </ul>
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4 bg-light">
+                    <div class="card-body p-4 p-xl-5">
+                        <div class="bg-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm mb-4" style="width: 60px; height: 60px;">
+                            <i class="bi bi-diagram-3 text-success fs-4"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark">5. Market Linkage</h5>
+                        <p class="small text-muted mb-0 mt-3">We help connect producers directly with verified buyers, processors, and investors through advanced mapping.</p>
                     </div>
                 </div>
             </div>
@@ -157,8 +181,9 @@
 </section>
 
 <section class="py-5 bg-light">
-    <div class="container">
+    <div class="container py-4">
         <div class="text-center mb-5">
+            <span class="badge bg-danger text-white px-3 py-2 rounded-pill shadow-sm mb-3 heartbeat-badge"><i class="bi bi-record-circle me-1"></i> LIVE DATABASE PULL</span>
             <h2 class="fw-bold" style="color: var(--soil-brown);">Regional Market Pulse</h2>
             <p class="text-muted">Direct field data from regional hubs. Upgrade for full access.</p>
         </div>
@@ -166,62 +191,81 @@
         <div class="row g-4">
             {% for item in preview %}
             <div class="col-md-4">
-                <div class="card shadow-sm border-0 h-100 preview-item-card">
-                    <div class="card-body p-4">
+                <div class="card shadow-sm border-0 h-100 preview-item-card rounded-4 overflow-hidden">
+                    <div class="card-body p-4 position-relative">
+                        
                         <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <span class="badge bg-light text-success border mb-2 small">LIVE FEED</span>
-                                <h5 class="fw-bold mb-0 text-dark">{{ item.commodity }}</h5>
-                                <small class="text-muted">Unit: 90kg Bag</small>
+                            <div style="max-width: 75%;">
+                                <span class="badge bg-light text-success border mb-2 small">{{ item.category | default('General') }}</span>
+                                <h5 class="fw-bold mb-0 text-dark text-clamp-1" title="{{ item.commodity }}">{{ item.commodity }}</h5>
+                                <small class="text-muted text-clamp-1" title="{{ item.region }}"><i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ item.region | default('Local Market') }}</small>
                             </div>
-                            <div class="text-success"><i class="bi bi-graph-up-arrow fs-4"></i></div>
+                            
+                            {% if item.trend == 'up' %}
+                                <div class="text-danger bg-danger bg-opacity-10 p-2 rounded-circle shadow-sm" title="Trending Up"><i class="bi bi-arrow-up-right fw-bold fs-5"></i></div>
+                            {% elif item.trend == 'down' %}
+                                <div class="text-primary bg-primary bg-opacity-10 p-2 rounded-circle shadow-sm" title="Trending Down"><i class="bi bi-arrow-down-right fw-bold fs-5"></i></div>
+                            {% else %}
+                                <div class="text-success bg-success bg-opacity-10 p-2 rounded-circle shadow-sm" title="Stable"><i class="bi bi-dash fw-bold fs-5"></i></div>
+                            {% endif %}
                         </div>
 
-                        <hr class="text-muted opacity-25">
+                        <hr class="text-muted opacity-10 my-4">
 
-                        {% if session.get('tier') in ['premium', 'pro'] or session.get('user_role') in ['admin', 'tutor'] %}
+                        {% if session.get('tier') in ['bronze', 'silver', 'gold', 'premium', 'pro'] or session.get('role') in ['admin', 'tutor'] %}
+                            
                             <div class="py-2">
-                                <h3 class="fw-bold text-success mb-1">KES {{ item.price }}</h3>
-                                <p class="small text-muted mb-0">
-                                    <i class="bi bi-clock-history me-1"></i> Verified: {{ item.updated_at or 'Today' }}
-                                </p>
+                                <h3 class="fw-bold text-success mb-0">{{ item.currency | default('KES') }} {{ "{:,.2f}".format(item.price | float) }}</h3>
+                                <p class="small text-muted fw-bold fst-italic mb-3 text-clamp-2" title="{{ item.unit }}">{{ item.unit | default('per unit') }}</p>
+                                
+                                <div class="d-flex align-items-center justify-content-between bg-light p-2 rounded text-muted small">
+                                    <span><i class="bi bi-clock-history me-1"></i> Last updated:</span>
+                                    <span class="fw-bold text-dark">{{ item.updated_at[:10] if item.updated_at else 'Today' }}</span>
+                                </div>
                             </div>
+
                         {% else %}
+                            
                             <div class="position-relative py-3">
-                                <h3 class="fw-bold text-muted mb-1" style="filter: blur(8px); user-select: none;">
-                                    KES 4,250
+                                <h3 class="fw-bold text-muted mb-0" style="filter: blur(8px); user-select: none; opacity: 0.5;">
+                                    USD 145.00
                                 </h3>
-                                <div class="position-absolute top-50 start-50 translate-middle text-center w-100">
-                                    <a href="/pricing" class="btn btn-dark btn-sm rounded-pill shadow-sm px-3">
-                                        <i class="bi bi-lock-fill me-1"></i> Unlock Price
+                                <p class="small text-muted fw-bold fst-italic mb-3" style="filter: blur(6px); user-select: none; opacity: 0.5;">per metric ton</p>
+                                
+                                <div class="locked-overlay">
+                                    <i class="bi bi-lock-fill fs-3 text-dark mb-2"></i>
+                                    <h6 class="fw-bold text-dark mb-2">Premium Data Locked</h6>
+                                    <a href="/pricing" class="btn btn-dark btn-sm rounded-pill shadow px-4 fw-bold hover-lift">
+                                        Unlock Market Prices
                                     </a>
                                 </div>
                             </div>
-                            <p class="small text-danger mt-1 mb-0 fw-medium"><i class="bi bi-shield-exclamation me-1"></i> Pro Membership Required</p>
+
                         {% endif %}
                     </div>
                 </div>
             </div>
             {% else %}
             <div class="col-12 text-center py-5">
-                <p class="text-muted italic">Refreshing global market nodes... Check back in a moment.</p>
+                <div class="spinner-border text-success mb-3" role="status"></div>
+                <p class="text-muted fst-italic">Syncing with global market nodes... Check back in a moment.</p>
             </div>
             {% endfor %}
         </div>
         
         <div class="text-center mt-5">
-            <a href="/live-market-prices" class="btn btn-outline-success px-5 rounded-pill fw-bold">View Full Global Board</a>
+            <a href="/live-market-prices" class="btn btn-outline-success px-5 py-3 rounded-pill fw-bold shadow-sm hover-lift">View Full Global Board <i class="bi bi-arrow-right ms-2"></i></a>
         </div>
     </div>
 </section>
 
 <section class="py-5 text-center text-white overflow-hidden footer-cta" style="background-color: var(--sky-blue);">
-    <div class="container py-4">
-        <h3 class="fw-bold cta-title mb-3">Make Data-Driven Decisions Today</h3>
-        <p class="mb-4 cta-text lead max-w-75 mx-auto">Get customized intelligence briefs, access our interactive price dashboards, or consult with our analyst team.</p>
-        <div class="d-flex justify-content-center gap-3">
-            <a href="/contact" class="btn btn-light btn-lg fw-bold px-4 cta-btn shadow" style="color: var(--sky-blue);">Request Intelligence Report</a>
-            <a href="/pricing" class="btn btn-outline-light btn-lg fw-bold px-4 cta-btn shadow">Subscribe to Dashboards</a>
+    <div class="container py-5">
+        <h2 class="fw-bold cta-title mb-3">Make Data-Driven Decisions Today</h2>
+        <p class="mb-5 cta-text lead max-w-75 mx-auto opacity-75">Get customized intelligence briefs, access our interactive price dashboards, or consult directly with our agricultural analyst team.</p>
+        <div class="d-flex flex-column flex-sm-row justify-content-center gap-3">
+            <a href="/contact" class="btn btn-light btn-lg fw-bold px-5 py-3 cta-btn shadow rounded-pill" style="color: var(--sky-blue);">Request Intelligence Report</a>
+            <a href="/pricing" class="btn btn-outline-light btn-lg fw-bold px-5 py-3 cta-btn shadow rounded-pill">Subscribe to Dashboards</a>
         </div>
     </div>
 </section>
@@ -238,11 +282,16 @@
     // 1. Decoded Hero Title Effect
     gsap.from(".intel-title", {
         text: { value: "▓▒░█▓▒░█▓▒░█▓▒", chars: "XO!#" },
-        duration: 2,
-        ease: "none"
+        duration: 2, ease: "none"
     });
     gsap.to(".intel-lead", { opacity: 1, y: 0, startAt: {y: 20}, duration: 1, delay: 1 });
     gsap.to(".intel-btns", { opacity: 1, y: 0, startAt: {y: 20}, duration: 1, delay: 1.3 });
+
+    // Heartbeat animation for the live feed badge
+    gsap.to(".heartbeat-badge", {
+        scale: 1.05, opacity: 0.8,
+        duration: 0.8, repeat: -1, yoyo: true, ease: "power1.inOut"
+    });
 
     // 2. Risk Items Cascade
     gsap.to(".risk-item", {
@@ -259,25 +308,23 @@
     // 4. Market Pulse Preview
     gsap.to(".preview-item-card", {
         scrollTrigger: { trigger: ".preview-item-card", start: "top 85%" },
-        opacity: 1, y: 0, startAt: { y: 40 }, stagger: 0.1, duration: 0.6, ease: "power2.out"
+        opacity: 1, y: 0, startAt: { y: 40 }, stagger: 0.15, duration: 0.8, ease: "back.out(1.2)"
     });
 
-    // 5. Perspective Entrance for Preview Image/Card
+    // 5. Perspective Entrance for Preview Details
     gsap.to(".preview-card", {
         scrollTrigger: { trigger: ".preview-card", start: "top 80%" },
         opacity: 1, rotationY: 0, startAt: { rotationY: -15, opacity: 0 }, duration: 1.5, ease: "power3.out"
     });
 
     // 6. Bouncy CTA
-    const ctaTl = gsap.timeline({
-        scrollTrigger: { trigger: ".footer-cta", start: "top 90%" }
-    });
+    const ctaTl = gsap.timeline({ scrollTrigger: { trigger: ".footer-cta", start: "top 90%" }});
     ctaTl.to(".cta-title", { opacity: 1, y: 0, startAt: {y: -30}, duration: 0.6, ease: "back.out(2)" })
          .to(".cta-text", { opacity: 1, duration: 0.4 })
          .to(".cta-btn", { opacity: 1, scale: 1, startAt: {scale: 0.7}, stagger: 0.1, duration: 0.5, ease: "elastic.out(1, 0.5)" }, "-=0.2");
 
     // 7. Magnetic Buttons
-    document.querySelectorAll(".magnetic-btn, .cta-btn").forEach(btn => {
+    document.querySelectorAll(".magnetic-btn").forEach(btn => {
         btn.addEventListener("mousemove", (e) => {
             const rect = btn.getBoundingClientRect();
             const x = e.clientX - rect.left - rect.width / 2;

@@ -8,6 +8,7 @@
               {% if messages %}
                 {% for category, message in messages %}
                   <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show shadow-sm mb-4" role="alert">
+                    <i class="bi {{ 'bi-check-circle-fill' if category == 'success' else 'bi-exclamation-triangle-fill' }} me-2"></i>
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                   </div>
@@ -28,9 +29,15 @@
                             <label for="email" class="form-label fw-bold small text-uppercase" style="color: #5D4037;">Email Address</label>
                             <input type="email" name="email" class="form-control form-control-lg bg-light border-0" id="email" placeholder="name@example.com" required>
                         </div>
+                        
                         <div class="mb-4 login-field">
                             <label for="password" class="form-label fw-bold small text-uppercase" style="color: #5D4037;">Security Password</label>
-                            <input type="password" name="password" class="form-control form-control-lg bg-light border-0" id="password" required>
+                            <div class="input-group">
+                                <input type="password" name="password" class="form-control form-control-lg bg-light border-0" id="password" placeholder="••••••••" required>
+                                <button class="btn btn-light bg-light border-0 px-3" type="button" id="togglePassword">
+                                    <i class="bi bi-eye-slash text-muted" id="toggleIcon"></i>
+                                </button>
+                            </div>
                         </div>
                         
                         <div class="d-flex justify-content-between align-items-center mb-4 login-field">
@@ -66,6 +73,14 @@
         border: 1px solid #2E7D32 !important;
         box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.15);
     }
+    
+    /* Ensure the eye icon button blends nicely with the input field */
+    .input-group:focus-within .btn-light {
+        background-color: #fff !important;
+        border-top: 1px solid #2E7D32 !important;
+        border-bottom: 1px solid #2E7D32 !important;
+        border-right: 1px solid #2E7D32 !important;
+    }
 </style>
 {% endblock %}
 
@@ -78,31 +93,20 @@
 
     // 1. Flip-X Entrance for the card
     gsap.to(".login-card", {
-        rotationX: 0, 
-        opacity: 1, 
-        startAt: { rotationX: 90 },
-        transformPerspective: 800, 
-        duration: 1.2, 
-        ease: "power3.out"
+        rotationX: 0, opacity: 1, startAt: { rotationX: 90 },
+        transformPerspective: 800, duration: 1.2, ease: "power3.out"
     });
 
     // 2. Cascade Entrance for Fields
     gsap.to(".login-field", {
-        y: 0,
-        opacity: 1,
-        startAt: { y: 20 },
-        stagger: 0.1,
-        duration: 0.6,
-        ease: "power2.out",
-        delay: 0.4
+        y: 0, opacity: 1, startAt: { y: 20 },
+        stagger: 0.1, duration: 0.6, ease: "power2.out", delay: 0.4
     });
 
     // 3. Decoded Effect for the title
     gsap.from(".decode-text", {
         text: { value: "▓▒░█▓▒░█", chars: "XO!#" },
-        duration: 1.5,
-        ease: "none",
-        delay: 0.5
+        duration: 1.5, ease: "none", delay: 0.5
     });
 
     // 4. Magnetic-style subtle pull for the login button
@@ -115,6 +119,26 @@
     });
     loginBtn.addEventListener("mouseleave", () => {
         gsap.to(loginBtn, { x: 0, y: 0, duration: 0.3 });
+    });
+
+    // 5. NEW: Toggle Password Visibility
+    const togglePassword = document.getElementById('togglePassword');
+    const password = document.getElementById('password');
+    const toggleIcon = document.getElementById('toggleIcon');
+
+    togglePassword.addEventListener('click', function () {
+        // Toggle the type attribute
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        
+        // Toggle the eye icon
+        if (type === 'password') {
+            toggleIcon.classList.remove('bi-eye');
+            toggleIcon.classList.add('bi-eye-slash');
+        } else {
+            toggleIcon.classList.remove('bi-eye-slash');
+            toggleIcon.classList.add('bi-eye');
+        }
     });
 </script>
 {% endblock %}

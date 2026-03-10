@@ -3,67 +3,141 @@ from firebase_admin import db
 
 def analyze_weather_and_generate_alerts(temp, humidity, wind_speed, condition, region):
     """
-    Analyzes live weather data and generates actionable farming advice.
-    Returns a list of alert dictionaries.
+    Advanced Agronomic Decision Engine.
+    Cross-references weather parameters to generate highly specific, actionable farming advice.
     """
     alerts = []
-    # Format time nicely for the UI
     timestamp = datetime.now().strftime("%b %d, %H:%M")
+    condition_lower = condition.lower()
 
-    # RULE 1: Wind Speed (Spraying Safety)
-    # Wind over 15 km/h causes chemical drift
-    if wind_speed > 15:
+    # ==========================================
+    # 1. CRITICAL THREATS (Priority: Highest)
+    # ==========================================
+    
+    # Frost & Freezing Risk
+    if temp <= 4:
         alerts.append({
-            'title': 'High Wind Warning',
-            'advice': f'Wind speeds are at {wind_speed} km/h. Strictly avoid spraying pesticides or foliar fertilizers to prevent chemical drift and waste.',
+            'title': 'Frost Warning ',
+            'advice': f'Temperatures have dropped to {temp}°C. Immediate risk of frost damage to sensitive crops. Deploy frost covers, use smudge pots, or run irrigation to protect blossoms.',
+            'alert_type': 'danger', 
+            'timestamp': timestamp,
+            'region': region
+        })
+        
+    # Severe Heat & Pollen Sterility
+    elif temp >= 35:
+        alerts.append({
+            'title': 'Extreme Heat Stress ',
+            'advice': f'Temperatures at {temp}°C can cause pollen sterility in maize and tomatoes. Halt all field labor for safety. Ensure emergency shading and ad-lib water for all livestock.',
+            'alert_type': 'danger',
+            'timestamp': timestamp,
+            'region': region
+        })
+
+    # Structural & Crop Damage
+    if wind_speed >= 30:
+        alerts.append({
+            'title': 'Gale Force Winds ',
+            'advice': f'Winds at {wind_speed} km/h risk lodging (flattening) tall crops like maize and damaging greenhouses. Secure loose structures and drop greenhouse side-curtains.',
+            'alert_type': 'danger',
+            'timestamp': timestamp,
+            'region': region
+        })
+
+    # ==========================================
+    # 2. DISEASE & PEST VECTORS
+    # ==========================================
+    
+    # Warm + High Humidity = Blight/Rot
+    if humidity >= 85 and 20 <= temp <= 30:
+        alerts.append({
+            'title': 'High Fungal Disease Risk ',
+            'advice': f'High humidity ({humidity}%) combined with {temp}°C heat creates the perfect incubator for Late Blight and Rust. Apply preventative fungicides and ensure greenhouse ventilation.',
+            'alert_type': 'warning',
+            'timestamp': timestamp,
+            'region': region
+        })
+        
+    # Cool + High Humidity = Mildew/Botrytis
+    elif humidity >= 80 and 10 <= temp < 20:
+        alerts.append({
+            'title': 'Mildew & Botrytis Watch ',
+            'advice': f'Cool, damp conditions ({temp}°C, {humidity}% RH) strongly favor Powdery Mildew and Gray Mold. Reduce overhead watering and prune lower leaves for airflow.',
+            'alert_type': 'warning',
+            'timestamp': timestamp,
+            'region': region
+        })
+        
+    # Hot + Dry = Spider Mites
+    elif temp >= 28 and humidity < 40:
+        alerts.append({
+            'title': 'Pest Outbreak Alert ',
+            'advice': f'Hot and dry conditions ({humidity}% RH) trigger rapid breeding of Spider Mites and Thrips. Scout undersides of leaves immediately and consider misting to raise localized humidity.',
             'alert_type': 'warning',
             'timestamp': timestamp,
             'region': region
         })
 
-    # RULE 2: Precipitation (Field Operations)
-    if 'rain' in condition.lower() or 'drizzle' in condition.lower() or 'thunder' in condition.lower():
+    # ==========================================
+    # 3. FIELD OPERATIONS & SOIL MANAGEMENT
+    # ==========================================
+    
+    # Spraying Safety (Chemical Drift)
+    if 15 < wind_speed < 30:
         alerts.append({
-            'title': 'Precipitation Alert',
-            'advice': 'Rain detected in your area. Halt chemical spraying. Ensure field drainage channels are clear to prevent crop waterlogging.',
-            'alert_type': 'info',  # Maps to your success/info color in HTML
-            'timestamp': timestamp,
-            'region': region
-        })
-
-    # RULE 3: Fungal Risk (High Humidity + Warm Temps)
-    # Fungi thrive in warm, highly moist environments
-    if humidity >= 80 and temp >= 18:
-        alerts.append({
-            'title': 'High Fungal Disease Risk',
-            'advice': f'High humidity ({humidity}%) and warm temperatures are highly favorable for fungal diseases like Blight and Rust. Scout crops closely.',
+            'title': 'Chemical Drift Hazard ',
+            'advice': f'Wind speeds ({wind_speed} km/h) make spraying illegal and ineffective. Suspend all herbicide and foliar fertilizer applications until winds drop below 10 km/h.',
             'alert_type': 'warning',
             'timestamp': timestamp,
             'region': region
         })
-
-    # RULE 4: Heat Stress (High Temp + Clear Sky)
-    if temp >= 30 and 'clear' in condition.lower():
+        
+    # Nutrient Leaching (Heavy Rain)
+    if 'heavy' in condition_lower or 'thunder' in condition_lower or 'storm' in condition_lower:
         alerts.append({
-            'title': 'Heat Stress Watch',
-            'advice': f'Temperatures reaching {temp}°C. Increase irrigation frequency for shallow-rooted vegetables and provide adequate shade/water for livestock.',
-            'alert_type': 'warning',
+            'title': 'Nutrient Leaching Risk ',
+            'advice': 'Heavy rainfall detected. Do NOT apply soil fertilizers today as they will wash away. Check contour ridges and drainage trenches to prevent topsoil erosion.',
+            'alert_type': 'danger',
+            'timestamp': timestamp,
+            'region': region
+        })
+    elif 'rain' in condition_lower or 'drizzle' in condition_lower:
+        alerts.append({
+            'title': 'Precipitation Noted ',
+            'advice': 'Light to moderate rain. Great for natural irrigation. Suspend chemical spraying to prevent wash-off.',
+            'alert_type': 'info',
             'timestamp': timestamp,
             'region': region
         })
 
-    # RULE 5: Default Optimal Conditions
+    # ==========================================
+    # 4. OPTIMAL WINDOWS (Green Alerts)
+    # ==========================================
+    
+    # Perfect Spraying Window
+    if wind_speed <= 10 and 15 <= temp <= 25 and 'rain' not in condition_lower and 'thunder' not in condition_lower:
+        # Check if we already added a danger/warning alert to prevent conflicting advice
+        if not any(a['alert_type'] in ['danger', 'warning'] for a in alerts):
+            alerts.append({
+                'title': 'Perfect Spraying Window ',
+                'advice': f'Ideal conditions for field operations. Low wind ({wind_speed} km/h) and moderate temps ({temp}°C) ensure maximum chemical absorption with zero drift.',
+                'alert_type': 'success',
+                'timestamp': timestamp,
+                'region': region
+            })
+
+    # Default fallback if nothing triggered
     if not alerts:
         alerts.append({
-            'title': 'Optimal Farming Conditions',
-            'advice': 'Current weather conditions are stable and favorable for standard field operations, including weeding, harvesting, and soil preparation.',
-            'alert_type': 'success',
+            'title': 'Stable Agronomic Conditions ',
+            'advice': 'Weather parameters are within normal ranges. Proceed with standard daily crop management, harvesting, and livestock feeding schedules.',
+            'alert_type': 'info',
             'timestamp': timestamp,
             'region': region
         })
 
     return alerts
-# In logic.py
+
 def update_firebase_alerts(user_id, alerts):
     """
     Overwrites the old alerts for THIS SPECIFIC USER and pushes the newly generated ones.
@@ -71,10 +145,13 @@ def update_firebase_alerts(user_id, alerts):
     if not user_id:
         return False
         
-    # Target the specific user's private alert folder
-    ref = db.reference(f'climate_alerts/{user_id}')
-    
-    # .set() replaces the whole node for this user instantly with the new list
-    ref.set(alerts) 
+    try:
+        # Target the specific user's private alert folder
+        ref = db.reference(f'climate_alerts/{user_id}')
         
-    return True
+        # .set() replaces the whole node for this user instantly with the new list
+        ref.set(alerts) 
+        return True
+    except Exception as e:
+        print(f"Firebase Update Error: {e}")
+        return False

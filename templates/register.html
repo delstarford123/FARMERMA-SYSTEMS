@@ -68,7 +68,12 @@
 
                         <div class="mb-4 reg-field">
                             <label for="password" class="form-label fw-bold" style="color: #5D4037;">Password</label>
-                            <input type="password" class="form-control form-control-lg bg-light border-0" id="password" name="password" required minlength="8">
+                            <div class="input-group">
+                                <input type="password" class="form-control form-control-lg bg-light border-0" id="password" name="password" placeholder="••••••••" required minlength="8">
+                                <button class="btn btn-light bg-light border-0 px-3" type="button" id="togglePassword">
+                                    <i class="bi bi-eye-slash text-muted" id="toggleIcon"></i>
+                                </button>
+                            </div>
                             <div class="form-text">Secure your data with at least 8 characters.</div>
                         </div>
 
@@ -103,6 +108,17 @@
         background-color: #fff !important;
         border: 1px solid #2E7D32 !important;
         box-shadow: 0 0 0 0.25rem rgba(46, 125, 50, 0.15);
+    }
+
+    /* Ensure the eye icon button blends nicely with the input field */
+    .input-group:focus-within .btn-light {
+        background-color: #fff !important;
+        border-top: 1px solid #2E7D32 !important;
+        border-bottom: 1px solid #2E7D32 !important;
+        border-right: 1px solid #2E7D32 !important;
+    }
+    .input-group:focus-within .form-control {
+        border-right: none !important;
     }
 
     /* Professional Radio Button Styling */
@@ -157,6 +173,26 @@
     });
     regBtn.addEventListener("mouseleave", () => {
         gsap.to(regBtn, { x: 0, y: 0, duration: 0.3 });
+    });
+
+    // 4. Toggle Password Visibility
+    const togglePassword = document.getElementById('togglePassword');
+    const password = document.getElementById('password');
+    const toggleIcon = document.getElementById('toggleIcon');
+
+    togglePassword.addEventListener('click', function () {
+        // Toggle the type attribute
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        
+        // Toggle the eye icon
+        if (type === 'password') {
+            toggleIcon.classList.remove('bi-eye');
+            toggleIcon.classList.add('bi-eye-slash');
+        } else {
+            toggleIcon.classList.remove('bi-eye-slash');
+            toggleIcon.classList.add('bi-eye');
+        }
     });
 </script>
 {% endblock %}

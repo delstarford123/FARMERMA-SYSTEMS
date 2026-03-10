@@ -49,17 +49,19 @@
         <div class="card border-0 shadow-sm management-table-card">
             <div class="card-header bg-white py-3 border-0">
                 <div class="row align-items-center">
-                    <div class="col-md-6 mb-2 mb-md-0">
+                    <div class="col-md-5 mb-2 mb-md-0">
                         <div class="input-group">
                             <span class="input-group-text bg-light border-0"><i class="bi bi-search text-success"></i></span>
                             <input type="text" id="subscriberSearch" class="form-control bg-light border-0 shadow-none" placeholder="Search email, name, or UID...">
                         </div>
                     </div>
-                    <div class="col-md-6 text-md-end">
+                    <div class="col-md-7 text-md-end">
                         <div class="btn-group btn-group-sm shadow-sm" role="group" aria-label="Role Filter">
                             <button type="button" class="btn btn-outline-dark active filter-btn" onclick="filterByRole('all', this)">All</button>
                             <button type="button" class="btn btn-outline-dark filter-btn" onclick="filterByRole('admin', this)">Admins</button>
                             <button type="button" class="btn btn-outline-dark filter-btn" onclick="filterByRole('tutor', this)">Tutors</button>
+                            <button type="button" class="btn btn-outline-dark filter-btn" onclick="filterByRole('buyer', this)">Buyers</button>
+                            <button type="button" class="btn btn-outline-dark filter-btn" onclick="filterByRole('seller', this)">Sellers</button>
                             <button type="button" class="btn btn-outline-dark filter-btn" onclick="filterByRole('client', this)">Clients</button>
                         </div>
                     </div>
@@ -99,12 +101,14 @@
                                     <form action="/admin/update-role" method="POST" class="d-flex gap-2">
                                         <input type="hidden" name="user_id" value="{{ sub.uid }}">
                                         
-                                        <div class="input-group input-group-sm" style="width: 130px;">
+                                        <div class="input-group input-group-sm" style="width: 140px;">
                                             <span class="input-group-text bg-white"><i class="bi bi-person-badge"></i></span>
                                             <select name="role" class="form-select border-start-0 shadow-none">
-                                                <option value="client" {% if sub.role == 'client' %}selected{% endif %}>Client</option>
+                                                <option value="buyer" {% if sub.role == 'buyer' %}selected{% endif %}>Buyer</option>
+                                                <option value="seller" {% if sub.role == 'seller' %}selected{% endif %}>Seller</option>
+                                                <option value="client" {% if sub.role == 'client' %}selected{% endif %} class="text-muted">Client (Legacy)</option>
                                                 <option value="tutor" {% if sub.role == 'tutor' %}selected{% endif %}>Tutor</option>
-                                                <option value="admin" {% if sub.role == 'admin' %}selected{% endif %}>Admin</option>
+                                                <option value="admin" {% if sub.role == 'admin' %}selected{% endif %} class="text-danger fw-bold">Admin</option>
                                             </select>
                                         </div>
 
@@ -174,6 +178,7 @@
 
         const rows = document.querySelectorAll('.sub-row');
         rows.forEach(row => {
+            // Note: role could be 'buyer', 'seller', etc based on data-role attribute
             const userRole = row.getAttribute('data-role');
             if (role === 'all' || userRole === role) {
                 row.style.display = '';

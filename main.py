@@ -233,7 +233,7 @@ def tutor_required(f):
         user_role = session.get('role', session.get('user_role'))
         if user_role not in ['tutor', 'admin']:
             flash("Access denied: This area is reserved for Tutors.", "danger")
-            return redirect(url_for('market_intelligence'))
+            return redirect(url_for('insights')) # <-- New standard landing page
         return f(*args, **kwargs)
     return decorated_function
 
@@ -299,7 +299,14 @@ def send_welcome_email(user_email, name, role):
     """Sends the welcome email in the background so the user doesn't wait."""
     with app.app_context():
         try:
-            subject = "Welcome to the Faculty!" if role == 'tutor' else "Your Market Intelligence is Ready!"
+            # Personalize subject based on the new roles
+            if role == 'tutor':
+                subject = "Welcome to the Faculty!"
+            elif role == 'seller':
+                subject = "Ready to scale your agribusiness? 🚀"
+            else: # buyer or legacy client
+                subject = "Your Market Intelligence is Ready!"
+                
             msg = Message(subject, recipients=[user_email])
             
             template = 'emails/welcome_tutor.html' if role == 'tutor' else 'emails/welcome_client.html'
@@ -309,7 +316,6 @@ def send_welcome_email(user_email, name, role):
             print(f"Welcome email successfully sent to {user_email}")
         except Exception as e:
             print(f"Failed to send welcome email: {e}")
-
 
 
 
@@ -364,7 +370,6 @@ def register():
             flash(f"Registration Error: {str(e)}", "danger")
             
     return render_template('register.html')
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -386,10 +391,11 @@ def login():
             user_data = user_ref.get()
             
             if user_data:
-                raw_role = str(user_data.get('role', 'client')).strip().lower()
+                # Fallback to 'buyer' if role is empty to match your new frontend
+                raw_role = str(user_data.get('role', 'buyer')).strip().lower()
                 raw_tier = str(user_data.get('subscription_tier', 'free')).strip().lower()
             else:
-                raw_role = 'client'
+                raw_role = 'buyer'
                 raw_tier = 'free'
                 user_ref.set({'email': email, 'role': raw_role, 'subscription_tier': raw_tier, 'uid': uid})
 
@@ -406,12 +412,22 @@ def login():
             if raw_role == 'admin':
                 flash("Welcome back, Administrator!", "success")
                 return redirect(url_for('subscriber_management')) 
+                
             elif raw_role == 'tutor':
                 flash("Welcome to the Faculty Portal!", "success")
-                return redirect(url_for('market_intelligence')) 
+                # Usually tutors go to their dashboard, or keep it as market_intelligence if you prefer
+                return redirect(url_for('tutor_dashboard')) 
+                
+            elif raw_role in ['buyer', 'seller', 'client']:
+                # DIRECT BUYERS & SELLERS TO INSIGHTS & RESEARCH
+                # (We keep 'client' in the list just in case you have older legacy users in the database)
+                flash(f"Authentication successful. Welcome to your {raw_role.capitalize()} portal!", "success")
+                return redirect(url_for('insights'))
+                
             else:
+                # Catch-all fallback
                 flash("Authentication successful. Welcome to your portal!", "success")
-                return redirect(url_for('market_intelligence'))
+                return redirect(url_for('insights'))
             
         except requests.exceptions.HTTPError:
             flash("Invalid email or password. Please try again.", "danger")
@@ -420,7 +436,6 @@ def login():
             flash("System error during login. Check server console.", "danger")
             
     return render_template('login.html')
-
 
 
 
@@ -565,20 +580,47 @@ def admin_upload_training():
 
     files_metadata = list((rtdb.reference('training_content').get() or {}).values())
     return render_template('admin_training_upload.html', files_metadata=files_metadata)
-
 @app.route('/admin/data-manager', methods=['GET', 'POST'])
 @admin_required
 def market_data_manager():
     if request.method == 'POST':
+        # Safely convert price to float for graphing
+        try:
+            numeric_price = float(request.form.get('price', 0))
+        except ValueError:
+            numeric_price = 0.0
+
         rtdb.reference('market_data').push({
-            "commodity": request.form.get('commodity'), "region": request.form.get('region'),
-            "price": float(request.form.get('price')), "currency": request.form.get('currency', 'KES'),
-            "trend": request.form.get('trend'), "updated_at": {".sv": "timestamp"}
+            "commodity": request.form.get('commodity').strip(),
+            "category": request.form.get('category', 'Other'), # e.g. Vegetables, Grains
+            "region": request.form.get('region'),
+            "price": numeric_price,
+            "unit": request.form.get('unit', 'kg'), # e.g. 'per bundle', 'per crate'
+            "currency": request.form.get('currency', 'USD'),
+            "trend": request.form.get('trend'),
+            # Use actual datetime string for precise graphing
+            "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S") 
         })
-        flash("Market data published!", "success")
+        flash(f"Market data for {request.form.get('commodity')} published successfully!", "success")
+        return redirect(url_for('market_data_manager'))
+        
     items = rtdb.reference('market_data').get() or {}
-    market_list = [{'id': k, **v} for k, v in items.items()]
-    return render_template('market data manager.html', market_items=reversed(market_list))
+    
+    # Clean up the data for the frontend
+    market_list = []
+    for k, v in items.items():
+        # Handle legacy data that might be missing the new fields
+        v['id'] = k
+        v['category'] = v.get('category', 'General')
+        v['unit'] = v.get('unit', 'unit')
+        # Convert Firebase '{".sv": "timestamp"}' to a string if it exists in legacy data
+        if isinstance(v.get('updated_at'), dict):
+            v['updated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        market_list.append(v)
+        
+    # Convert the iterator back into a proper list so JSON can read it!
+    return render_template('market data manager.html', market_items=list(reversed(market_list)))
+
 
 @app.route('/admin/delete-market-data/<item_id>', methods=['POST'])
 @admin_required
@@ -812,7 +854,9 @@ def academy_leaderboard():
     leaderboard = []
     
     for uid, user_data in all_users.items():
-        if user_data.get('role', 'client') != 'client':
+        # Allow legacy clients, new buyers, and new sellers to appear on the board
+        user_role = user_data.get('role', 'buyer').lower()
+        if user_role not in ['client', 'buyer', 'seller']:
             continue
             
         name = user_data.get('full_name', 'Anonymous Farmer')
@@ -1510,7 +1554,7 @@ def chat_dashboard():
             online_contacts.append({
                 'uid': uid,
                 'name': data.get('full_name', 'Farmer'),
-                'role': data.get('role', 'client'),
+                'role': data.get('role', 'buyer'),
                 # We pass the status to the frontend instead of filtering
                 'is_online': uid in online_users 
             })
