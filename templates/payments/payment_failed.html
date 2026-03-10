@@ -13,6 +13,15 @@
 {% endblock %}
 
 {% block content %}
+{% set source = request.args.get('source', 'pricing') %}
+{% if source == 'banking' %}
+    {% set try_again_link = url_for('banking_dashboard') %}
+    {% set try_again_text = "Return to Digital Wallet" %}
+{% else %}
+    {% set try_again_link = url_for('pricing') %}
+    {% set try_again_text = "View Subscription Plans" %}
+{% endif %}
+
 <div class="container d-flex align-items-center justify-content-center min-vh-100 py-5">
     <div class="card border-0 shadow-lg text-center p-5 failed-card border-top border-danger border-4" style="max-width: 450px; border-radius: 15px;">
         <div class="card-body">
@@ -20,10 +29,10 @@
                 <i class="bi bi-exclamation-triangle-fill"></i>
             </div>
             
-            <h3 class="fw-bold mb-3 text-dark">Payment Unsuccessful</h3>
+            <h3 class="fw-bold mb-3 text-dark">Transaction Failed</h3>
             
             <p class="text-muted mb-4">
-                {{ error_message | default("Your transaction could not be completed. Don't worry, no charges were made to your account.") }}
+                {{ request.args.get('msg') | default("Your transaction could not be completed. Don't worry, no funds were deducted from your account.") }}
             </p>
             
             <div class="bg-light p-3 rounded mb-4 text-start small text-muted">
@@ -36,10 +45,10 @@
             </div>
 
             <div class="d-grid gap-2">
-                <a href="{{ url_for('pricing') }}" class="btn btn-danger btn-lg fw-bold rounded-pill shadow-sm">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i> Try Again
+                <a href="{{ try_again_link }}" class="btn btn-danger btn-lg fw-bold rounded-pill shadow-sm">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> {{ try_again_text }}
                 </a>
-                <a href="mailto:support@farmerman.com" class="btn btn-link text-decoration-none text-muted">Contact Support</a>
+                <a href="mailto:support@farmerman.com" class="btn btn-link text-decoration-none text-muted mt-2">Contact Support</a>
             </div>
         </div>
     </div>

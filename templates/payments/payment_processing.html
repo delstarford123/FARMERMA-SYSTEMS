@@ -11,7 +11,11 @@
             
             <h3 class="fw-bold mb-3 text-dark">Check your phone</h3>
             <p class="text-muted mb-4">
-                We have sent an M-Pesa prompt to your phone. Please enter your PIN to complete the transaction.
+                {% if request.args.get('source') == 'banking' %}
+                    We have sent an M-Pesa prompt to fund your digital wallet. Please enter your PIN to complete the deposit.
+                {% else %}
+                    We have sent an M-Pesa prompt to your phone. Please enter your PIN to complete the subscription payment.
+                {% endif %}
             </p>
             
             <div class="d-flex align-items-center justify-content-center text-muted small mb-4">
@@ -37,8 +41,19 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const checkoutId = "{{ checkout_id }}";
+        // Grab the source from the URL (defaults to subscription)
+        const source = "{{ request.args.get('source', 'subscription') }}";
+        
         let attempts = 0;
         const maxAttempts = 20; // Will poll for about 60 seconds total
+
+        // 1. DYNAMIC URL ROUTING
+        // If it's a banking deposit, success redirects back to their digital wallet!
+        const successUrl = source === 'banking' 
+            ? "{{ url_for('banking_dashboard') }}" 
+            : "{{ url_for('payment_success') }}";
+            
+        const failedUrlBase = "{{ url_for('payment_failed') }}";
 
         const pollInterval = setInterval(() => {
             attempts++;
@@ -48,18 +63,16 @@
                 .then(data => {
                     if (data.status === 'completed') {
                         clearInterval(pollInterval);
-                        // Safaricom confirmed payment! Now redirect to success.
-                        window.location.href = "{{ url_for('payment_success') }}";
-                    } else if (data.status === 'failed') {
+                        window.location.href = successUrl;
+                    } 
+                    else if (data.status === 'failed') {
                         clearInterval(pollInterval);
-                        // Safaricom confirmed user cancelled.
-                        window.location.href = "{{ url_for('payment_failed', msg='Transaction was cancelled or failed.') }}";
+                        window.location.href = `${failedUrlBase}?msg=Transaction was cancelled or failed.&source=${source}`;
                     }
                     
                     if (attempts >= maxAttempts) {
                         clearInterval(pollInterval);
-                        // Timeout reached
-                        window.location.href = "{{ url_for('payment_failed', msg='Transaction timed out. If you paid, it will reflect in your billing history shortly.') }}";
+                        window.location.href = `${failedUrlBase}?msg=Transaction timed out. If you paid, it will reflect in your account shortly.&source=${source}`;
                     }
                 })
                 .catch(err => console.error("Polling error:", err));

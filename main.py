@@ -537,17 +537,78 @@ def admin_dashboard():
     users = rtdb.reference('users').get() or {}
     market = rtdb.reference('market_data').get() or {}
     txns = rtdb.reference('completed_transactions').get() or {}
-    rev = 0.0; recent = []
     
+    # 1. Existing Revenue & Subscriptions Logic
+    rev = 0.0; recent = []
     for uid, u_txns in txns.items():
         u_info = users.get(uid, {})
         for t in u_txns.values():
             rev += float(t.get('amount', 0))
-            recent.append({'name': u_info.get('full_name', 'User'), 'date': t.get('date', ''), 'plan': t.get('plan', 'Pro')})
+            recent.append({'name': u_info.get('full_name', 'User'), 'date': t.get('date', ''), 'plan': t.get('plan', 'Pro'), 'email': u_info.get('email', 'N/A')})
             
     recent.sort(key=lambda x: x['date'], reverse=True)
-    return render_template('admin dashboard.html', total_subscribers=len(users), active_feeds=len(market), total_revenue=rev, recent_transactions=recent[:5])
+    
+    # 2. NEW: Global Banking System Analytics
+    banking_groups = rtdb.reference('banking_groups').get() or {}
+    total_groups = len(banking_groups)
+    
+    banking_accounts = rtdb.reference('banking_accounts').get() or {}
+    total_deposits = 0.0
+    for acc in banking_accounts.values():
+        total_deposits += float(acc.get('emergency_fund', 0.0))
+        for grp_balance in acc.get('standard_savings', {}).values():
+            total_deposits += float(grp_balance)
+            
+    # 3. NEW: Pending Loan Requests
+    all_loans = rtdb.reference('banking_loans').get() or {}
+    pending_loans = []
+    for uid, user_loans in all_loans.items():
+        if isinstance(user_loans, dict):
+            for loan_id, loan_data in user_loans.items():
+                if loan_data.get('status') == 'Pending Review':
+                    loan_data['loan_id'] = loan_id
+                    loan_data['uid'] = uid
+                    
+                    # Attach user contact info so admin can call them
+                    user_profile = users.get(uid, {})
+                    loan_data['user_name'] = user_profile.get('full_name', 'Unknown')
+                    loan_data['user_email'] = user_profile.get('email', 'No Email')
+                    # Prefer the phone number typed in the loan request, fallback to profile phone if missing
+                    loan_data['user_phone'] = loan_data.get('phone_number', user_profile.get('phone', 'No Phone Provided'))
+                    
+                    pending_loans.append(loan_data)
+                    
+    pending_loans.sort(key=lambda x: x.get('requested_at', ''), reverse=True)
 
+    return render_template(
+        'admin dashboard.html', 
+        total_subscribers=len(users), 
+        active_feeds=len(market), 
+        total_revenue=rev, 
+        recent_transactions=recent[:5],
+        total_groups=total_groups,
+        total_deposits=total_deposits,
+        pending_loans=pending_loans
+    )
+    
+@app.route('/admin/process-loan', methods=['POST'])
+@admin_required
+def admin_process_loan():
+    uid = request.form.get('uid')
+    loan_id = request.form.get('loan_id')
+    action = request.form.get('action') # 'Approved' or 'Denied'
+    
+    try:
+        rtdb.reference(f'banking_loans/{uid}/{loan_id}').update({
+            'status': action,
+            'processed_at': datetime.now(timezone(timedelta(hours=3))).strftime("%Y-%m-%d %H:%M:%S")
+        })
+        flash(f"Loan successfully {action}.", "success")
+    except Exception as e:
+        flash(f"Error processing loan: {e}", "danger")
+        
+    return redirect(url_for('admin_dashboard'))
+   
 @app.route('/admin/upload-training-media', methods=['GET', 'POST'])
 @admin_required
 def admin_upload_training():
@@ -1243,10 +1304,9 @@ def process_mpesa():
     except Exception as e:
         print(f"CRITICAL MPESA STK ERROR: {str(e)}")
         return redirect(url_for('payment_failed', msg="M-Pesa Gateway is currently unstable. Please try again later or use a Card."))
-
 @app.route('/mpesa-callback', methods=['POST'])
 def mpesa_callback():
-    """Receives async confirmation from Safaricom."""
+    """Receives async confirmation from Safaricom for BOTH Subscriptions & Banking."""
     try:
         data = request.json
         stk = data.get('Body', {}).get('stkCallback', {})
@@ -1256,18 +1316,49 @@ def mpesa_callback():
         pending_data = pending_ref.get()
 
         if pending_data:
+            # Define timezone for accurate logging
+            eat_tz = timezone(timedelta(hours=3))
+            
+            # Fetch the tx_type. Default to 'subscription' for older/legacy API calls
+            tx_type = pending_data.get('tx_type', 'subscription')
+            
             # 1. SUCCESS: Safaricom confirms the PIN was entered and funds captured
             if stk.get('ResultCode') == 0:
                 meta = stk.get('CallbackMetadata', {}).get('Item', [])
                 receipt = next((i['Value'] for i in meta if i['Name'] == 'MpesaReceiptNumber'), 'UNKNOWN')
                 
                 uid = pending_data.get('user_id')
-                plan_bought = pending_data.get('plan_id', 'bronze')
-                amount = pending_data.get('amount', 0)
+                amount = float(pending_data.get('amount', 0)) # Ensure amount is a float for math
                 
-                # Record the transaction securely
-                record_successful_transaction(uid, plan_bought, amount, "M-Pesa", receipt)
-                pending_ref.delete() # Cleanup deletes the pending record
+                if tx_type == 'banking_deposit':
+                    # --- ROUTE TO BANKING SYSTEM ---
+                    fund_type = pending_data.get('fund_type')
+                    
+                    if fund_type == 'emergency_fund':
+                        account_ref = rtdb.reference(f'banking_accounts/{uid}')
+                        current_bal = float(account_ref.child('emergency_fund').get() or 0.0)
+                        account_ref.update({'emergency_fund': current_bal + amount})
+                    else:
+                        # It is a specific group ID
+                        account_ref = rtdb.reference(f'banking_accounts/{uid}/standard_savings/{fund_type}')
+                        current_bal = float(account_ref.get() or 0.0)
+                        account_ref.set(current_bal + amount)
+                    
+                    # Log the banking transaction
+                    rtdb.reference(f'banking_transactions/{uid}').push({
+                        'type': 'deposit',
+                        'fund_type': fund_type,
+                        'amount': amount,
+                        'receipt': receipt,
+                        'timestamp': datetime.now(eat_tz).strftime("%Y-%m-%d %H:%M:%S")
+                    })
+                else:
+                    # --- ROUTE TO SUBSCRIPTION SYSTEM ---
+                    plan_bought = pending_data.get('plan_id', 'bronze')
+                    record_successful_transaction(uid, plan_bought, amount, "M-Pesa", receipt)
+                    
+                # Cleanup deletes the pending record
+                pending_ref.delete() 
             
             # 2. FAILED: User cancelled, typed wrong PIN, or had insufficient funds
             else:
@@ -1280,7 +1371,8 @@ def mpesa_callback():
     except Exception as e:
         print(f"M-Pesa Callback Error: {e}")
         return jsonify({"ResultCode": 1, "ResultDesc": "Internal Server Error"}), 500
-
+    
+    
 @app.route('/checkout')
 @login_required 
 def subscriber_checkout():
@@ -1938,7 +2030,264 @@ def add_insight():
         flash(f"Error publishing insight: {e}", "danger")
         
     return redirect(url_for('admin_dashboard'))
+# ==========================================
+# DIGITAL SAVINGS & TABLE BANKING SYSTEM (MULTI-GROUP)
+# ==========================================
 
+@app.route('/banking')
+@login_required
+def banking_dashboard():
+    uid = session.get('user_id')
+    eat_tz = timezone(timedelta(hours=3))
+    current_time = datetime.now(eat_tz)
+    
+    # 1. Fetch User's Banking Account
+    account_ref = rtdb.reference(f'banking_accounts/{uid}')
+    account = account_ref.get()
+    
+    # Initialize if totally new
+    if not account:
+        account = {'standard_savings': {}, 'emergency_fund': 0.0, 'groups': {}}
+        account_ref.set(account)
+        
+    # Ensure legacy accounts are converted to the multi-group schema
+    if 'group_id' in account:
+        old_group = account.pop('group_id')
+        old_savings = account.pop('standard_savings', 0.0)
+        account['groups'] = {old_group: True} if old_group else {}
+        account['standard_savings'] = {old_group: old_savings} if old_group else {}
+        account_ref.set(account)
+
+    # 2. Fetch All Groups & Categorize Them
+    all_groups = rtdb.reference('banking_groups').get() or {}
+    my_groups = []
+    available_groups = []
+    
+    for gid, gdata in all_groups.items():
+        if not isinstance(gdata, dict): continue
+        
+        gdata['id'] = gid
+        gdata['member_count'] = len(gdata.get('members', {}))
+        
+        # Calculate maturity
+        try:
+            maturity_date = datetime.strptime(gdata['cycle_end_date'], "%Y-%m-%d").replace(tzinfo=eat_tz)
+            time_diff = maturity_date - current_time
+            gdata['days_to_maturity'] = max(0, time_diff.days)
+            gdata['can_withdraw'] = gdata['days_to_maturity'] == 0
+        except Exception:
+            gdata['days_to_maturity'] = 0
+            gdata['can_withdraw'] = False
+            
+        # Is the user in this group?
+        if uid in gdata.get('members', {}):
+            # Fetch their specific balance for this group
+            gdata['my_balance'] = account.get('standard_savings', {}).get(gid, 0.0)
+            my_groups.append(gdata)
+        else:
+            available_groups.append(gdata)
+
+    # 3. Fetch Transactions
+    transactions_data = rtdb.reference(f'banking_transactions/{uid}').get()
+    tx_list = []
+    if isinstance(transactions_data, dict):
+        tx_list = [v for v in transactions_data.values() if isinstance(v, dict)]
+    elif isinstance(transactions_data, list):
+        tx_list = [v for v in transactions_data if isinstance(v, dict)]
+        
+    tx_list.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+    tx_list = tx_list[:10]
+
+    # 4. Fetch Loans
+    loans_data = rtdb.reference(f'banking_loans/{uid}').get()
+    loan_list = []
+    if isinstance(loans_data, dict):
+        loan_list = [v for v in loans_data.values() if isinstance(v, dict)]
+    elif isinstance(loans_data, list):
+        loan_list = [v for v in loans_data if isinstance(v, dict)]
+
+    return render_template(
+        'banking/dashboard.html',
+        account=account,
+        my_groups=my_groups,
+        available_groups=available_groups,
+        transactions=tx_list,
+        loans=loan_list
+    )
+
+@app.route('/banking/create-group', methods=['POST'])
+@login_required
+def banking_create_group():
+    uid = session.get('user_id')
+    eat_tz = timezone(timedelta(hours=3))
+    
+    group_name = request.form.get('group_name')
+    duration_months = int(request.form.get('duration_months', 6))
+    maturity_date = datetime.now(eat_tz) + timedelta(days=duration_months * 30)
+    
+    import uuid
+    group_id = f"group_{uuid.uuid4().hex[:8]}"
+    
+    rtdb.reference(f'banking_groups/{group_id}').set({
+        'name': group_name,
+        'description': request.form.get('description'),
+        'cycle_end_date': maturity_date.strftime("%Y-%m-%d"),
+        'creator_id': uid,
+        'members': {uid: True}
+    })
+    
+    # Add to user's group list and initialize a 0.0 balance for it
+    rtdb.reference(f'banking_accounts/{uid}/groups/{group_id}').set(True)
+    rtdb.reference(f'banking_accounts/{uid}/standard_savings/{group_id}').set(0.0)
+    
+    flash(f"Successfully created '{group_name}'.", "success")
+    return redirect(url_for('banking_dashboard'))
+
+@app.route('/banking/join-group/<group_id>', methods=['POST'])
+@login_required
+def banking_join_group(group_id):
+    uid = session.get('user_id')
+    rtdb.reference(f'banking_groups/{group_id}/members/{uid}').set(True)
+    rtdb.reference(f'banking_accounts/{uid}/groups/{group_id}').set(True)
+    rtdb.reference(f'banking_accounts/{uid}/standard_savings/{group_id}').set(0.0)
+    flash("Successfully joined the savings group!", "success")
+    return redirect(url_for('banking_dashboard'))
+
+# ---------------------------------------------------------
+# BANKING DEPOSITS (M-PESA)
+# ---------------------------------------------------------
+@app.route('/banking/process-deposit', methods=['POST'])
+@login_required
+def banking_process_deposit():
+    """Handles M-Pesa STK Push for Banking Deposits."""
+    uid = session.get('user_id')
+    eat_tz = timezone(timedelta(hours=3))
+    
+    # The fund type can be 'emergency_fund' OR 'group_XYZ123'
+    fund_type_or_group = request.form.get('fund_type')
+    phone_number = request.form.get('phone_number')
+    
+    try:
+        amount = float(request.form.get('amount', 0))
+    except ValueError:
+        flash("Invalid amount.", "danger")
+        return redirect(url_for('banking_dashboard'))
+
+    if amount <= 0:
+        flash("Amount must be greater than zero.", "warning")
+        return redirect(url_for('banking_dashboard'))
+
+    try:
+        res = initiate_stk_push(phone_number, int(amount))
+        
+        if res and res.get('ResponseCode') == '0':
+            checkout_id = res.get("CheckoutRequestID")
+            rtdb.reference(f'pending_transactions/{checkout_id}').set({
+                'user_id': uid, 
+                'amount': amount, 
+                'fund_type': fund_type_or_group,
+                'status': 'awaiting_payment',
+                'tx_type': 'banking_deposit', 
+                'timestamp': datetime.now(eat_tz).strftime("%Y-%m-%d %H:%M:%S")
+            })
+            
+            # CRITICAL FIX: We must pass source='banking' here!
+            return redirect(url_for('payment_processing', checkout_id=checkout_id, source='banking'))
+            
+        flash(f"M-Pesa Error: {res.get('errorMessage', 'Service unavailable.')}", "danger")
+    except Exception as e:
+        flash("M-Pesa Gateway is currently unstable. Please try again.", "danger")
+        
+    return redirect(url_for('banking_dashboard'))
+
+# ---------------------------------------------------------
+# WITHDRAWALS & LOANS
+# ---------------------------------------------------------
+
+@app.route('/banking/withdraw', methods=['POST'])
+@login_required
+def banking_process_withdraw():
+    """Deducts funds and securely processes withdrawal requests."""
+    uid = session.get('user_id')
+    eat_tz = timezone(timedelta(hours=3))
+    
+    target_account = request.form.get('fund_type') # 'emergency_fund' or 'group_XYZ123'
+    phone_number = request.form.get('phone_number')
+    
+    try:
+        amount = float(request.form.get('amount', 0))
+    except ValueError:
+        flash("Invalid amount.", "danger")
+        return redirect(url_for('banking_dashboard'))
+
+    account_ref = rtdb.reference(f'banking_accounts/{uid}')
+    account = account_ref.get()
+    
+    # Route logic based on where they are withdrawing from
+    if target_account == 'emergency_fund':
+        current_balance = account.get('emergency_fund', 0.0)
+        if amount > current_balance:
+            flash("Insufficient emergency funds.", "danger")
+            return redirect(url_for('banking_dashboard'))
+        account_ref.update({'emergency_fund': current_balance - amount})
+        log_name = "Emergency Fund"
+        
+    else:
+        # It's a standard savings group
+        group_id = target_account
+        current_balance = account.get('standard_savings', {}).get(group_id, 0.0)
+        
+        if amount > current_balance:
+            flash("Insufficient group savings.", "danger")
+            return redirect(url_for('banking_dashboard'))
+            
+        # Enforce Lock-in for this specific group
+        group = rtdb.reference(f'banking_groups/{group_id}').get()
+        maturity_date = datetime.strptime(group['cycle_end_date'], "%Y-%m-%d").replace(tzinfo=eat_tz)
+        if datetime.now(eat_tz) < maturity_date:
+            flash(f"Savings in '{group['name']}' are locked until {group['cycle_end_date']}.", "danger")
+            return redirect(url_for('banking_dashboard'))
+
+        # Deduct balance
+        new_balance = current_balance - amount
+        rtdb.reference(f'banking_accounts/{uid}/standard_savings/{group_id}').set(new_balance)
+        log_name = group['name']
+    
+    # Log withdrawal
+    rtdb.reference(f'banking_transactions/{uid}').push({
+        'type': 'withdraw',
+        'fund_type': log_name,
+        'amount': amount,
+        'destination': phone_number,
+        'timestamp': datetime.now(eat_tz).strftime("%Y-%m-%d %H:%M:%S")
+    })
+    
+    flash(f"Withdrawal of KES {amount:,.2f} is being processed to {phone_number}.", "success")
+    return redirect(url_for('banking_dashboard'))
+@app.route('/banking/loan', methods=['POST'])
+@login_required
+def banking_request_loan():
+    uid = session.get('user_id')
+    eat_tz = timezone(timedelta(hours=3))
+    
+    loan_data = {
+        'amount': float(request.form.get('amount', 0)),
+        'type': request.form.get('loan_type'),
+        'reason': request.form.get('reason'),
+        'provider': request.form.get('provider'),
+        'phone_number': request.form.get('phone_number'), # <-- NEW: Captures the verification number
+        'status': 'Pending Review' if request.form.get('provider') == 'system' else 'Referred',
+        'requested_at': datetime.now(eat_tz).strftime("%Y-%m-%d %H:%M:%S")
+    }
+    rtdb.reference(f'banking_loans/{uid}').push(loan_data)
+    
+    if loan_data['provider'] == 'external_bank':
+        flash("Request logged. Visit your nearest partner bank branch with your ID.", "info")
+    else:
+        # Inform them that they will receive a call
+        flash("System loan request submitted. An admin will call the provided number shortly to verify.", "success")
+        
+    return redirect(url_for('banking_dashboard'))
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -1948,7 +2297,7 @@ if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 5000))
     
-    # Add these two lines to create a clickable link in your terminal!
+    
     print(f"\n Farmerman Systems is LIVE!")
     print(f" Click here to open: http://127.0.0.1:{port}\n")
     

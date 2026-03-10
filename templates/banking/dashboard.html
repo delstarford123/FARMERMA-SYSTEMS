@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --plant-green: #2E7D32;
+        --soil-brown: #5D4037;
+    }
+    .banking-card {
+        border-radius: 20px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .banking-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.08) !important;
+    }
+    .icon-circle {
+        width: 50px; height: 50px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
+    }
+    .modal {
+        background-color: rgba(0, 0, 0, 0.6) !important;
+        backdrop-filter: blur(3px);
+    }
+    .stagger-item, .bank-header { opacity: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-light min-vh-100 py-4 py-md-5 overflow-hidden">
+    <div class="container-xl">
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show mb-4 shadow-sm rounded-4" role="alert">
+                <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="bank-header mb-5 d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <h2 class="fw-bold" style="color: var(--soil-brown);">
+                    <i class="bi bi-piggy-bank-fill text-success me-2"></i>Digital Savings & Loans
+                </h2>
+                <p class="text-muted">Manage your standard savings, emergency funds, and credit access securely.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-dark rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#createGroupModal">
+                    <i class="bi bi-plus-circle me-2"></i>New Circle
+                </button>
+                <button class="btn btn-light border text-primary rounded-pill fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#loanModal">
+                    <i class="bi bi-cash-coin me-2"></i>Request Loan
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5">
+            
+            <div class="col-md-6 col-xl-4 stagger-item">
+                <div class="card border-0 shadow-sm banking-card bg-white h-100 position-relative overflow-hidden">
+                    <div class="position-absolute top-0 end-0 p-3 z-1">
+                        <button class="btn btn-sm btn-success rounded-circle shadow-sm me-1" title="Deposit" data-bs-toggle="modal" data-bs-target="#depositModal"><i class="bi bi-arrow-up"></i></button>
+                        <button class="btn btn-sm btn-dark rounded-circle shadow-sm" title="Withdraw" data-bs-toggle="modal" data-bs-target="#withdrawModal"><i class="bi bi-arrow-down"></i></button>
+                    </div>
+                    <div class="card-body p-4 position-relative z-0">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="icon-circle bg-danger bg-opacity-10 text-danger"><i class="bi bi-heart-pulse-fill"></i></div>
+                            <span class="badge bg-light text-dark border"><i class="bi bi-unlock-fill text-success me-1"></i> Liquid</span>
+                        </div>
+                        <p class="text-muted mb-1 text-uppercase small fw-bold">Personal Emergency Fund</p>
+                        <h2 class="fw-bold text-dark mb-0">KES {{ "{:,.2f}".format(account.emergency_fund) }}</h2>
+                        <div class="mt-4 pt-3 border-top">
+                            <p class="small text-muted mb-2">Accessibility:</p>
+                            <p class="small fw-bold text-success mb-0"><i class="bi bi-check-circle-fill me-1"></i> Available for instant withdrawal</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% for group in my_groups %}
+            <div class="col-md-6 col-xl-4 stagger-item">
+                <div class="card border-0 shadow-sm banking-card bg-white h-100 position-relative overflow-hidden">
+                    <div class="position-absolute top-0 end-0 p-3 z-1">
+                        <button class="btn btn-sm btn-success rounded-circle shadow-sm me-1" title="Deposit" data-bs-toggle="modal" data-bs-target="#depositModal"><i class="bi bi-arrow-up"></i></button>
+                        {% if group.can_withdraw %}
+                            <button class="btn btn-sm btn-dark rounded-circle shadow-sm" title="Withdraw" data-bs-toggle="modal" data-bs-target="#withdrawModal"><i class="bi bi-arrow-down"></i></button>
+                        {% endif %}
+                    </div>
+                    <div class="card-body p-4 position-relative z-0">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="icon-circle bg-success bg-opacity-10 text-success"><i class="bi bi-safe2"></i></div>
+                            {% if group.can_withdraw %}
+                                <span class="badge bg-success text-white shadow-sm"><i class="bi bi-unlock-fill me-1"></i> Matured</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark border"><i class="bi bi-lock-fill text-warning me-1"></i> Locked</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-muted mb-1 text-uppercase small fw-bold text-truncate" title="{{ group.name }}">{{ group.name }}</p>
+                        <h2 class="fw-bold text-dark mb-0">KES {{ "{:,.2f}".format(group.my_balance) }}</h2>
+                        <div class="mt-4 pt-3 border-top">
+                            <p class="small text-muted mb-2">Cycle Matures In:</p>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h4 class="fw-bold text-primary d-inline mb-0 me-1">{{ group.days_to_maturity }}</h4>
+                                    <span class="text-muted small">Days</span>
+                                </div>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary"><i class="bi bi-people-fill me-1"></i>{{ group.member_count }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-md-6 col-xl-4 stagger-item">
+                <div class="card border border-dashed shadow-none bg-transparent h-100 d-flex align-items-center justify-content-center p-4 text-center" style="min-height: 250px;">
+                    <i class="bi bi-people text-muted opacity-50 display-4 mb-3"></i>
+                    <p class="text-muted fw-bold">Not in any groups yet.</p>
+                    <p class="small text-muted mb-0">Join an available group below or create your own to start saving with peers.</p>
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+
+        <div class="row g-4 stagger-item">
+            
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="fw-bold text-dark mb-0"><i class="bi bi-compass text-success me-2"></i> Discover & Join Circles</h6>
+                    </div>
+                    <div class="card-body p-0 overflow-auto" style="max-height: 400px;">
+                        <ul class="list-group list-group-flush">
+                            {% for g in available_groups %}
+                            <li class="list-group-item py-4 px-4 hover-bg-light">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1">{{ g.name }}</h6>
+                                        <p class="small text-muted mb-2 pe-3">{{ g.description }}</p>
+                                        <span class="badge bg-light text-dark border me-2"><i class="bi bi-people-fill me-1 text-primary"></i>{{ g.member_count }} Members</span>
+                                        <span class="badge bg-light text-dark border"><i class="bi bi-calendar-event me-1 text-danger"></i>Ends: {{ g.cycle_end_date }}</span>
+                                    </div>
+                                    <form action="{{ url_for('banking_join_group', group_id=g.id) }}" method="POST" class="ms-2">
+                                        <button type="submit" class="btn btn-outline-success btn-sm rounded-pill fw-bold">Join</button>
+                                    </form>
+                                </div>
+                            </li>
+                            {% else %}
+                            <li class="list-group-item py-5 text-center text-muted">
+                                <i class="bi bi-emoji-frown fs-1 opacity-25 d-block mb-2"></i>
+                                No new groups available right now.
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="fw-bold text-dark mb-0"><i class="bi bi-receipt text-success me-2"></i> Recent Activity</h6>
+                    </div>
+                    <div class="card-body p-0 overflow-auto" style="max-height: 400px;">
+                        <table class="table table-hover align-middle mb-0">
+                            <tbody class="small">
+                                {% for tx in transactions %}
+                                <tr>
+                                    <td class="ps-4">
+                                        {% if tx.type == 'deposit' %}
+                                            <span class="text-success fw-bold"><i class="bi bi-arrow-up-right-circle-fill me-2"></i>In</span>
+                                        {% else %}
+                                            <span class="text-danger fw-bold"><i class="bi bi-arrow-down-left-circle-fill me-2"></i>Out</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-muted text-truncate" style="max-width: 150px;">
+                                        {{ tx.fund_type.replace('_', ' ').title() if tx.fund_type == 'emergency_fund' else tx.fund_type }}
+                                    </td>
+                                    <td class="fw-bold text-dark text-end">KES {{ "{:,.2f}".format(tx.amount) }}</td>
+                                    <td class="text-end pe-4 text-muted" style="font-size: 0.7rem;">{{ tx.timestamp[:10] }}</td>
+                                </tr>
+                                {% endfor %}
+                                {% if not transactions %}
+                                <tr><td colspan="4" class="text-center py-5 text-muted">No recent financial activity.</td></tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createGroupModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-plus-circle me-2 text-success"></i>Create Savings Circle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form action="{{ url_for('banking_create_group') }}" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Group Name</label>
+                        <input type="text" name="group_name" class="form-control bg-light border-0 shadow-sm" placeholder="e.g., Kakamega Farmers Union" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Description / Goal</label>
+                        <input type="text" name="description" class="form-control bg-light border-0 shadow-sm" placeholder="e.g., Saving for a shared tractor" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">Maturity Period</label>
+                        <select name="duration_months" class="form-select bg-light border-0 shadow-sm fw-bold text-success" required>
+                            <option value="3">3 Months (Short Term)</option>
+                            <option value="6" selected>6 Months (Standard)</option>
+                            <option value="9">9 Months</option>
+                            <option value="12">12 Months (Long Term)</option>
+                        </select>
+                        <div class="form-text small mt-2">Savings placed in this group will be locked for the duration of the cycle.</div>
+                    </div>
+                    <button type="submit" class="btn btn-dark w-100 py-3 rounded-pill fw-bold">Create & Join Circle</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="depositModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-success"><i class="bi bi-phone-vibrate me-2"></i>M-Pesa Deposit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form action="{{ url_for('banking_process_deposit') }}" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Select Destination Account</label>
+                        <select name="fund_type" class="form-select bg-light border-0 shadow-sm fw-bold" required>
+                            <option value="emergency_fund">Emergency Fund (Liquid)</option>
+                            {% for group in my_groups %}
+                                <option value="{{ group.id }}">{{ group.name }} (Locked)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">M-Pesa Phone Number</label>
+                        <input type="tel" name="phone_number" class="form-control form-control-lg bg-light border-0 shadow-sm fw-bold" placeholder="2547XXXXXXXX" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">Amount (KES)</label>
+                        <input type="number" name="amount" step="0.01" class="form-control form-control-lg bg-light border-0 shadow-sm fw-bold text-success" placeholder="0.00" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow-sm">Send M-Pesa Prompt</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="withdrawModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-arrow-down-circle me-2"></i>Withdraw to M-Pesa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form action="{{ url_for('banking_process_withdraw') }}" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Withdraw From</label>
+                        <select name="fund_type" class="form-select bg-light border-0 shadow-sm fw-bold" required>
+                            <option value="emergency_fund">Emergency Fund (Bal: KES {{ "{:,.2f}".format(account.emergency_fund) }})</option>
+                            {% for group in my_groups %}
+                                {% if group.can_withdraw %}
+                                    <option value="{{ group.id }}">{{ group.name }} (Bal: KES {{ "{:,.2f}".format(group.my_balance) }})</option>
+                                {% else %}
+                                    <option value="{{ group.id }}" disabled>{{ group.name }} (Locked for {{ group.days_to_maturity }} days)</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Receiving M-Pesa Number</label>
+                        <input type="tel" name="phone_number" class="form-control form-control-lg bg-light border-0 shadow-sm fw-bold text-dark" placeholder="2547XXXXXXXX" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">Amount to Withdraw (KES)</label>
+                        <input type="number" name="amount" step="0.01" class="form-control form-control-lg bg-light border-0 shadow-sm fw-bold text-danger" placeholder="0.00" required>
+                    </div>
+                    <button type="submit" class="btn btn-dark w-100 py-3 rounded-pill fw-bold shadow-sm">Send to my Phone</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="loanModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-primary"><i class="bi bi-bank2 me-2"></i>Request a Loan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form action="{{ url_for('banking_request_loan') }}" method="POST">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Loan Category</label>
+                        <select name="loan_type" class="form-select bg-light border-0 shadow-sm" required>
+                            <option value="agricultural">Agricultural Input Loan</option>
+                            <option value="equipment">Farm Equipment Financing</option>
+                            <option value="education">Education / School Fees</option>
+                            <option value="emergency">Personal Emergency</option>
+                        </select>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-6 mb-3 mb-sm-0">
+                            <label class="form-label fw-bold small text-muted">Amount (KES)</label>
+                            <input type="number" name="amount" class="form-control bg-light border-0 shadow-sm fw-bold text-primary" placeholder="0.00" required>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-bold small text-muted">Verification Phone</label>
+                            <input type="tel" name="phone_number" class="form-control bg-light border-0 shadow-sm fw-bold" placeholder="2547XXXXXXXX" required>
+                        </div>
+                        <div class="col-12 mt-1">
+                            <div class="form-text small text-danger"><i class="bi bi-telephone-fill me-1"></i>An admin will call this number to verify your request.</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Brief Reason</label>
+                        <textarea name="reason" class="form-control bg-light border-0 shadow-sm" rows="2" placeholder="Explain why you need these funds..." required></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">Funding Source</label>
+                        <select name="provider" class="form-select bg-light border-0 shadow-sm" required>
+                            <option value="system">Farmerman Internal Pool (Instant Review)</option>
+                            <option value="external_bank">Refer to Partner Bank (e.g. Equity, KCB)</option>
+                        </select>
+                        <div class="form-text small">Bank referrals require a physical branch visit with your ID.</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold">Submit Loan Application</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+    gsap.to(".bank-header", { opacity: 1, y: 0, startAt: {y: -20}, duration: 0.8, ease: "power3.out" });
+    gsap.to(".stagger-item", { opacity: 1, y: 0, startAt: { y: 30 }, stagger: 0.15, duration: 0.8, ease: "power2.out", delay: 0.2 });
+</script>
+{% endblock %}
