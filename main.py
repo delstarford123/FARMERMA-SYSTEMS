@@ -1304,6 +1304,8 @@ def process_mpesa():
     except Exception as e:
         print(f"CRITICAL MPESA STK ERROR: {str(e)}")
         return redirect(url_for('payment_failed', msg="M-Pesa Gateway is currently unstable. Please try again later or use a Card."))
+
+    
 @app.route('/mpesa-callback', methods=['POST'])
 def mpesa_callback():
     """Receives async confirmation from Safaricom for BOTH Subscriptions & Banking."""
@@ -1903,8 +1905,7 @@ from flask import request, jsonify
 from logic import analyze_weather_and_generate_alerts, update_firebase_alerts
 # In main.py
 @app.route('/api/climate/analyze', methods=['POST'])
-@login_required
-@premium_required
+@token_required
 def analyze_climate():
     data = request.get_json(silent=True)
     if not data:
@@ -1964,6 +1965,8 @@ def insights():
     articles = [{'id': k, **v} for k, v in insights_data.items()]
     
     return render_template('insights.html', articles=articles) 
+
+
 @app.route('/insights/<article_id>')
 def read_insight(article_id):
     """Fetches and displays a single full-length article."""
@@ -2219,7 +2222,7 @@ def banking_process_withdraw():
     except ValueError:
         flash("Invalid amount.", "danger")
         return redirect(url_for('banking_dashboard'))
-
+    
     account_ref = rtdb.reference(f'banking_accounts/{uid}')
     account = account_ref.get()
     
@@ -2288,6 +2291,163 @@ def banking_request_loan():
         flash("System loan request submitted. An admin will call the provided number shortly to verify.", "success")
         
     return redirect(url_for('banking_dashboard'))
+
+
+# ==========================================
+# FLUTTER MOBILE APP APIs (JSON Endpoints)
+# ==========================================
+
+@app.route('/api/banking/dashboard', methods=['GET'])
+@token_required # Validates the mobile app's Firebase Bearer token
+def api_banking_dashboard():
+    """Returns the user's banking data as JSON for the Flutter app."""
+    try:
+        uid = request.user['uid']
+        
+        # 1. Fetch Account Balances
+        account_ref = rtdb.reference(f'banking_accounts/{uid}')
+        account = account_ref.get() or {'emergency_fund': 0.0, 'standard_savings': {}}
+        
+        emergency_fund = float(account.get('emergency_fund', 0.0))
+        
+        # Calculate sum of all savings groups
+        standard_savings = account.get('standard_savings', {})
+        total_savings = sum(float(v) for v in standard_savings.values())
+        
+        # 2. Fetch Transactions
+        txns_data = rtdb.reference(f'banking_transactions/{uid}').get() or {}
+        tx_list = []
+        if isinstance(txns_data, dict):
+            tx_list = [v for v in txns_data.values() if isinstance(v, dict)]
+            
+        # Sort newest first
+        tx_list.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+        
+        return jsonify({
+            "status": "success",
+            "emergency_fund": emergency_fund,
+            "total_savings": total_savings,
+            "recent_transactions": tx_list[:10] # Return the 10 most recent
+        }), 200
+        
+    except Exception as e:
+        print(f"API Banking Error: {e}")
+        return jsonify({"error": "Failed to load banking data"}), 500
+
+
+@app.route('/api/process-mpesa', methods=['POST'])
+@token_required 
+def api_process_mpesa():
+    """Triggers Safaricom STK push from the Flutter app."""
+    try:
+        data = request.json
+        phone = data.get('phone_number')
+        amount = int(float(data.get('amount', 0)))
+        fund_type = data.get('fund_type', 'emergency_fund')
+        tx_type = data.get('tx_type', 'banking_deposit') # Can be 'banking_deposit' or 'subscription'
+        plan_id = data.get('plan_id', 'pro')
+        
+        uid = request.user['uid']
+        eat_tz = timezone(timedelta(hours=3))
+
+        if amount <= 0:
+            return jsonify({"error": "Amount must be greater than zero."}), 400
+
+        # Trigger your actual mpesa.py logic
+        res = initiate_stk_push(phone, amount)
+        
+        if res and res.get('ResponseCode') == '0':
+            checkout_id = res.get("CheckoutRequestID")
+            
+            # Store in pending transactions so your mpesa-callback can match it
+            rtdb.reference(f'pending_transactions/{checkout_id}').set({
+                'user_id': uid, 
+                'amount': amount, 
+                'fund_type': fund_type,
+                'plan_id': plan_id,
+                'status': 'awaiting_payment',
+                'tx_type': tx_type, 
+                'timestamp': datetime.now(eat_tz).strftime("%Y-%m-%d %H:%M:%S")
+            })
+            
+            return jsonify({"status": "success", "checkout_id": checkout_id}), 200
+            
+        return jsonify({"error": res.get('errorMessage', 'Safaricom service unavailable.')}), 400
+        
+    except Exception as e:
+        print(f"API STK Error: {e}")
+        return jsonify({"error": "Gateway unstable. Please try again."}), 500
+
+
+# ==========================================
+# PREMIUM INSIGHTS API
+# ==========================================
+@app.route('/api/insights', methods=['GET'])
+@token_required
+def api_insights():
+    """Fetches live thought leadership articles for the mobile app."""
+    try:
+        # Fetch live articles from Firebase
+        insights_data = rtdb.reference('insights').get() or {}
+        
+        articles = []
+        for key, val in insights_data.items():
+            if isinstance(val, dict):
+                # Attach the firebase key as the ID
+                articles.append({'id': key, **val})
+        
+        # Optional: Sort articles by date (newest first) assuming you have a 'date' field
+        articles.sort(key=lambda x: x.get('date', ''), reverse=True)
+        
+        return jsonify({
+            "status": "success", 
+            "articles": articles
+        }), 200
+        
+    except Exception as e:
+        print(f"API Insights Error: {e}")
+        return jsonify({"error": "Failed to load premium insights."}), 500
+
+
+# ==========================================
+# EXCLUSIVE DEAL ROOM API
+# ==========================================
+@app.route('/api/deal-room', methods=['GET'])
+@token_required
+def api_deal_room():
+    """Exclusive portal for Gold/Investor tier to view bankable projects via mobile."""
+    try:
+        uid = request.user['uid']
+        
+        # 1. Security Check: Fetch user data to verify their tier
+        user_data = rtdb.reference(f'users/{uid}').get() or {}
+        user_tier = str(user_data.get('subscription_tier', 'free')).lower()
+        user_role = str(user_data.get('role', 'client')).lower()
+        
+        # 2. Enforce the Paywall on the backend
+        if user_tier not in ['gold', 'investor'] and user_role != 'admin':
+            return jsonify({
+                "status": "error", 
+                "error": "Access Denied. Please upgrade to the Gold or Investor tier."
+            }), 403
+
+        # 3. Fetch live deals from Firebase
+        deals_data = rtdb.reference('deals').get() or {}
+        
+        deals = []
+        for key, val in deals_data.items():
+            if isinstance(val, dict):
+                deals.append({'id': key, **val})
+                
+        return jsonify({
+            "status": "success", 
+            "deals": deals
+        }), 200
+        
+    except Exception as e:
+        print(f"API Deal Room Error: {e}")
+        return jsonify({"error": "Failed to load deal room data."}), 500
+    
 
 @app.errorhandler(404)
 def page_not_found(e):
