@@ -2448,7 +2448,100 @@ def api_deal_room():
         print(f"API Deal Room Error: {e}")
         return jsonify({"error": "Failed to load deal room data."}), 500
     
+# ==========================================
+# MOBILE APP LOAN REQUEST API
+# ==========================================
+@app.route('/api/banking/loan', methods=['POST'])
+@token_required 
+def api_request_loan():
+    """Handles loan requests coming from the Flutter mobile app."""
+    try:
+        uid = request.user['uid']
+        data = request.get_json(silent=True) or {}
+        
+        amount = float(data.get('amount', 0))
+        reason = str(data.get('reason', 'General Agriculture'))
+        
+        if amount < 500:
+            return jsonify({"error": "Minimum loan amount is KES 500"}), 400
+            
+        eat_tz = timezone(timedelta(hours=3))
+        
+        # 1. Fetch user info to attach to the loan request
+        user_data = rtdb.reference(f'users/{uid}').get() or {}
+        full_name = user_data.get('full_name', 'Unknown User')
+        phone = user_data.get('phone', 'No Phone')
 
+        # 2. Push the new loan request to Firebase
+        loan_ref = rtdb.reference('loan_requests').push()
+        loan_ref.set({
+            'user_id': uid,
+            'full_name': full_name,
+            'phone': phone,
+            'amount': amount,
+            'reason': reason,
+            'status': 'pending',  # Awaiting Admin Approval
+            'timestamp': datetime.now(eat_tz).strftime("%Y-%m-%d %H:%M:%S"),
+            'platform': 'mobile_app'
+        })
+        
+        return jsonify({
+            "status": "success", 
+            "message": "Loan requested successfully"
+        }), 200
+        
+    except Exception as e:
+        print(f"API Loan Request Error: {e}")
+        return jsonify({"error": "Failed to process loan request"}), 500
+# ==========================================
+# MOBILE APP WITHDRAWAL REQUEST API
+# ==========================================
+@app.route('/api/banking/withdraw', methods=['POST'])
+@token_required 
+def api_request_withdrawal():
+    """Handles withdrawal requests coming from the Flutter mobile app."""
+    try:
+        uid = request.user['uid']
+        data = request.get_json(silent=True) or {}
+        
+        amount = float(data.get('amount', 0))
+        phone = str(data.get('phone', ''))
+        
+        if amount <= 0:
+            return jsonify({"error": "Invalid amount requested."}), 400
+        if not phone:
+            return jsonify({"error": "A receiving M-Pesa number is required."}), 400
+            
+        eat_tz = timezone(timedelta(hours=3))
+        
+        # 1. Fetch user info to attach to the request
+        user_data = rtdb.reference(f'users/{uid}').get() or {}
+        full_name = user_data.get('full_name', 'Unknown User')
+
+        # 2. Add validation (Optional: Check if they actually have this money)
+        # For a full banking app, you would check `user_data.get('total_savings') >= amount` here.
+
+        # 3. Push the withdrawal request to Firebase
+        withdraw_ref = rtdb.reference('withdrawal_requests').push()
+        withdraw_ref.set({
+            'user_id': uid,
+            'full_name': full_name,
+            'phone': phone,
+            'amount': amount,
+            'status': 'pending',  # Awaiting Admin to disburse funds
+            'timestamp': datetime.now(eat_tz).strftime("%Y-%m-%d %H:%M:%S"),
+            'platform': 'mobile_app'
+        })
+        
+        return jsonify({
+            "status": "success", 
+            "message": "Withdrawal requested successfully"
+        }), 200
+        
+    except Exception as e:
+        print(f"API Withdrawal Error: {e}")
+        return jsonify({"error": "Failed to process withdrawal"}), 500
+        
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
