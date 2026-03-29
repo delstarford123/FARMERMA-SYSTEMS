@@ -1561,6 +1561,15 @@ def services():
 def privacy_policy(): 
     return render_template('privacy policy.html')
 
+@app.route('/manifest.json')
+def serve_manifest():
+    return send_from_directory('static', 'manifest.json')
+
+@app.route('/sw.js')
+def serve_sw():
+    return send_from_directory('static', 'sw.js')
+
+
 # DEDUPLICATED PRICING ROUTE
 @app.route('/pricing')
 def pricing():

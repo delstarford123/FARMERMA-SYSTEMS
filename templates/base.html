@@ -11,7 +11,7 @@
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    
+    <link rel="manifest" href="/manifest.json"> <meta name="theme-color" content="#2E7D32">
     <style>
         /* --- Agricultural Brand Palette --- */
         :root { 
@@ -59,6 +59,15 @@
         /* Footer styling */
         footer { background-color: var(--soil-brown) !important; }
         main { position: relative; z-index: 1; }
+
+        /* Custom links */
+        .hover-white:hover { color: #ffffff !important; transition: 0.3s; }
+        .brand-link { letter-spacing: 0.5px; }
+        .brand-link:hover { 
+            color: #28a745 !important; 
+            text-shadow: 0 0 8px rgba(40, 167, 69, 0.4); 
+        }
+        .transition-all { transition: all 0.3s ease; }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -124,19 +133,15 @@
                             <i class="bi bi-globe-central-south-asia me-1"></i> Baze
                         </a>
                         <ul class="dropdown-menu shadow-sm border-0 mt-2">
-    <li><h6 class="dropdown-header fw-bold text-uppercase" style="color: var(--plant-green);">Strategic Portals</h6></li>
-    
-    <li><a class="dropdown-item" href="/banking"><i class="bi bi-piggy-bank-fill me-2 text-success"></i>Savings & Loans</a></li>
-    
-    <li><a class="dropdown-item" href="/deal-room"><i class="bi bi-briefcase-fill me-2"></i>The Deal Room</a></li>
-    <li><a class="dropdown-item" href="/climate"><i class="bi bi-cloud-sun-fill me-2"></i>Climate Intelligence</a></li>
-    <li><a class="dropdown-item" href="/insights"><i class="bi bi-lightbulb-fill me-2"></i>Insights & Research</a></li>
-    
-    <li><hr class="dropdown-divider"></li>
-    
-    <li><h6 class="dropdown-header fw-bold text-uppercase text-muted">Developers</h6></li>
-    <li><a class="dropdown-item" href="/api-docs"><i class="bi bi-code-slash me-2"></i>API Documentation</a></li>
-</ul>
+                            <li><h6 class="dropdown-header fw-bold text-uppercase" style="color: var(--plant-green);">Strategic Portals</h6></li>
+                            <li><a class="dropdown-item" href="/banking"><i class="bi bi-piggy-bank-fill me-2 text-success"></i>Savings & Loans</a></li>
+                            <li><a class="dropdown-item" href="/deal-room"><i class="bi bi-briefcase-fill me-2"></i>The Deal Room</a></li>
+                            <li><a class="dropdown-item" href="/climate"><i class="bi bi-cloud-sun-fill me-2"></i>Climate Intelligence</a></li>
+                            <li><a class="dropdown-item" href="/insights"><i class="bi bi-lightbulb-fill me-2"></i>Insights & Research</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header fw-bold text-uppercase text-muted">Developers</h6></li>
+                            <li><a class="dropdown-item" href="/api-docs"><i class="bi bi-code-slash me-2"></i>API Documentation</a></li>
+                        </ul>
                     </li>
 
                     <li class="nav-item dropdown">
@@ -233,122 +238,202 @@
         </div>
     </footer>
 
-    <style>
-        .hover-white:hover { color: #ffffff !important; transition: 0.3s; }
-        .brand-link { letter-spacing: 0.5px; }
-        .brand-link:hover { 
-            color: #28a745 !important; 
-            text-shadow: 0 0 8px rgba(40, 167, 69, 0.4); 
-        }
-        .transition-all { transition: all 0.3s ease; }
-    </style>
+    <div id="pwa-install-alert" class="card shadow-lg border-0" 
+         style="position: fixed; top: 20px; right: -350px; width: 300px; z-index: 9999; border-left: 5px solid var(--plant-green) !important; opacity: 0; visibility: hidden;">
+        <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="d-flex align-items-center">
+                    <img src="/static/image.png" alt="App Icon" style="width: 45px; height: 45px; border-radius: 10px;" class="me-3">
+                    <div>
+                        <h6 class="mb-0 fw-bold">Install Web App</h6>
+                        <small class="text-muted">Access Farmerman faster</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close small" id="close-pwa-popup" style="font-size: 0.7rem;"></button>
+            </div>
+            <div class="mt-3">
+                <button id="btn-install-pwa" class="btn btn-success btn-sm w-100 fw-bold rounded-pill">INSTALL NOW</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pwa-success-alert" class="card shadow-lg border-0" 
+         style="position: fixed; top: 20px; right: -350px; width: 320px; z-index: 9999; border-left: 5px solid var(--plant-green) !important; opacity: 0; visibility: hidden;">
+        <div class="card-body p-3 d-flex align-items-center">
+            <i class="bi bi-check-circle-fill fs-2 me-3" style="color: var(--plant-green);"></i>
+            <div>
+                <h6 class="mb-1 fw-bold text-dark">Installation Complete!</h6>
+                <small class="text-muted">Farmerman Systems is now available on your home screen.</small>
+            </div>
+            <button type="button" class="btn-close ms-auto align-self-start" id="close-success-popup" style="font-size: 0.7rem;"></button>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     
     <script>
-        // Optimization: Ensure GSAP reveals content even if slow network
+        // -----------------------------------------
+        // 1. GSAP Content Reveal Fix
+        // -----------------------------------------
         window.addEventListener('load', function() {
             setTimeout(() => {
                 document.querySelectorAll('.gsap-reveal, [style*="opacity: 0"]').forEach(el => {
-                    el.style.visibility = "visible";
-                    el.style.opacity = "1";
+                    // Ignore PWA popups for this auto-reveal
+                    if(el.id !== 'pwa-install-alert' && el.id !== 'pwa-success-alert') {
+                        el.style.visibility = "visible";
+                        el.style.opacity = "1";
+                    }
                 });
             }, 3000);
         });
-    </script>
-    <script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Your active OpenWeather API key
-    const API_KEY = "{{ weather_api_key }}";
 
-    function fetchLiveWeather(lat, lon) {
-        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`;
+        // -----------------------------------------
+        // 2. Weather & AI Engine Logic
+        // -----------------------------------------
+        document.addEventListener("DOMContentLoaded", function() {
+            const API_KEY = "{{ weather_api_key }}";
 
-        fetch(url)
-            .then(response => {
-                if (!response.ok) throw new Error("Weather API failed");
-                return response.json();
-            })
-            .then(data => {
-                // SAFETY CHECK: Only update the DOM if the weather card actually exists on this page
-                if (document.getElementById('weather-region')) {
-                    
-                    // 1. Update UI with live weather data
-                    document.getElementById('weather-region').innerText = data.name + ", " + data.sys.country;
-                    document.getElementById('weather-temp').innerText = Math.round(data.main.temp);
-                    document.getElementById('weather-condition').innerText = data.weather[0].main;
-                    document.getElementById('weather-humidity').innerText = data.main.humidity;
-                    
-                    // Convert wind speed from m/s to km/h
-                    const windKmh = (data.wind.speed * 3.6).toFixed(1);
-                    document.getElementById('weather-wind').innerText = windKmh;
+            function fetchLiveWeather(lat, lon) {
+                const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`;
 
-                    const now = new Date();
-                    document.getElementById('weather-timestamp').innerText = "Live: " + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
-                    // Dynamic Weather Icons
-                    const condition = data.weather[0].main.toLowerCase();
-                    const iconEl = document.getElementById('weather-icon');
-                    iconEl.className = "display-1 mb-3 d-block bi "; 
-                    
-                    if (condition.includes('rain') || condition.includes('drizzle')) iconEl.className += "bi-cloud-drizzle";
-                    else if (condition.includes('clear')) iconEl.className += "bi-sun text-warning";
-                    else if (condition.includes('cloud')) iconEl.className += "bi-cloud";
-                    else if (condition.includes('thunder')) iconEl.className += "bi-cloud-lightning-rain";
-                    else iconEl.className += "bi-cloud-sun";
-
-                    // ========================================================
-                    // 2. SEND LIVE DATA TO FLASK TO GENERATE AGRONOMIC ALERTS
-                    // ========================================================
-                    fetch('/api/climate/analyze', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            temp: data.main.temp,
-                            humidity: data.main.humidity,
-                            wind: parseFloat(windKmh),
-                            condition: data.weather[0].main,
-                            region: data.name
-                        })
-                    })
-                    .then(res => res.json())
+                fetch(url)
                     .then(response => {
-                        console.log("Agronomic engine success:", response);
-                        
-                        // TRIGGER THE UI UPDATES
-                        // 1. Show the Toast sliding in
-                        const toastEl = document.getElementById('alertsToast');
-                        if (toastEl) {
-                            const toast = new bootstrap.Toast(toastEl, { delay: 10000 }); // Stays for 10 seconds
-                            toast.show();
-                        }
-                        
-                        // 2. Highlight the Refresh Button on the card
-                        const refreshBtn = document.getElementById('refresh-alerts-btn');
-                        if (refreshBtn) {
-                            refreshBtn.classList.remove('btn-outline-success');
-                            refreshBtn.classList.add('btn-success', 'text-white', 'fw-bold', 'shadow');
-                            refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> New Alerts Ready!';
+                        if (!response.ok) throw new Error("Weather API failed");
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (document.getElementById('weather-region')) {
+                            
+                            // Update DOM
+                            document.getElementById('weather-region').innerText = data.name + ", " + data.sys.country;
+                            document.getElementById('weather-temp').innerText = Math.round(data.main.temp);
+                            document.getElementById('weather-condition').innerText = data.weather[0].main;
+                            document.getElementById('weather-humidity').innerText = data.main.humidity;
+                            
+                            const windKmh = (data.wind.speed * 3.6).toFixed(1);
+                            document.getElementById('weather-wind').innerText = windKmh;
+
+                            const now = new Date();
+                            document.getElementById('weather-timestamp').innerText = "Live: " + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+                            const condition = data.weather[0].main.toLowerCase();
+                            const iconEl = document.getElementById('weather-icon');
+                            iconEl.className = "display-1 mb-3 d-block bi "; 
+                            
+                            if (condition.includes('rain') || condition.includes('drizzle')) iconEl.className += "bi-cloud-drizzle";
+                            else if (condition.includes('clear')) iconEl.className += "bi-sun text-warning";
+                            else if (condition.includes('cloud')) iconEl.className += "bi-cloud";
+                            else if (condition.includes('thunder')) iconEl.className += "bi-cloud-lightning-rain";
+                            else iconEl.className += "bi-cloud-sun";
+
+                            // SEND TO FLASK FOR ALERTS
+                            fetch('/api/climate/analyze', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    temp: data.main.temp,
+                                    humidity: data.main.humidity,
+                                    wind: parseFloat(windKmh),
+                                    condition: data.weather[0].main,
+                                    region: data.name
+                                })
+                            })
+                            .then(res => res.json())
+                            .then(response => {
+                                console.log("Agronomic engine success:", response);
+                                
+                                const toastEl = document.getElementById('alertsToast');
+                                if (toastEl) {
+                                    const toast = new bootstrap.Toast(toastEl, { delay: 10000 });
+                                    toast.show();
+                                }
+                                
+                                const refreshBtn = document.getElementById('refresh-alerts-btn');
+                                if (refreshBtn) {
+                                    refreshBtn.classList.remove('btn-outline-success');
+                                    refreshBtn.classList.add('btn-success', 'text-white', 'fw-bold', 'shadow');
+                                    refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> New Alerts Ready!';
+                                }
+                            })
+                            .catch(err => console.error("Error communicating with logic engine:", err));
                         }
                     })
-                    .catch(err => console.error("Error communicating with logic engine:", err));
-                }
-            })
-            .catch(error => {
-                console.error("Using fallback Jinja data.", error);
-            });
-    }
+                    .catch(error => {
+                        console.error("Using fallback Jinja data.", error);
+                    });
+            }
 
-    // Ask browser for location
-    if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => { fetchLiveWeather(position.coords.latitude, position.coords.longitude); },
-            (error) => { console.warn("Location access denied."); }
-        );
-    }
-});
-</script>
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => { fetchLiveWeather(position.coords.latitude, position.coords.longitude); },
+                    (error) => { console.warn("Location access denied."); }
+                );
+            }
+        });
+
+        // -----------------------------------------
+        // 3. PWA Installation Logic
+        // -----------------------------------------
+        let deferredPrompt;
+        const installPopup = document.getElementById('pwa-install-alert');
+        const installBtn = document.getElementById('btn-install-pwa');
+        const closeInstallPopup = document.getElementById('close-pwa-popup');
+        
+        const successPopup = document.getElementById('pwa-success-alert');
+        const closeSuccessPopup = document.getElementById('close-success-popup');
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(err => console.error("Service Worker registration failed:", err));
+        }
+
+        // Listen for prompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Slide in the install prompt
+            gsap.to(installPopup, {autoAlpha: 1, right: 20, duration: 0.6, ease: "back.out(1.5)"});
+        });
+
+        // Click the Install button
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    // Hide prompt immediately if they accepted
+                    gsap.to(installPopup, {autoAlpha: 0, right: -350, duration: 0.4});
+                }
+                deferredPrompt = null;
+            }
+        });
+
+        // Click the X on install popup
+        closeInstallPopup.addEventListener('click', () => {
+            gsap.to(installPopup, {autoAlpha: 0, right: -350, duration: 0.4});
+        });
+
+        // Fired when the app is successfully installed
+        window.addEventListener('appinstalled', () => {
+            // Hide install prompt just in case
+            gsap.to(installPopup, {autoAlpha: 0, right: -350, duration: 0.2});
+            
+            // Slide in Success Notification
+            gsap.to(successPopup, {autoAlpha: 1, right: 20, duration: 0.6, ease: "back.out(1.5)"});
+
+            // Auto-hide success after 5 seconds
+            setTimeout(() => {
+                gsap.to(successPopup, {autoAlpha: 0, right: -350, duration: 0.5, ease: "power2.in"});
+            }, 5000);
+        });
+
+        // Click the X on success popup
+        closeSuccessPopup.addEventListener('click', () => {
+            gsap.to(successPopup, {autoAlpha: 0, right: -350, duration: 0.5, ease: "power2.in"});
+        });
+    </script>
+    
     {% block extra_js %}{% endblock %}
 
 </body>
