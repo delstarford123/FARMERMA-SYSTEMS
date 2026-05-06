@@ -2558,8 +2558,7 @@ def page_not_found(e):
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 5000))
-    
-    
+        
     print(f"\n Farmerman Systems is LIVE!")
     print(f" Click here to open: http://127.0.0.1:{port}\n")
     
