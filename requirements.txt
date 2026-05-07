@@ -1,23 +1,31 @@
-APScheduler
-eventlet
-firebase-admin
-Flask
-Flask-Mail
-Flask-SocketIO
-Flask-SQLAlchemy
-google-cloud-storage
+# Core Web Server
 gunicorn
+gevent
+gevent-websocket
+
+# Flask & SocketIO
+Flask
+Flask-SocketIO
+python-socketio
+python-engineio
+Werkzeug
+
+# Database & Tasks
+SQLAlchemy
+Flask-SQLAlchemy
+APScheduler
+
+# External Services
+firebase-admin
+google-cloud-storage
+stripe
+Flask-Mail
+requests
+
+# Data & Utils
 numpy
 pandas
 pillow
 python-dotenv
-python-socketio
-python-engineio
-requests
 scikit-learn
 scipy
-SQLAlchemy
-stripe
-Werkzeug
-gevent
-gevent-websocket

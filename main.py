@@ -1,5 +1,10 @@
-import eventlet
-eventlet.monkey_patch()
+from gevent import monkey
+monkey.patch_all()
+
+import os
+from flask import Flask
+from flask_socketio import SocketIO
+# ... rest of your imports
 import os
 import json
 import base64
@@ -62,7 +67,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 sqlalchemy_db.init_app(app)
 
 # Initialize SocketIO for real-time chat
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
 
 # Dictionary to track who is currently online { 'user_id': 'socket_id' }
 online_users = {}
