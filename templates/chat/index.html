@@ -236,22 +236,6 @@
             });
         }
     });
-
-    // OVERRIDE FOR OPEN CHAT TO RESET BADGES INSTANTLY ON CLICK
-    const originalOpenChatMobile = window.openChatMobile; // Backup original function if needed
-    window.openChatMobile = function(targetUid, targetName) {
-        // Reset the badge visually immediately
-        const badge = document.getElementById(`unread-badge-${targetUid}`);
-        if(badge) {
-            badge.innerText = '0';
-            badge.classList.add('d-none');
-        }
-        
-        // Execute the standard openChatMobile from chat.js
-        if (typeof openChatMobileInternal === 'function') {
-            openChatMobileInternal(targetUid, targetName);
-        }
-    };
 </script>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 {% endblock %}

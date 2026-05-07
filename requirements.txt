@@ -19,3 +19,5 @@ scipy
 SQLAlchemy
 stripe
 Werkzeug
+gevent
+gevent-websocket

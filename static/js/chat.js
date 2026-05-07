@@ -1,4 +1,14 @@
 const socket = io();
+
+// --- CONNECTION LOGGING ---
+socket.on('connect', () => {
+    console.log("Farsaap Connected: Secure Real-Time Channel Established.");
+});
+
+socket.on('connect_error', (err) => {
+    console.error("Farsaap Connection Error:", err);
+});
+
 let currentActiveChatId = null;
 let typingTimeout;
 
