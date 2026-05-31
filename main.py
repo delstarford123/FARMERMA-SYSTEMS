@@ -657,18 +657,23 @@ def market_data_manager():
             numeric_price = float(request.form.get('price', 0))
         except ValueError:
             numeric_price = 0.0
+        custom_date = request.form.get('updated_at')
+        if custom_date:
+            updated_at_str = f"{custom_date} {datetime.now().strftime('%H:%M:%S')}"
+        else:
+            updated_at_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         rtdb.reference('market_data').push({
             "commodity": request.form.get('commodity').strip(),
-            "category": request.form.get('category', 'Other'), # e.g. Vegetables, Grains
+            "category": request.form.get('category', 'Other'), 
             "region": request.form.get('region'),
             "price": numeric_price,
-            "unit": request.form.get('unit', 'kg'), # e.g. 'per bundle', 'per crate'
+            "unit": request.form.get('unit', 'kg'), 
             "currency": request.form.get('currency', 'USD'),
             "trend": request.form.get('trend'),
-            # Use actual datetime string for precise graphing
-            "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S") 
+            "updated_at": updated_at_str 
         })
+
         flash(f"Market data for {request.form.get('commodity')} published successfully!", "success")
         return redirect(url_for('market_data_manager'))
         
@@ -756,15 +761,69 @@ def update_user_role():
 # PROTECTED MARKET INTELLIGENCE & AI
 # ==========================================
 @app.route('/market-intelligence')
-@login_required
 def market_intelligence():
     try:
-        featured_items = rtdb.reference('market_data').order_by_key().limit_to_last(3).get()
-        preview_list = [{'id': k, **v} for k, v in featured_items.items()] if featured_items else []
-        preview_list.reverse()
-        return render_template('market intelligence.html', preview=preview_list)
-    except Exception:
-        return render_template('market intelligence.html', preview=[])
+        ref = rtdb.reference('market_data')
+        all_items = ref.get() or {}
+        
+        # Automatic Kakamega Market Seed if empty or very few records
+        if not all_items or len(all_items) < 5:
+            seed_data = [
+                # Maize
+                {"commodity": "Maize (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 3200.0, "unit": "per 90kg bag", "currency": "KES", "trend": "stable", "updated_at": "2026-05-25 10:00:00"},
+                {"commodity": "Maize (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 3100.0, "unit": "per 90kg bag", "currency": "KES", "trend": "down", "updated_at": "2026-05-26 10:00:00"},
+                {"commodity": "Maize (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 3150.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-27 10:00:00"},
+                {"commodity": "Maize (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 3000.0, "unit": "per 90kg bag", "currency": "KES", "trend": "down", "updated_at": "2026-05-28 10:00:00"},
+                {"commodity": "Maize (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 2800.0, "unit": "per 90kg bag", "currency": "KES", "trend": "down", "updated_at": "2026-05-29 10:00:00"},
+                
+                # Beans
+                {"commodity": "Rosecoco Beans (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 8500.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-25 10:00:00"},
+                {"commodity": "Rosecoco Beans (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 8700.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-26 10:00:00"},
+                {"commodity": "Rosecoco Beans (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 8600.0, "unit": "per 90kg bag", "currency": "KES", "trend": "down", "updated_at": "2026-05-27 10:00:00"},
+                {"commodity": "Rosecoco Beans (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 8800.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-28 10:00:00"},
+                {"commodity": "Rosecoco Beans (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 9000.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-29 10:00:00"},
+
+                # Sukuma Wiki
+                {"commodity": "Sukuma Wiki (Crate)", "category": "Vegetables", "region": "Lurambi Market Kakamega", "price": 1200.0, "unit": "per large crate", "currency": "KES", "trend": "down", "updated_at": "2026-05-25 10:00:00"},
+                {"commodity": "Sukuma Wiki (Crate)", "category": "Vegetables", "region": "Lurambi Market Kakamega", "price": 1100.0, "unit": "per large crate", "currency": "KES", "trend": "down", "updated_at": "2026-05-26 10:00:00"},
+                {"commodity": "Sukuma Wiki (Crate)", "category": "Vegetables", "region": "Lurambi Market Kakamega", "price": 1150.0, "unit": "per large crate", "currency": "KES", "trend": "up", "updated_at": "2026-05-27 10:00:00"},
+                {"commodity": "Sukuma Wiki (Crate)", "category": "Vegetables", "region": "Lurambi Market Kakamega", "price": 1050.0, "unit": "per large crate", "currency": "KES", "trend": "down", "updated_at": "2026-05-28 10:00:00"},
+                {"commodity": "Sukuma Wiki (Crate)", "category": "Vegetables", "region": "Lurambi Market Kakamega", "price": 1000.0, "unit": "per large crate", "currency": "KES", "trend": "down", "updated_at": "2026-05-29 10:00:00"},
+
+                # Sweet Potatoes
+                {"commodity": "Sweet Potatoes (Bag)", "category": "Tubers", "region": "Mumias Market Kakamega", "price": 4200.0, "unit": "per 90kg bag", "currency": "KES", "trend": "stable", "updated_at": "2026-05-25 10:00:00"},
+                {"commodity": "Sweet Potatoes (Bag)", "category": "Tubers", "region": "Mumias Market Kakamega", "price": 4300.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-26 10:00:00"},
+                {"commodity": "Sweet Potatoes (Bag)", "category": "Tubers", "region": "Mumias Market Kakamega", "price": 4150.0, "unit": "per 90kg bag", "currency": "KES", "trend": "down", "updated_at": "2026-05-27 10:00:00"},
+                {"commodity": "Sweet Potatoes (Bag)", "category": "Tubers", "region": "Mumias Market Kakamega", "price": 4400.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-28 10:00:00"},
+                {"commodity": "Sweet Potatoes (Bag)", "category": "Tubers", "region": "Mumias Market Kakamega", "price": 4500.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-29 10:00:00"},
+            ]
+            for item in seed_data:
+                ref.push(item)
+            all_items = ref.get() or {}
+
+        # Form list of dictionaries with ID and clean date conversions
+        full_list = []
+        for k, v in all_items.items():
+            v['id'] = k
+            if isinstance(v.get('updated_at'), dict):
+                v['updated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            full_list.append(v)
+
+        # Get latest unique commodity entries for the preview list
+        unique_commodities = {}
+        sorted_full = sorted(full_list, key=lambda x: x.get('updated_at', ''))
+        for item in sorted_full:
+            unique_commodities[item['commodity']] = item
+        
+        # Convert unique dict to preview_list
+        preview_list = list(unique_commodities.values())
+        # Sort by updated_at descending for latest first
+        preview_list.sort(key=lambda x: x.get('updated_at', ''), reverse=True)
+
+        return render_template('market intelligence.html', preview=preview_list, all_market_items=full_list)
+    except Exception as e:
+        print(f"Error in market intelligence: {e}")
+        return render_template('market intelligence.html', preview=[], all_market_items=[])
 
 @app.route('/live-market-prices')
 @login_required

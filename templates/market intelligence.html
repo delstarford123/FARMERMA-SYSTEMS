@@ -80,6 +80,77 @@
     </div>
 </section>
 
+<section class="py-5 bg-white overflow-hidden">
+    <div class="container py-4">
+        <div class="text-center mb-5">
+            <span class="text-success fw-bold text-uppercase small tracking-wide">Interactive Analytics</span>
+            <h2 class="fw-bold mt-2" style="color: var(--soil-brown);">Kakamega Crop Price Trends</h2>
+            <p class="text-muted">Track historical market prices over time for major crops sold in Lurambi, Mumias, and Kakamega Central markets.</p>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card shadow-sm border-0 graph-card p-4 bg-light rounded-4 position-relative" style="min-height: 450px;">
+                    
+                    {% if session.get('tier') in ['bronze', 'silver', 'gold', 'premium', 'pro'] or session.get('role') in ['admin', 'tutor'] %}
+                        <!-- Dropdown select for Kakamega crops -->
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3 position-relative z-1">
+                            <div>
+                                <label class="form-label fw-bold text-muted small text-uppercase mb-1"><i class="bi bi-funnel text-success"></i> Select Crop</label>
+                                <select id="cropSelector" class="form-select border-0 bg-white shadow-sm fw-bold text-dark rounded-pill px-4" style="min-width: 250px;" onchange="updateKakamegaChart(this.value)">
+                                    <option value="Maize (90kg)">🌾 Maize (90kg)</option>
+                                    <option value="Rosecoco Beans (90kg)">🫘 Rosecoco Beans (90kg)</option>
+                                    <option value="Sukuma Wiki (Crate)">🥬 Sukuma Wiki (Crate)</option>
+                                    <option value="Sweet Potatoes (Bag)">🍠 Sweet Potatoes (Bag)</option>
+                                </select>
+                            </div>
+                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 border border-success border-opacity-25 shadow-sm align-self-start align-self-sm-center">
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i> Kakamega Markets
+                            </span>
+                        </div>
+
+                        <div style="height: 350px; width: 100%; position: relative; z-1;">
+                            <canvas id="kakamegaChart"></canvas>
+                        </div>
+                    {% else %}
+                        <!-- Blurred preview chart for locked state -->
+                        <div class="d-flex justify-content-between align-items-center mb-4 position-relative z-1" style="filter: blur(4px); pointer-events: none;">
+                            <div>
+                                <label class="form-label fw-bold text-muted small text-uppercase mb-1">Select Crop</label>
+                                <select class="form-select border-0 bg-white shadow-sm fw-bold text-muted rounded-pill px-4" style="min-width: 250px;">
+                                    <option>Maize (90kg)</option>
+                                </select>
+                            </div>
+                            <span class="badge bg-secondary bg-opacity-10 text-muted rounded-pill px-3 py-2 border border-secondary shadow-sm">
+                                Kakamega Markets
+                            </span>
+                        </div>
+
+                        <div class="position-relative" style="height: 350px; width: 100%;">
+                            <!-- Blurred placeholder canvas path -->
+                            <div style="position: absolute; inset: 0; filter: blur(8px); opacity: 0.15; background: radial-gradient(circle, var(--plant-green) 10%, transparent 100%);"></div>
+                            
+                            <div class="locked-overlay rounded-4" style="background: rgba(255,255,255,0.85); text-align: center; padding: 2rem;">
+                                <div class="bg-white rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                                    <i class="bi bi-lock-fill text-success fs-2"></i>
+                                </div>
+                                <h4 class="fw-bold text-dark mb-2">Kakamega Price Trend Chart Locked</h4>
+                                <p class="text-muted max-w-75 mx-auto mb-4" style="font-size: 0.95rem;">Unlock price history and interactive dashboards showing crops sold in Kakamega Central, Lurambi, and Mumias markets. Access starting from KSH 1,000.</p>
+                                <a href="/pricing" class="btn btn-success btn-lg rounded-pill shadow px-5 fw-bold hover-lift">
+                                    Unlock Market Intelligence
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div id="kakamegaDataDump" style="display: none;">{{ all_market_items | tojson }}</div>
+
 <section class="py-5 bg-light overflow-hidden">
     <div class="container py-4">
         <div class="row align-items-center g-5">
@@ -275,8 +346,118 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+    // --- Chart.js Interactive Kakamega Crop Chart ---
+    {% if session.get('tier') in ['bronze', 'silver', 'gold', 'premium', 'pro'] or session.get('role') in ['admin', 'tutor'] %}
+    const rawKakamegaData = JSON.parse(document.getElementById('kakamegaDataDump').innerText);
+    let kakamegaChartInstance = null;
+    const kakamegaCtx = document.getElementById('kakamegaChart').getContext('2d');
+    
+    function initKakamegaChart() {
+        kakamegaChartInstance = new Chart(kakamegaCtx, {
+            type: 'line',
+            data: {
+                labels: ['Waiting for data...'],
+                datasets: [{
+                    label: 'Price (KES)',
+                    data: [0],
+                    borderColor: '#2E7D32',
+                    backgroundColor: 'rgba(46, 125, 50, 0.1)',
+                    borderWidth: 4,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#2E7D32',
+                    pointRadius: 6,
+                    pointHoverRadius: 9,
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(93, 64, 55, 0.95)',
+                        padding: 16,
+                        titleFont: { size: 14, family: "'Segoe UI', Roboto, sans-serif" },
+                        bodyFont: { size: 16, weight: 'bold', family: "'Segoe UI', Roboto, sans-serif" },
+                        displayColors: false,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: false,
+                        grid: { borderDash: [5, 5], color: '#e9ecef' },
+                        ticks: { font: { weight: 'bold' } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { weight: '500' } }
+                    }
+                }
+            }
+        });
+    }
+    
+    window.updateKakamegaChart = function(cropName) {
+        let filtered = rawKakamegaData.filter(item => 
+            item.commodity.toLowerCase() === cropName.toLowerCase() && 
+            item.region.toLowerCase().includes('kakamega')
+        );
+        
+        if (filtered.length === 0) {
+            filtered = rawKakamegaData.filter(item => 
+                item.commodity.toLowerCase() === cropName.toLowerCase()
+            );
+        }
+        
+        if (filtered.length === 0) return;
+
+        filtered.sort((a, b) => new Date(a.updated_at) - new Date(b.updated_at));
+
+        if (filtered.length === 1) {
+            filtered = [filtered[0], filtered[0]];
+        }
+
+        const labels = filtered.map(item => {
+            const d = new Date(item.updated_at);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
+        const prices = filtered.map(item => item.price);
+        const currency = filtered[0].currency || 'KES';
+
+        kakamegaChartInstance.data.labels = labels;
+        kakamegaChartInstance.data.datasets[0].label = `Price (${currency})`;
+        kakamegaChartInstance.data.datasets[0].data = prices;
+        
+        const startPrice = prices[0];
+        const endPrice = prices[prices.length - 1];
+        if (endPrice > startPrice) {
+            kakamegaChartInstance.data.datasets[0].borderColor = '#dc3545';
+            kakamegaChartInstance.data.datasets[0].backgroundColor = 'rgba(220, 53, 69, 0.1)';
+            kakamegaChartInstance.data.datasets[0].pointBorderColor = '#dc3545';
+        } else {
+            kakamegaChartInstance.data.datasets[0].borderColor = '#2E7D32';
+            kakamegaChartInstance.data.datasets[0].backgroundColor = 'rgba(46, 125, 50, 0.1)';
+            kakamegaChartInstance.data.datasets[0].pointBorderColor = '#2E7D32';
+        }
+        
+        kakamegaChartInstance.update();
+    };
+
+    initKakamegaChart();
+    
+    setTimeout(() => {
+        const sel = document.getElementById('cropSelector');
+        if (sel) updateKakamegaChart(sel.value);
+    }, 800);
+    {% endif %}
+
     gsap.registerPlugin(ScrollTrigger, TextPlugin);
 
     // 1. Decoded Hero Title Effect
