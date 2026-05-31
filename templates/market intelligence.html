@@ -92,7 +92,7 @@
             <div class="col-lg-10">
                 <div class="card shadow-sm border-0 graph-card p-4 bg-light rounded-4 position-relative" style="min-height: 450px;">
                     
-                    {% if session.get('tier') in ['bronze', 'silver', 'gold', 'premium', 'pro'] or session.get('role') in ['admin', 'tutor'] %}
+                    {% if session.get('tier') in ['bronze', 'silver', 'gold', 'premium', 'pro', 'market_intel'] or session.get('role') in ['admin', 'tutor'] %}
                         <!-- Dropdown select for Kakamega crops -->
                         <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3 position-relative z-1">
                             <div>
@@ -135,10 +135,15 @@
                                     <i class="bi bi-lock-fill text-success fs-2"></i>
                                 </div>
                                 <h4 class="fw-bold text-dark mb-2">Kakamega Price Trend Chart Locked</h4>
-                                <p class="text-muted max-w-75 mx-auto mb-4" style="font-size: 0.95rem;">Unlock price history and interactive dashboards showing crops sold in Kakamega Central, Lurambi, and Mumias markets. Access starting from KSH 1,000.</p>
-                                <a href="/pricing" class="btn btn-success btn-lg rounded-pill shadow px-5 fw-bold hover-lift">
-                                    Unlock Market Intelligence
-                                </a>
+                                <p class="text-muted max-w-75 mx-auto mb-4" style="font-size: 0.95rem;">Unlock Kakamega price history and interactive trend charts. Get access to this page for just <strong>KSH 50 / month</strong>, or upgrade to a full consulting package from KSH 1,000.</p>
+                                <div class="d-flex flex-wrap justify-content-center gap-3">
+                                    <a href="{{ url_for('subscriber_checkout', plan='market_intel') }}" class="btn btn-success btn-lg rounded-pill shadow px-5 fw-bold hover-lift text-white" style="background-color: var(--plant-green); border-color: var(--plant-green);">
+                                        Unlock This Page Only (KSH 50/mo)
+                                    </a>
+                                    <a href="/pricing" class="btn btn-outline-dark btn-lg rounded-pill shadow px-4 fw-bold hover-lift">
+                                        View Consulting Packages
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     {% endif %}
@@ -283,7 +288,7 @@
 
                         <hr class="text-muted opacity-10 my-4">
 
-                        {% if session.get('tier') in ['bronze', 'silver', 'gold', 'premium', 'pro'] or session.get('role') in ['admin', 'tutor'] %}
+                        {% if session.get('tier') in ['bronze', 'silver', 'gold', 'premium', 'pro', 'market_intel'] or session.get('role') in ['admin', 'tutor'] %}
                             
                             <div class="py-2">
                                 <h3 class="fw-bold text-success mb-0">{{ item.currency | default('KES') }} {{ "{:,.2f}".format(item.price | float) }}</h3>
@@ -297,20 +302,23 @@
 
                         {% else %}
                             
-                            <div class="position-relative py-3">
-                                <h3 class="fw-bold text-muted mb-0" style="filter: blur(8px); user-select: none; opacity: 0.5;">
-                                    USD 145.00
-                                </h3>
-                                <p class="small text-muted fw-bold fst-italic mb-3" style="filter: blur(6px); user-select: none; opacity: 0.5;">per metric ton</p>
-                                
-                                <div class="locked-overlay">
-                                    <i class="bi bi-lock-fill fs-3 text-dark mb-2"></i>
-                                    <h6 class="fw-bold text-dark mb-2">Premium Data Locked</h6>
-                                    <a href="/pricing" class="btn btn-dark btn-sm rounded-pill shadow px-4 fw-bold hover-lift">
-                                        Unlock Market Prices
-                                    </a>
-                                </div>
-                            </div>
+                             <div class="position-relative py-3">
+                                 <h3 class="fw-bold text-muted mb-0" style="filter: blur(8px); user-select: none; opacity: 0.5;">
+                                     USD 145.00
+                                 </h3>
+                                 <p class="small text-muted fw-bold fst-italic mb-3" style="filter: blur(6px); user-select: none; opacity: 0.5;">per metric ton</p>
+                                 
+                                 <div class="locked-overlay p-3 text-center">
+                                     <i class="bi bi-lock-fill fs-3 text-dark mb-1"></i>
+                                     <h6 class="fw-bold text-dark mb-1" style="font-size: 0.9rem;">Price Data Locked</h6>
+                                     <a href="{{ url_for('subscriber_checkout', plan='market_intel') }}" class="btn btn-success btn-sm rounded-pill shadow px-3 fw-bold hover-lift mb-1 text-white" style="font-size: 0.8rem; background-color: var(--plant-green); border-color: var(--plant-green);">
+                                         Unlock for KSH 50/mo
+                                     </a>
+                                     <a href="/pricing" class="text-muted small d-block" style="font-size: 0.75rem; text-decoration: underline;">
+                                         or view full packages
+                                     </a>
+                                 </div>
+                             </div>
 
                         {% endif %}
                     </div>
@@ -350,7 +358,7 @@
 
 <script>
     // --- Chart.js Interactive Kakamega Crop Chart ---
-    {% if session.get('tier') in ['bronze', 'silver', 'gold', 'premium', 'pro'] or session.get('role') in ['admin', 'tutor'] %}
+    {% if session.get('tier') in ['bronze', 'silver', 'gold', 'premium', 'pro', 'market_intel'] or session.get('role') in ['admin', 'tutor'] %}
     const rawKakamegaData = JSON.parse(document.getElementById('kakamegaDataDump').innerText);
     let kakamegaChartInstance = null;
     const kakamegaCtx = document.getElementById('kakamegaChart').getContext('2d');
