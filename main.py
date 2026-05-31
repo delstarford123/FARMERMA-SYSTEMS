@@ -1236,9 +1236,9 @@ PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
 # --- MASTER PRICING DICTIONARY ---
 # Single source of truth for all payment gateways
 SYSTEM_PRICING = {
-    'bronze': {"name": "Bronze Consulting Package", "kes": 75000, "usd": 500.00},
-    'silver': {"name": "Silver Consulting Package", "kes": 180000, "usd": 1200.00},
-    'gold': {"name": "Gold Consulting Package", "kes": 420000, "usd": 2800.00},
+    'bronze': {"name": "Bronze Consulting Package", "kes": 1000, "usd": 10.00},
+    'silver': {"name": "Silver Consulting Package", "kes": 2000, "usd": 20.00},
+    'gold': {"name": "Gold Consulting Package", "kes": 3000, "usd": 30.00},
     'course_entrepreneurship': {"name": "Agribusiness Entrepreneurship", "kes": 3750, "usd": 25.00},
     'course_marketing': {"name": "Agricultural Marketing", "kes": 3000, "usd": 20.00},
     'course_finance': {"name": "Financial Management", "kes": 4500, "usd": 30.00},

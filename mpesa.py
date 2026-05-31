@@ -12,13 +12,19 @@ load_dotenv()
 CONSUMER_KEY = os.environ.get('MPESA_CONSUMER_KEY')
 CONSUMER_SECRET = os.environ.get('MPESA_CONSUMER_SECRET')
 PASSKEY = os.environ.get('MPESA_PASSKEY')
-BUSINESS_SHORT_CODE = os.environ.get('MPESA_BUSINESS_SHORT_CODE', '174379')
+BUSINESS_SHORT_CODE = os.environ.get('MPESA_BUSINESS_SHORT_CODE') or os.environ.get('MPESA_SHORTCODE') or '174379'
+MPESA_ENV = os.environ.get('MPESA_ENV', 'sandbox').lower()
+
+if MPESA_ENV == 'production':
+    BASE_URL = "https://api.safaricom.co.ke"
+else:
+    BASE_URL = "https://sandbox.safaricom.co.ke"
 
 # FIX 1: Strip whitespace to prevent "Invalid CallBackURL" errors from hidden spaces in .env
 CALLBACK_URL = os.environ.get('MPESA_CALLBACK_URL', 'https://farmerman-systems.onrender.com/mpesa-callback').strip()
 
 def get_access_token():
-    api_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+    api_url = f"{BASE_URL}/oauth/v1/generate?grant_type=client_credentials"
     try:
         # FIX 2: Added timeout=15 to prevent Render workers from hanging
         r = requests.get(api_url, auth=(CONSUMER_KEY, CONSUMER_SECRET), timeout=15)
@@ -64,7 +70,7 @@ def initiate_stk_push(phone_number, amount):
         "TransactionDesc": "Pro Subscription"
     }
 
-    stk_url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+    stk_url = f"{BASE_URL}/mpesa/stkpush/v1/processrequest"
     
     try:
         # FIX 4: Added timeout=30 to prevent the 503 gateway timeouts on Render
