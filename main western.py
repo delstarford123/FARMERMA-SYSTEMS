@@ -760,12 +760,67 @@ def api_process_mpesa():
 @app.route('/market-intelligence')
 def market_intelligence():
     try:
-        featured_items = rtdb.reference('market_data').order_by_key().limit_to_last(3).get()
-        preview_list = [{'id': k, **v} for k, v in featured_items.items()] if featured_items else []
-        preview_list.reverse()
-        return render_template('market intelligence.html', preview=preview_list)
-    except Exception:
-        return render_template('market intelligence.html', preview=[])
+        ref = rtdb.reference('market_data')
+        all_items = ref.get() or {}
+        
+        # Automatic Kakamega Market Seed if empty or very few records
+        if not all_items or len(all_items) < 5:
+            seed_data = [
+                # Maize
+                {"commodity": "Maize (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 3200.0, "unit": "per 90kg bag", "currency": "KES", "trend": "stable", "updated_at": "2026-05-25 10:00:00"},
+                {"commodity": "Maize (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 3100.0, "unit": "per 90kg bag", "currency": "KES", "trend": "down", "updated_at": "2026-05-26 10:00:00"},
+                {"commodity": "Maize (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 3150.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-27 10:00:00"},
+                {"commodity": "Maize (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 3000.0, "unit": "per 90kg bag", "currency": "KES", "trend": "down", "updated_at": "2026-05-28 10:00:00"},
+                {"commodity": "Maize (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 2800.0, "unit": "per 90kg bag", "currency": "KES", "trend": "down", "updated_at": "2026-05-29 10:00:00"},
+                
+                # Beans
+                {"commodity": "Rosecoco Beans (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 8500.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-25 10:00:00"},
+                {"commodity": "Rosecoco Beans (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 8700.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-26 10:00:00"},
+                {"commodity": "Rosecoco Beans (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 8600.0, "unit": "per 90kg bag", "currency": "KES", "trend": "down", "updated_at": "2026-05-27 10:00:00"},
+                {"commodity": "Rosecoco Beans (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 8800.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-28 10:00:00"},
+                {"commodity": "Rosecoco Beans (90kg)", "category": "Grains", "region": "Kakamega Central Market", "price": 9000.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-29 10:00:00"},
+
+                # Sukuma Wiki
+                {"commodity": "Sukuma Wiki (Crate)", "category": "Vegetables", "region": "Lurambi Market Kakamega", "price": 1200.0, "unit": "per large crate", "currency": "KES", "trend": "down", "updated_at": "2026-05-25 10:00:00"},
+                {"commodity": "Sukuma Wiki (Crate)", "category": "Vegetables", "region": "Lurambi Market Kakamega", "price": 1100.0, "unit": "per large crate", "currency": "KES", "trend": "down", "updated_at": "2026-05-26 10:00:00"},
+                {"commodity": "Sukuma Wiki (Crate)", "category": "Vegetables", "region": "Lurambi Market Kakamega", "price": 1150.0, "unit": "per large crate", "currency": "KES", "trend": "up", "updated_at": "2026-05-27 10:00:00"},
+                {"commodity": "Sukuma Wiki (Crate)", "category": "Vegetables", "region": "Lurambi Market Kakamega", "price": 1050.0, "unit": "per large crate", "currency": "KES", "trend": "down", "updated_at": "2026-05-28 10:00:00"},
+                {"commodity": "Sukuma Wiki (Crate)", "category": "Vegetables", "region": "Lurambi Market Kakamega", "price": 1000.0, "unit": "per large crate", "currency": "KES", "trend": "down", "updated_at": "2026-05-29 10:00:00"},
+
+                # Sweet Potatoes
+                {"commodity": "Sweet Potatoes (Bag)", "category": "Tubers", "region": "Mumias Market Kakamega", "price": 4200.0, "unit": "per 90kg bag", "currency": "KES", "trend": "stable", "updated_at": "2026-05-25 10:00:00"},
+                {"commodity": "Sweet Potatoes (Bag)", "category": "Tubers", "region": "Mumias Market Kakamega", "price": 4300.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-26 10:00:00"},
+                {"commodity": "Sweet Potatoes (Bag)", "category": "Tubers", "region": "Mumias Market Kakamega", "price": 4150.0, "unit": "per 90kg bag", "currency": "KES", "trend": "down", "updated_at": "2026-05-27 10:00:00"},
+                {"commodity": "Sweet Potatoes (Bag)", "category": "Tubers", "region": "Mumias Market Kakamega", "price": 4400.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-28 10:00:00"},
+                {"commodity": "Sweet Potatoes (Bag)", "category": "Tubers", "region": "Mumias Market Kakamega", "price": 4500.0, "unit": "per 90kg bag", "currency": "KES", "trend": "up", "updated_at": "2026-05-29 10:00:00"},
+            ]
+            for item in seed_data:
+                ref.push(item)
+            all_items = ref.get() or {}
+
+        # Form list of dictionaries with ID and clean date conversions
+        full_list = []
+        for k, v in all_items.items():
+            v['id'] = k
+            if isinstance(v.get('updated_at'), dict):
+                v['updated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            full_list.append(v)
+
+        # Get latest unique commodity entries for the preview list
+        unique_commodities = {}
+        sorted_full = sorted(full_list, key=lambda x: x.get('updated_at', ''))
+        for item in sorted_full:
+            unique_commodities[item['commodity']] = item
+        
+        # Convert unique dict to preview_list
+        preview_list = list(unique_commodities.values())
+        # Sort by updated_at descending for latest first
+        preview_list.sort(key=lambda x: x.get('updated_at', ''), reverse=True)
+
+        return render_template('market intelligence.html', preview=preview_list, all_market_items=full_list)
+    except Exception as e:
+        print(f"Error in market intelligence: {e}")
+        return render_template('market intelligence.html', preview=[], all_market_items=[])
 
 @app.route('/live-market-prices')
 def live_market_prices():
@@ -1122,7 +1177,25 @@ def page_not_found(e):
     return render_template('404.html'), 404
 
 if __name__ == '__main__':
+    import socket
     # Use the port assigned by Render, or default to 5000 for local dev
     port = int(os.environ.get("PORT", 5000))
+    
+    # Self-healing dynamic port check to prevent address collisions (WinError 10048)
+    def is_port_in_use(port_to_check):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(('0.0.0.0', port_to_check))
+                return False
+            except socket.error:
+                return True
+                
+    while is_port_in_use(port):
+        print(f" Port {port} is currently in use. Fallback to next address...")
+        port += 1
+        
+    print(f"\n Farmerman Systems is LIVE!")
+    print(f" Click here to open: http://127.0.0.1:{port}\n")
+    
     # Must use 0.0.0.0 to be visible to the outside world on Render
     app.run(host='0.0.0.0', port=port)

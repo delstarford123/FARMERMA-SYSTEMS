@@ -98,10 +98,7 @@
                             <div>
                                 <label class="form-label fw-bold text-muted small text-uppercase mb-1"><i class="bi bi-funnel text-success"></i> Select Crop</label>
                                 <select id="cropSelector" class="form-select border-0 bg-white shadow-sm fw-bold text-dark rounded-pill px-4" style="min-width: 250px;" onchange="updateKakamegaChart(this.value)">
-                                    <option value="Maize (90kg)">🌾 Maize (90kg)</option>
-                                    <option value="Rosecoco Beans (90kg)">🫘 Rosecoco Beans (90kg)</option>
-                                    <option value="Sukuma Wiki (Crate)">🥬 Sukuma Wiki (Crate)</option>
-                                    <option value="Sweet Potatoes (Bag)">🍠 Sweet Potatoes (Bag)</option>
+                                    <option value="">Loading products...</option>
                                 </select>
                             </div>
                             <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 border border-success border-opacity-25 shadow-sm align-self-start align-self-sm-center">
@@ -111,6 +108,24 @@
 
                         <div style="height: 350px; width: 100%; position: relative; z-1;">
                             <canvas id="kakamegaChart"></canvas>
+                        </div>
+
+                        <!-- Professional FARD Export & Reporting Center -->
+                        <div class="mt-4 pt-4 border-top position-relative z-1" style="border-top: 2px dashed rgba(46, 125, 50, 0.15) !important;">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-1 d-flex align-items-center">
+                                        <i class="bi bi-file-earmark-bar-graph-fill text-success fs-5 me-2"></i>
+                                        <span>Export & Reporting Center</span>
+                                    </h6>
+                                    <p class="small text-muted mb-0">Generate premium briefs containing FARD letterheads, executive summary data tables, and dynamic trend charts for all regional commodities.</p>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button class="btn btn-outline-primary btn-sm rounded-pill fw-bold px-3 py-2 shadow-sm d-inline-flex align-items-center hover-lift" onclick="exportMarketReport('docx')">
+                                        <i class="bi bi-filetype-docx me-1 fs-6"></i> Word Brief
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     {% else %}
                         <!-- Blurred preview chart for locked state -->
@@ -135,10 +150,10 @@
                                     <i class="bi bi-lock-fill text-success fs-2"></i>
                                 </div>
                                 <h4 class="fw-bold text-dark mb-2">Kakamega Price Trend Chart Locked</h4>
-                                <p class="text-muted max-w-75 mx-auto mb-4" style="font-size: 0.95rem;">Unlock Kakamega price history and interactive trend charts. Get access to this page for just <strong>KSH 50 / month</strong>, or upgrade to a full consulting package from KSH 1,000.</p>
+                                <p class="text-muted max-w-75 mx-auto mb-4" style="font-size: 0.95rem;">Unlock Kakamega price history and interactive trend charts. Get access to this page from just <strong>KES 100 / day</strong> (with specialized organization pricing), or upgrade to a full consulting package from KSH 1,000.</p>
                                 <div class="d-flex flex-wrap justify-content-center gap-3">
                                     <a href="{{ url_for('subscriber_checkout', plan='market_intel') }}" class="btn btn-success btn-lg rounded-pill shadow px-5 fw-bold hover-lift text-white" style="background-color: var(--plant-green); border-color: var(--plant-green);">
-                                        Unlock This Page Only (KSH 50/mo)
+                                        Unlock Daily Access (from KES 100/day)
                                     </a>
                                     <a href="/pricing" class="btn btn-outline-dark btn-lg rounded-pill shadow px-4 fw-bold hover-lift">
                                         View Consulting Packages
@@ -312,7 +327,7 @@
                                      <i class="bi bi-lock-fill fs-3 text-dark mb-1"></i>
                                      <h6 class="fw-bold text-dark mb-1" style="font-size: 0.9rem;">Price Data Locked</h6>
                                      <a href="{{ url_for('subscriber_checkout', plan='market_intel') }}" class="btn btn-success btn-sm rounded-pill shadow px-3 fw-bold hover-lift mb-1 text-white" style="font-size: 0.8rem; background-color: var(--plant-green); border-color: var(--plant-green);">
-                                         Unlock for KSH 50/mo
+                                         Unlock from KES 100/day
                                      </a>
                                      <a href="/pricing" class="text-muted small d-block" style="font-size: 0.75rem; text-decoration: underline;">
                                          or view full packages
@@ -348,6 +363,21 @@
         </div>
     </div>
 </section>
+
+<!-- Professional Report Compiling Glassmorphism Modal -->
+<div id="exportLoadingModal" class="position-fixed top-0 start-0 w-100 h-100 d-none justify-content-center align-items-center z-3" style="background: rgba(0,0,0,0.55); backdrop-filter: blur(8px); transition: all 0.3s ease;">
+    <div class="card border-0 shadow-lg p-5 text-center bg-white rounded-4" style="max-width: 450px;">
+        <div class="spinner-border text-success mb-4" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h4 class="fw-bold text-dark mb-2">Compiling Report & Charts</h4>
+        <p class="text-muted mb-4 small" style="line-height: 1.6;">Our reporting system is dynamically compiling historical prices, drawing price trends, and packaging the FARD Executive Brief. This may take a few moments.</p>
+        <div class="progress rounded-pill shadow-sm" style="height: 10px; background-color: #e9ecef;">
+            <div id="exportProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <small id="exportProgressStatus" class="text-success fw-bold d-block mt-3">Initializing compiler...</small>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -355,6 +385,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Professional Exporter Dependencies -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
     // --- Chart.js Interactive Kakamega Crop Chart ---
@@ -363,6 +396,61 @@
     let kakamegaChartInstance = null;
     const kakamegaCtx = document.getElementById('kakamegaChart').getContext('2d');
     
+    function populateCropSelector() {
+        const cropSelector = document.getElementById('cropSelector');
+        if (!cropSelector) return;
+
+        // Extract unique commodity names from rawKakamegaData
+        const commodities = [];
+        rawKakamegaData.forEach(item => {
+            if (item.commodity && !commodities.includes(item.commodity)) {
+                commodities.push(item.commodity);
+            }
+        });
+
+        // Sort alphabetically to keep things neat and discoverable
+        commodities.sort();
+
+        // Clear existing options
+        cropSelector.innerHTML = '';
+
+        // Helper function for mapping premium emojis to crops
+        const getEmojiForCrop = (cropName) => {
+            const lower = cropName.toLowerCase();
+            if (lower.includes('maize') || lower.includes('corn')) return '🌾';
+            if (lower.includes('bean') || lower.includes('rosecoco') || lower.includes('legume')) return '🫘';
+            if (lower.includes('sukuma') || lower.includes('spinach') || lower.includes('kale') || lower.includes('cabbage') || lower.includes('greens') || lower.includes('skumawiki')) return '🥬';
+            if (lower.includes('sweet potato') || lower.includes('potato') || lower.includes('tuber') || lower.includes('pototoe')) return '🍠';
+            if (lower.includes('apple')) return '🍎';
+            if (lower.includes('banana') || lower.includes('bunch')) return '🍌';
+            if (lower.includes('avocado')) return '🥑';
+            if (lower.includes('mango')) return '🥭';
+            if (lower.includes('pinaple') || lower.includes('pineapple')) return '🍍';
+            if (lower.includes('tomato') || lower.includes('tomotoe')) return '🍅';
+            if (lower.includes('pepper') || lower.includes('capsicum')) return '🫑';
+            if (lower.includes('egg plant') || lower.includes('eggplant')) return '🍆';
+            if (lower.includes('mushroom')) return '🍄';
+            if (lower.includes('butternut')) return '🎃';
+            if (lower.includes('beetroot')) return '🔴';
+            if (lower.includes('ginger')) return '🧄';
+            if (lower.includes('garlic')) return '🧄';
+            if (lower.includes('pear')) return '🍐';
+            if (lower.includes('carrot')) return '🥕';
+            if (lower.includes('onion')) return '🧅';
+            if (lower.includes('dania') || lower.includes('coriander')) return '🌿';
+            if (lower.includes('cucumber')) return '🥒';
+            return '📦'; // premium universal fallback
+        };
+
+        // Populate crop selector
+        commodities.forEach(crop => {
+            const option = document.createElement('option');
+            option.value = crop;
+            option.textContent = `${getEmojiForCrop(crop)} ${crop}`;
+            cropSelector.appendChild(option);
+        });
+    }
+
     function initKakamegaChart() {
         kakamegaChartInstance = new Chart(kakamegaCtx, {
             type: 'line',
@@ -413,6 +501,8 @@
     }
     
     window.updateKakamegaChart = function(cropName) {
+        if (!cropName) return;
+        
         let filtered = rawKakamegaData.filter(item => 
             item.commodity.toLowerCase() === cropName.toLowerCase() && 
             item.region.toLowerCase().includes('kakamega')
@@ -458,12 +548,575 @@
         kakamegaChartInstance.update();
     };
 
+    // First populate, then build the chart
+    populateCropSelector();
     initKakamegaChart();
     
     setTimeout(() => {
         const sel = document.getElementById('cropSelector');
-        if (sel) updateKakamegaChart(sel.value);
+        if (sel && sel.value) {
+            updateKakamegaChart(sel.value);
+        } else if (sel && sel.options.length > 0) {
+            updateKakamegaChart(sel.options[0].value);
+        }
     }, 800);
+
+    // =======================================================
+    // --- FARD & FARMERMAN SYSTEMS REPORTING & EXPORTER ---
+    // =======================================================
+    
+    // Helper to get image as Base64 Data URL (e.g. the letterhead) with high-performance JPEG compression
+    function getBase64Image(imgUrl, callback) {
+        const img = new Image();
+        img.setAttribute('crossOrigin', 'anonymous');
+        img.onload = function () {
+            const canvas = document.createElement('canvas');
+            // Scale down to premium print resolution (max width 800px) to prevent massive memory payloads on mobile
+            const maxW = 800;
+            const scale = Math.min(1, maxW / this.width);
+            canvas.width = this.width * scale;
+            canvas.height = this.height * scale;
+            
+            const ctx = canvas.getContext('2d');
+            // Fill white background for JPEG rendering
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.drawImage(this, 0, 0, canvas.width, canvas.height);
+            
+            // Highly optimized JPEG output (quality 0.8) saves 99% payload size
+            const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+            callback(dataURL);
+        };
+        img.onerror = function() {
+            console.error("Failed to load letterhead image for Base64 conversion.");
+            callback(null);
+        };
+        img.src = imgUrl;
+    }
+
+    // Helper to sequentially compile line charts for all unique crops
+    async function compileProductCharts(commodities, onProgress) {
+        const chartImages = {};
+        
+        // Create an off-screen canvas styled perfectly for mobile and Word page limits
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 500;
+        tempCanvas.height = 220;
+        tempCanvas.style.position = 'fixed';
+        tempCanvas.style.left = '-9999px';
+        tempCanvas.style.top = '-9999px';
+        document.body.appendChild(tempCanvas);
+        
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        for (let i = 0; i < commodities.length; i++) {
+            const crop = commodities[i];
+            onProgress(i, commodities.length, crop);
+            
+            // Filter historical records
+            let filtered = rawKakamegaData.filter(item => 
+                item.commodity.toLowerCase() === crop.toLowerCase()
+            );
+            filtered.sort((a, b) => new Date(a.updated_at) - new Date(b.updated_at));
+            
+            if (filtered.length === 0) continue;
+            if (filtered.length === 1) {
+                filtered = [filtered[0], filtered[0]];
+            }
+            
+            const labels = filtered.map(item => {
+                const d = new Date(item.updated_at);
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            const prices = filtered.map(item => item.price);
+            const currency = filtered[0].currency || 'KES';
+            
+            const isUp = prices[prices.length - 1] > prices[0];
+            
+            // Draw a clean white background for JPEG rendering to prevent black backgrounds
+            tempCtx.fillStyle = '#ffffff';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            
+            const tempChart = new Chart(tempCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Price',
+                        data: prices,
+                        borderColor: isUp ? '#dc3545' : '#2E7D32',
+                        backgroundColor: isUp ? 'rgba(220, 53, 69, 0.04)' : 'rgba(46, 125, 50, 0.04)',
+                        borderWidth: 4,
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: isUp ? '#dc3545' : '#2E7D32',
+                        pointRadius: 5,
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    animation: false, // capture immediately
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: `${crop} Historical Price Trend (${currency})`,
+                            color: '#5D4037',
+                            font: { size: 14, weight: 'bold', family: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif" }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: false,
+                            grid: { borderDash: [5, 5], color: '#e9ecef' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+            
+            // Ultra-fast timeout delay (20ms) since animations are disabled
+            await new Promise(resolve => setTimeout(resolve, 20));
+            // Output as compressed JPEG (0.6 quality) to optimize mobile word payloads
+            chartImages[crop] = tempCanvas.toDataURL('image/jpeg', 0.6);
+            tempChart.destroy();
+        }
+        
+        document.body.removeChild(tempCanvas);
+        return chartImages;
+    }
+
+    // Main Exporter Router
+    window.exportMarketReport = function(format) {
+        const modal = document.getElementById('exportLoadingModal');
+        const progressBar = document.getElementById('exportProgressBar');
+        const progressStatus = document.getElementById('exportProgressStatus');
+        
+        // Open compiler modal
+        if (modal) {
+            modal.classList.remove('d-none');
+            modal.classList.add('d-flex');
+            progressBar.style.width = '5%';
+            progressStatus.textContent = 'Initializing reporting engine...';
+        }
+
+        // Get unique products
+        const uniqueCrops = [];
+        rawKakamegaData.forEach(item => {
+            if (item.commodity && !uniqueCrops.includes(item.commodity)) {
+                uniqueCrops.push(item.commodity);
+            }
+        });
+        uniqueCrops.sort();
+
+        // 1. Excel (XLSX) Export Route
+        if (format === 'xlsx') {
+            try {
+                progressBar.style.width = '40%';
+                progressStatus.textContent = 'Formatting spreadsheets...';
+                
+                const wsData = [];
+                wsData.push(["COMMODITY", "CATEGORY", "REGION", "PRICE", "CURRENCY", "TREND", "LAST UPDATED"]);
+
+                rawKakamegaData.forEach(item => {
+                    wsData.push([
+                        item.commodity,
+                        item.category || "General",
+                        item.region || "Local Market",
+                        item.price,
+                        item.currency || "KES",
+                        item.trend || "stable",
+                        item.updated_at ? item.updated_at.split(' ')[0] : "N/A"
+                    ]);
+                });
+
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+                // Professional column width configuration
+                const wscols = [
+                    {wch: 32}, // Commodity
+                    {wch: 16}, // Category
+                    {wch: 28}, // Region
+                    {wch: 12}, // Price
+                    {wch: 10}, // Currency
+                    {wch: 12}, // Trend
+                    {wch: 18}  // Last Updated
+                ];
+                ws['!cols'] = wscols;
+
+                XLSX.utils.book_append_sheet(wb, ws, "Kakamega Market Pulse");
+                
+                // Add second sheet for historical commodity records group by crop
+                const cropGroupData = [["COMMODITY", "HISTORICAL LOG (DATE: PRICE)"]];
+                uniqueCrops.forEach(crop => {
+                    const logs = rawKakamegaData.filter(x => x.commodity === crop)
+                        .map(x => `${x.updated_at ? x.updated_at.split(' ')[0] : 'N/A'}: ${x.price} ${x.currency || 'KES'}`)
+                        .join(" | ");
+                    cropGroupData.push([crop, logs]);
+                });
+                const wsGroups = XLSX.utils.aoa_to_sheet(cropGroupData);
+                wsGroups['!cols'] = [{wch: 32}, {wch: 100}];
+                XLSX.utils.book_append_sheet(wb, wsGroups, "Historical Summary Logs");
+
+                progressBar.style.width = '85%';
+                progressStatus.textContent = 'Downloading workbook...';
+                
+                setTimeout(() => {
+                    XLSX.writeFile(wb, "FARD_Market_Intelligence_Report.xlsx");
+                    // Close loader
+                    modal.classList.add('d-none');
+                    modal.classList.remove('d-flex');
+                }, 500);
+
+            } catch (err) {
+                console.error("Excel generation error: ", err);
+                alert("An error occurred while exporting the Excel sheet.");
+                modal.classList.add('d-none');
+                modal.classList.remove('d-flex');
+            }
+            return;
+        }
+
+        // 2. CSV Export Route
+        if (format === 'csv') {
+            try {
+                progressBar.style.width = '50%';
+                progressStatus.textContent = 'Parsing raw dataset...';
+                
+                let csvContent = "data:text/csv;charset=utf-8,\ufeff";
+                csvContent += "Commodity,Category,Region,Price,Currency,Trend,Last Updated\n";
+                
+                rawKakamegaData.forEach(item => {
+                    const row = [
+                        `"${item.commodity.replace(/"/g, '""')}"`,
+                        `"${(item.category || 'General').replace(/"/g, '""')}"`,
+                        `"${(item.region || 'Local Market').replace(/"/g, '""')}"`,
+                        item.price,
+                        `"${(item.currency || 'KES').replace(/"/g, '""')}"`,
+                        `"${(item.trend || 'stable').replace(/"/g, '""')}"`,
+                        `"${(item.updated_at ? item.updated_at.split(' ')[0] : 'N/A').replace(/"/g, '""')}"`
+                    ].join(",");
+                    csvContent += row + "\n";
+                });
+                
+                progressBar.style.width = '90%';
+                progressStatus.textContent = 'Downloading CSV...';
+                
+                setTimeout(() => {
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", "FARD_Market_Intelligence_Raw.csv");
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Close loader
+                    modal.classList.add('d-none');
+                    modal.classList.remove('d-flex');
+                }, 500);
+            } catch (err) {
+                console.error("CSV generation error: ", err);
+                alert("An error occurred while exporting the CSV data.");
+                modal.classList.add('d-none');
+                modal.classList.remove('d-flex');
+            }
+            return;
+        }
+
+        // 3. PDF and DOCX Exporter
+        if (format === 'pdf' || format === 'docx') {
+            // Load Letterhead first
+            getBase64Image('/static/BEST COMPLETED LETTER HEAD FOR FARD.png', async function(letterheadBase64) {
+                if (!letterheadBase64) {
+                    letterheadBase64 = "";
+                }
+                
+                progressBar.style.width = '20%';
+                progressStatus.textContent = 'Compiling individual crop trend lines...';
+                
+                // Compile charts
+                let chartImages = {};
+                try {
+                    chartImages = await compileProductCharts(uniqueCrops, function(currentIndex, totalCount, crop) {
+                        const pct = Math.floor(20 + (currentIndex / totalCount) * 50);
+                        progressBar.style.width = `${pct}%`;
+                        progressStatus.textContent = `Compiling chart for ${crop} (${currentIndex + 1}/${totalCount})...`;
+                    });
+                } catch (e) {
+                    console.error("Chart compilation failed: ", e);
+                }
+                
+                progressBar.style.width = '75%';
+                progressStatus.textContent = 'Formatting professional document elements...';
+                
+                // Build off-screen HTML block
+                const printContainer = document.createElement('div');
+                printContainer.style.position = 'absolute';
+                printContainer.style.left = '-99999px';
+                printContainer.style.top = '0';
+                printContainer.style.width = '800px';
+                printContainer.style.padding = '20px';
+                printContainer.style.background = '#ffffff';
+                printContainer.style.fontFamily = "'Segoe UI', Arial, sans-serif";
+                printContainer.style.color = '#333333';
+                
+                // Header (FARD Letterhead)
+                let headerHtml = '';
+                if (letterheadBase64) {
+                    headerHtml = `<div style="text-align: center; margin-bottom: 25px;"><img src="${letterheadBase64}" style="width: 100%; max-height: 120px; object-fit: contain;"></div>`;
+                } else {
+                    headerHtml = `
+                        <div style="border-bottom: 3px double #2E7D32; padding-bottom: 15px; margin-bottom: 25px; text-align: center;">
+                            <h2 style="color: #2E7D32; margin: 0; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">FARD Organisation</h2>
+                            <p style="color: #5D4037; margin: 5px 0 0 0; font-weight: 600; font-size: 0.95rem;">Food, Artificial Intelligence Research, and Development</p>
+                        </div>
+                    `;
+                }
+                
+                const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                
+                let bodyHtml = `
+                    ${headerHtml}
+                    <div style="text-align: center; margin-top: 10px; margin-bottom: 30px;">
+                        <h1 style="color: #5D4037; font-size: 24px; font-weight: bold; margin: 0; text-transform: uppercase;">Market Intelligence Executive Report</h1>
+                        <p style="color: #666; margin: 5px 0 0 0; font-size: 13px; font-weight: 500;">REPORT ID: FARD-MI-${Math.floor(Date.now() / 1000)} | CLASSIFICATION: AGRIBUSINESS STRATEGIC INTEL</p>
+                        <p style="color: #2E7D32; margin: 3px 0 0 0; font-weight: bold; font-size: 13px;">DATE GENERATED: ${currentDate}</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px; padding: 15px; background-color: #fcfcfc; border-left: 5px solid #2E7D32; border-radius: 4px; font-size: 13.5px; line-height: 1.6; color: #555;">
+                        <strong>Executive Summary:</strong> This official report compiled by the Food, Artificial Intelligence Research, and Development (FARD) Organisation in collaboration with Farmerman Systems details the localized agricultural pricing structures, market pulses, and price trends tracked across Lurambi, Mumias, and Kakamega Central hubs in Western Kenya. Authorized stakeholders are advised to consult this data to mitigate trading risks, optimize regional supply logistics, and support profitable agribusiness outcomes.
+                    </div>
+                    
+                    <div style="margin-bottom: 30px; padding: 12px 15px; background-color: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 6px; text-align: center; font-size: 13px; line-height: 1.5;">
+                        <strong style="color: #2E7D32;">📈 Access Live Updates & Advanced Analytics:</strong><br>
+                        <span style="color: #444;">If you require real-time market price dashboards, short-term and long-term price forecasting, or dynamic mapping linkages with verified buyers across Kenya, visit our official live portal:</span><br>
+                        <a href="https://farmermansystems.co.ke/market-intelligence" style="color: #2E7D32; font-weight: bold; text-decoration: underline; word-break: break-all;" target="_blank">https://farmermansystems.co.ke/market-intelligence</a>
+                    </div>
+                    
+                    <h3 style="color: #2E7D32; border-bottom: 1px solid #ddd; padding-bottom: 5px; font-size: 16px; font-weight: bold; margin-bottom: 15px;">1. Market Pulse Price Overview</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 35px; font-size: 12.5px;">
+                        <thead>
+                            <tr style="background-color: #2E7D32; color: #ffffff;">
+                                <th style="padding: 10px; border: 1px solid #ddd; text-align: left; font-weight: bold;">Commodity Product</th>
+                                <th style="padding: 10px; border: 1px solid #ddd; text-align: left; font-weight: bold;">Category</th>
+                                <th style="padding: 10px; border: 1px solid #ddd; text-align: left; font-weight: bold;">Market Hub Region</th>
+                                <th style="padding: 10px; border: 1px solid #ddd; text-align: right; font-weight: bold;">Latest Price</th>
+                                <th style="padding: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Trend</th>
+                                <th style="padding: 10px; border: 1px solid #ddd; text-align: center; font-weight: bold;">Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                // Get latest records for table
+                uniqueCrops.forEach((crop, idx) => {
+                    let filtered = rawKakamegaData.filter(x => x.commodity === crop);
+                    filtered.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)); // newest first
+                    const latest = filtered[0];
+                    if (!latest) return;
+                    
+                    const priceFormatted = latest.currency + " " + latest.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    const trendEmoji = latest.trend === 'up' ? '↗️ UP' : latest.trend === 'down' ? '↘️ DOWN' : '➡️ STABLE';
+                    const trendColor = latest.trend === 'up' ? '#dc3545' : latest.trend === 'down' ? '#007bff' : '#2E7D32';
+                    const bgClass = idx % 2 === 0 ? '#f9f9f9' : '#ffffff';
+                    
+                    bodyHtml += `
+                        <tr style="background-color: ${bgClass};">
+                            <td style="padding: 9px; border: 1px solid #ddd; font-weight: 600; color: #333;">${crop}</td>
+                            <td style="padding: 9px; border: 1px solid #ddd; color: #555;">${latest.category || 'General'}</td>
+                            <td style="padding: 9px; border: 1px solid #ddd; color: #555;">${latest.region || 'Local Market'}</td>
+                            <td style="padding: 9px; border: 1px solid #ddd; text-align: right; font-weight: bold; color: #2E7D32;">${priceFormatted}</td>
+                            <td style="padding: 9px; border: 1px solid #ddd; text-align: center; font-weight: bold; color: ${trendColor};">${trendEmoji}</td>
+                            <td style="padding: 9px; border: 1px solid #ddd; text-align: center; color: #777;">${latest.updated_at ? latest.updated_at.split(' ')[0] : 'Today'}</td>
+                        </tr>
+                    `;
+                });
+                
+                bodyHtml += `
+                        </tbody>
+                    </table>
+                    
+                    <div style="page-break-after: always; break-after: page;"></div>
+                `;
+                
+                // Add individual deep dives
+                uniqueCrops.forEach((crop, idx) => {
+                    let filtered = rawKakamegaData.filter(x => x.commodity === crop);
+                    filtered.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)); // newest first
+                    const latest = filtered[0];
+                    if (!latest) return;
+                    
+                    // Grab historical log
+                    filtered.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+                    let historyRowsHtml = '';
+                    filtered.slice(0, 5).forEach(hist => {
+                        historyRowsHtml += `
+                            <tr>
+                                <td style="padding: 7px; border: 1px solid #eee; color: #555;">${hist.updated_at ? hist.updated_at.split(' ')[0] : 'N/A'}</td>
+                                <td style="padding: 7px; border: 1px solid #eee; color: #555;">${hist.region}</td>
+                                <td style="padding: 7px; border: 1px solid #eee; text-align: right; font-weight: bold; color: #2E7D32;">${hist.currency} ${hist.price.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                                <td style="padding: 7px; border: 1px solid #eee; text-align: center; color: #777;">${hist.unit || 'unit'}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    bodyHtml += `
+                        <div style="border-bottom: 2px solid #2E7D32; padding-bottom: 10px; margin-bottom: 20px;">
+                            <h2 style="color: #5D4037; font-size: 18px; font-weight: bold; margin: 0; text-transform: uppercase;">
+                                Commodity Analytics: ${crop}
+                            </h2>
+                            <p style="color: #666; margin: 3px 0 0 0; font-size: 12px; font-weight: 500;">
+                                CATEGORY: ${latest.category || 'General'} | LOCAL HUB: ${latest.region || 'Kakamega'}
+                            </p>
+                        </div>
+                    `;
+                    
+                    if (chartImages[crop]) {
+                        bodyHtml += `
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <img src="${chartImages[crop]}" style="width: 100%; max-height: 260px; object-fit: contain; border: 1px solid #eaeaea; padding: 10px; border-radius: 6px;">
+                            </div>
+                        `;
+                    } else {
+                        bodyHtml += `
+                            <div style="text-align: center; padding: 40px; border: 1px dashed #ccc; margin-bottom: 20px; border-radius: 6px; color: #888; font-style: italic;">
+                                Trend chart rendering omitted due to insufficient data points.
+                            </div>
+                        `;
+                    }
+                    
+                    bodyHtml += `
+                        <h4 style="color: #2E7D32; font-size: 13.5px; font-weight: bold; margin: 15px 0 8px 0; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 4px;">Historical Price Audit Trail (Recent Logs)</h4>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 11px; text-align: left;">
+                            <thead>
+                                <tr style="background-color: #f5f5f5; color: #5D4037; font-weight: bold;">
+                                    <th style="padding: 7px; border: 1px solid #eee;">Record Date</th>
+                                    <th style="padding: 7px; border: 1px solid #eee;">Market Location</th>
+                                    <th style="padding: 7px; border: 1px solid #eee; text-align: right;">Unit Price</th>
+                                    <th style="padding: 7px; border: 1px solid #eee; text-align: center;">Packaging Unit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${historyRowsHtml}
+                            </tbody>
+                        </table>
+                    `;
+                    
+                    // Don't append page break on last page
+                    if (idx < uniqueCrops.length - 1) {
+                        bodyHtml += `<div style="page-break-after: always; break-after: page; @media print { page-break-after: always; }"></div>`;
+                    }
+                });
+                
+                bodyHtml += `
+                    <hr style="border: 0; border-top: 1px solid #ddd; margin-top: 40px;">
+                    <div style="text-align: center; color: #777; font-size: 11px; margin-top: 15px; line-height: 1.5;">
+                        <strong>Farmerman Systems & FARD Organisation Joint Council</strong><br>
+                        Building data-driven agricultural value chains across Africa.<br>
+                        For live price feeds, predictive analytics, and agronomist modules, visit: 
+                        <a href="https://farmermansystems.co.ke/market-intelligence" style="color: #2E7D32; text-decoration: underline; font-weight: bold;" target="_blank">https://farmermansystems.co.ke/market-intelligence</a><br>
+                        © 2026 Farmerman Systems Pvt Ltd. All Rights Reserved.
+                    </div>
+                `;
+                
+                printContainer.innerHTML = bodyHtml;
+                
+                 // 3a. PDF Exporter
+                if (format === 'pdf') {
+                    progressBar.style.width = '88%';
+                    progressStatus.textContent = 'Rendering vector PDF pages...';
+                    
+                    // Attach to active DOM so html2canvas can measure and draw
+                    document.body.appendChild(printContainer);
+                    
+                    const opt = {
+                        margin:       [10, 12, 10, 12], // [top, left, bottom, right] in mm
+                        filename:     'FARD_Market_Intelligence_Report.pdf',
+                        image:        { type: 'jpeg', quality: 0.98 },
+                        html2canvas:  { scale: 2.2, useCORS: true, logging: false },
+                        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+                    };
+                    
+                    // Generate PDF via html2pdf
+                    html2pdf().from(printContainer).set(opt).save().then(() => {
+                        // Success! Clean up DOM and hide loader
+                        document.body.removeChild(printContainer);
+                        modal.classList.add('d-none');
+                        modal.classList.remove('d-flex');
+                    }).catch(err => {
+                        console.error("PDF generation failed: ", err);
+                        // Clean up DOM on error
+                        if (document.getElementById('fardPrintContainer') || printContainer.parentNode) {
+                            document.body.removeChild(printContainer);
+                        }
+                        alert("An error occurred while compiling the PDF.");
+                        modal.classList.add('d-none');
+                        modal.classList.remove('d-flex');
+                    });
+                }
+                
+                // 3b. Word Document (DOC) Exporter
+                if (format === 'docx') {
+                    progressBar.style.width = '90%';
+                    progressStatus.textContent = 'Packaging Word Brief...';
+                    
+                    setTimeout(() => {
+                        const htmlContent = `
+                        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                        <head>
+                            <title>FARD Market Intelligence Report</title>
+                            <!--[if gte mso 9]>
+                            <xml>
+                                <w:WordDocument>
+                                    <w:View>Print</w:View>
+                                    <w:Zoom>100</w:Zoom>
+                                    <w:DoNotOptimizeForBrowser/>
+                                </w:WordDocument>
+                            </xml>
+                            <![endif]-->
+                            <style>
+                                body { font-family: 'Segoe UI', Arial, sans-serif; color: #333333; line-height: 1.5; padding: 20px; }
+                                table { border-collapse: collapse; width: 100%; margin-bottom: 25px; font-size: 12px; }
+                                th, td { border: 1px solid #dddddd; padding: 8px; text-align: left; }
+                                th { background-color: #2E7D32; color: white; font-weight: bold; }
+                                .page-break { page-break-after: always; break-after: page; }
+                                .text-center { text-align: center; }
+                                .text-success { color: #2E7D32; }
+                                img { max-width: 100%; }
+                            </style>
+                        </head>
+                        <body>
+                            ${bodyHtml}
+                        </body>
+                        </html>
+                        `;
+                        
+                        const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
+                        const url = URL.createObjectURL(blob);
+                        
+                        const link = document.createElement("a");
+                        link.setAttribute("href", url);
+                        link.setAttribute("download", "FARD_Market_Intelligence_Report.doc");
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        // Close loader
+                        modal.classList.add('d-none');
+                        modal.classList.remove('d-flex');
+                    }, 500);
+                }
+            });
+        }
+    };
     {% endif %}
 
     gsap.registerPlugin(ScrollTrigger, TextPlugin);

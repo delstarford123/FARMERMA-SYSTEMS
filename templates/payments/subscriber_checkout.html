@@ -66,6 +66,30 @@
         </div>
     </div>
 
+    {% if plan_id == 'market_intel' %}
+    <!-- Dynamic Organization Category Panel -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0 p-4 rounded-4 bg-white text-center" style="border-top: 4px solid #2E7D32 !important; box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important;">
+                <label class="form-label fw-bold text-uppercase small mb-3 animate__animated animate__fadeIn" style="color: #5D4037; letter-spacing: 0.05em; font-family: 'Outfit', sans-serif;">
+                    <i class="bi bi-building-fill me-1 text-success"></i> Select Organization Category
+                </label>
+                <div class="position-relative">
+                    <select id="category-selector" class="form-select border border-2 rounded-pill px-4 text-center fw-bold shadow-sm" style="height: 52px; font-size: 1.15rem; color: #2E7D32; border-color: #2E7D32 !important; cursor: pointer; transition: 0.3s; background-position: right 20px center;">
+                        <option value="individual" data-kes="100" data-usd="1.00">Individual — KES 100 / day</option>
+                        <option value="cbo" data-kes="300" data-usd="3.00">Community-Based Org (CBO) — KES 300 / day</option>
+                        <option value="company" data-kes="900" data-usd="9.00">Company / Enterprise — KES 900 / day</option>
+                        <option value="ngo" data-kes="2700" data-usd="27.00">NGO / Other — KES 2,700 / day</option>
+                    </select>
+                </div>
+                <div class="small text-muted mt-3">
+                    <i class="bi bi-info-circle me-1"></i> Special daily tiered rates are dynamically calculated for the selected category.
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="row justify-content-center g-4">
         
         <div class="col-md-6 col-lg-3 payment-card">
@@ -73,17 +97,18 @@
                 <div class="card-body p-4 text-center d-flex flex-column">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg" alt="M-Pesa" height="40" class="mb-3 mx-auto">
                     <h5 class="fw-bold mb-1">M-Pesa Express</h5>
-                    <p class="text-muted small mb-4">Prompt to your phone (KES {{ "{:,.0f}".format(amount_kes) }})</p>
+                    <p class="text-muted small mb-4">Prompt to your phone (<span class="kes-price-display">KES {{ "{:,.0f}".format(amount_kes) }}</span>)</p>
                     
                     <form action="{{ url_for('process_mpesa') }}" method="POST" class="mt-auto" id="mpesa-form">
                         <div class="mb-3 text-start">
                             <label class="form-label small fw-bold text-muted">PHONE NUMBER</label>
                             <input type="text" name="phone_number" class="form-control bg-light border-0 mpesa-input" placeholder="2547XXXXXXXX" required pattern="^254[71]\d{8}$">
-                            <input type="hidden" name="amount" value="{{ amount_kes }}">
+                            <input type="hidden" name="amount" id="mpesa-amount" value="{{ amount_kes }}">
+                            <input type="hidden" name="category" id="mpesa-category" value="individual">
                             <input type="hidden" name="plan_id" value="{{ plan_id }}">
                         </div>
                         <button type="submit" class="btn btn-lg w-100 fw-bold text-white mpesa-submit" style="background-color: #2E7D32;">
-                            Pay KES {{ "{:,.0f}".format(amount_kes) }}
+                            Pay <span class="kes-price-display-btn">KES {{ "{:,.0f}".format(amount_kes) }}</span>
                         </button>
                     </form>
                 </div>
@@ -95,7 +120,7 @@
                 <div class="card-body p-4 text-center d-flex flex-column">
                     <div class="mb-3 text-primary"><i class="bi bi-credit-card-2-front" style="font-size: 2.5rem;"></i></div>
                     <h5 class="fw-bold mb-1">Local Card / Bank</h5>
-                    <p class="text-muted small mb-4">Visa/Mastercard (KES {{ "{:,.0f}".format(amount_kes) }})</p>
+                    <p class="text-muted small mb-4">Visa/Mastercard (<span class="kes-price-display">KES {{ "{:,.0f}".format(amount_kes) }}</span>)</p>
                     <button id="paystack-button" class="btn btn-lg btn-outline-primary mt-auto w-100 fw-bold btn-paystack">
                         Use Paystack
                     </button>
@@ -108,7 +133,7 @@
                 <div class="card-body p-4 text-center d-flex flex-column">
                     <div class="mb-3" style="color: #635BFF;"><i class="bi bi-globe" style="font-size: 2.5rem;"></i></div>
                     <h5 class="fw-bold mb-1">Global Card</h5>
-                    <p class="text-muted small mb-4">International Payments (${{ "{:,.2f}".format(amount_usd) }})</p>
+                    <p class="text-muted small mb-4">International Payments (<span class="usd-price-display">${{ "{:,.2f}".format(amount_usd) }}</span>)</p>
                     <button id="stripe-button" class="btn btn-lg btn-outline-primary mt-auto w-100 fw-bold btn-stripe">
                         Use Stripe
                     </button>
@@ -121,7 +146,7 @@
                 <div class="card-body p-4 text-center d-flex flex-column">
                     <div class="mb-3 text-warning"><i class="bi bi-paypal" style="font-size: 2.5rem;"></i></div>
                     <h5 class="fw-bold mb-1">PayPal</h5>
-                    <p class="text-muted small mb-4">Fast & Secure Wallet (${{ "{:,.2f}".format(amount_usd) }})</p>
+                    <p class="text-muted small mb-4">Fast & Secure Wallet (<span class="usd-price-display">${{ "{:,.2f}".format(amount_usd) }}</span>)</p>
                     <div id="paypal-button-container" class="mt-auto"></div>
                 </div>
             </div>
@@ -135,9 +160,43 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
 <script>
+    // Global Pricing variables
+    let currentKesAmount = {{ amount_kes }};
+    let currentUsdAmount = {{ amount_usd }};
+    let selectedCategory = "individual";
+
     // 1. ANIMATIONS
     gsap.to(".checkout-header", { y: 0, opacity: 1, startAt: { y: -20 }, duration: 0.8 });
     gsap.to(".payment-card", { y: 0, opacity: 1, startAt: { y: 30 }, stagger: 0.1, duration: 0.8, delay: 0.2 });
+
+    // 1b. Dynamic category update event listener
+    const categorySelector = document.getElementById('category-selector');
+    if (categorySelector) {
+        categorySelector.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            currentKesAmount = parseFloat(selectedOption.getAttribute('data-kes'));
+            currentUsdAmount = parseFloat(selectedOption.getAttribute('data-usd'));
+            selectedCategory = this.value;
+
+            // Recalculate displays KES & USD
+            document.querySelectorAll('.kes-price-display').forEach(el => {
+                el.innerText = `KES ${currentKesAmount.toLocaleString()}`;
+            });
+            document.querySelectorAll('.kes-price-display-btn').forEach(el => {
+                el.innerText = `KES ${currentKesAmount.toLocaleString()}`;
+            });
+            document.querySelectorAll('.usd-price-display').forEach(el => {
+                el.innerText = `$${currentUsdAmount.toFixed(2)}`;
+            });
+
+            // Update M-Pesa hidden form fields
+            const mpesaAmountEl = document.getElementById('mpesa-amount');
+            if (mpesaAmountEl) mpesaAmountEl.value = currentKesAmount;
+            
+            const mpesaCategoryEl = document.getElementById('mpesa-category');
+            if (mpesaCategoryEl) mpesaCategoryEl.value = selectedCategory;
+        });
+    }
 
     // 2. M-PESA 
     document.getElementById('mpesa-form').addEventListener('submit', function() {
@@ -151,11 +210,11 @@
         let handler = PaystackPop.setup({
             key: '{{ paystack_public_key }}',
             email: '{{ session.get("user_email") }}',
-            amount: {{ amount_kes }} * 100,
+            amount: currentKesAmount * 100,
             currency: 'KES',
             ref: 'FMS_' + Math.floor((Math.random() * 1000000000) + 1),
             callback: function(res) {
-                window.location.href = `/verify-paystack?reference=${res.reference}&plan={{ plan_id }}`;
+                window.location.href = `/verify-paystack?reference=${res.reference}&plan={{ plan_id }}&category=${selectedCategory}`;
             }
         });
         handler.openIframe();
@@ -168,7 +227,10 @@
         fetch('/create-stripe-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ plan: '{{ plan_id }}' })
+            body: JSON.stringify({ 
+                plan: '{{ plan_id }}',
+                category: selectedCategory
+            })
         })
         .then(r => r.json())
         .then(s => stripe.redirectToCheckout({ sessionId: s.id }));
@@ -179,7 +241,10 @@
         style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal' },
         createOrder: (data, actions) => {
             return actions.order.create({
-                purchase_units: [{ amount: { value: '{{ amount_usd }}' }, description: 'Farmerman {{ plan_name }}' }]
+                purchase_units: [{ 
+                    amount: { value: currentUsdAmount.toString() }, 
+                    description: 'Farmerman {{ plan_name }} - ' + selectedCategory.toUpperCase()
+                }]
             });
         },
         onApprove: (data, actions) => {
@@ -187,7 +252,11 @@
                 fetch('/paypal-transaction-complete', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderID: data.orderID, plan: '{{ plan_id }}' })
+                    body: JSON.stringify({ 
+                        orderID: data.orderID, 
+                        plan: '{{ plan_id }}',
+                        category: selectedCategory
+                    })
                 }).then(() => window.location.href = "{{ url_for('payment_success') }}");
             });
         }

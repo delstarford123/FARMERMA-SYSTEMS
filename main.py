@@ -1295,7 +1295,7 @@ PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
 # --- MASTER PRICING DICTIONARY ---
 # Single source of truth for all payment gateways
 SYSTEM_PRICING = {
-    'market_intel': {"name": "Market Intelligence Standalone", "kes": 50, "usd": 0.50},
+    'market_intel': {"name": "Market Intelligence Standalone", "kes": 100, "usd": 1.00},
     'bronze': {"name": "Bronze Consulting Package", "kes": 1000, "usd": 10.00},
     'silver': {"name": "Silver Consulting Package", "kes": 2000, "usd": 20.00},
     'gold': {"name": "Gold Consulting Package", "kes": 3000, "usd": 30.00},
@@ -1310,6 +1310,31 @@ SYSTEM_PRICING = {
     'bundle_starter': {"name": "Agribusiness Starter Bundle", "kes": 9000, "usd": 60.00},
     'bundle_investor': {"name": "Agribusiness Investor Bundle", "kes": 18000, "usd": 120.00}
 }
+
+def get_plan_price(plan_id, category=None):
+    """
+    Returns Kes & Usd values. For market_intel, supports:
+    individual (100 KSH / $1.00), cbo (300 KSH / $3.00),
+    company (900 KSH / $9.00), ngo / other (2700 KSH / $27.00).
+    """
+    base_plan = SYSTEM_PRICING.get(plan_id, SYSTEM_PRICING['bronze'])
+    if plan_id == 'market_intel':
+        if not category:
+            category = 'individual'
+        category = str(category).lower().strip()
+        if category == 'individual':
+            return {"name": "Market Intelligence - Individual", "kes": 100, "usd": 1.00}
+        elif category == 'cbo':
+            return {"name": "Market Intelligence - CBO", "kes": 300, "usd": 3.00}
+        elif category == 'company':
+            return {"name": "Market Intelligence - Company", "kes": 900, "usd": 9.00}
+        elif category in ['ngo', 'other']:
+            return {"name": "Market Intelligence - NGO/Other", "kes": 2700, "usd": 27.00}
+    return {
+        "name": base_plan['name'],
+        "kes": base_plan['kes'],
+        "usd": base_plan['usd']
+    }
 
 # --- Helper Function for Clean Code ---
 def record_successful_transaction(user_id, plan_id, amount, gateway, receipt_number):
@@ -1343,12 +1368,13 @@ def process_mpesa():
     phone = request.form.get('phone_number')
     plan_id = request.form.get('plan_id', 'bronze') 
     raw_amount = request.form.get('amount') 
+    category = request.form.get('category')
     
-    # Validation & Fallbacks - Now uses SYSTEM_PRICING
+    # Validation & Fallbacks - Now uses get_plan_price
     try:
-        amount = int(float(raw_amount)) if raw_amount else SYSTEM_PRICING.get(plan_id, SYSTEM_PRICING['bronze'])['kes']
+        amount = int(float(raw_amount)) if raw_amount else get_plan_price(plan_id, category)['kes']
     except (ValueError, TypeError):
-        amount = SYSTEM_PRICING.get(plan_id, SYSTEM_PRICING['bronze'])['kes']
+        amount = get_plan_price(plan_id, category)['kes']
         
     try:
         res = initiate_stk_push(phone, amount)
@@ -1359,6 +1385,7 @@ def process_mpesa():
                 'user_id': session.get('user_id'), 
                 'amount': amount, 
                 'plan_id': plan_id, 
+                'category': category or '',
                 'status': 'awaiting_payment',
                 'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
@@ -1424,7 +1451,13 @@ def mpesa_callback():
                 else:
                     # --- ROUTE TO SUBSCRIPTION SYSTEM ---
                     plan_bought = pending_data.get('plan_id', 'bronze')
+                    category = pending_data.get('category')
                     record_successful_transaction(uid, plan_bought, amount, "M-Pesa", receipt)
+                    if plan_bought == 'market_intel' and category:
+                        try:
+                            rtdb.reference(f'users/{uid}').update({'organization_category': category})
+                        except Exception as ex:
+                            print(f"Error saving category to database: {ex}")
                     
                 # Cleanup deletes the pending record
                 pending_ref.delete() 
@@ -1491,11 +1524,12 @@ def create_stripe_session():
     try:
         data = request.json
         plan_id = data.get('plan', 'bronze')
+        category = data.get('category')
         
-        # Look up the plan in our master dictionary
-        selected_plan = SYSTEM_PRICING.get(plan_id, SYSTEM_PRICING['bronze'])
+        # Look up the plan using our dynamic get_plan_price function
+        plan_details = get_plan_price(plan_id, category)
         # Stripe expects amounts in cents, so we multiply the USD amount by 100
-        amount_in_cents = int(selected_plan['usd'] * 100)
+        amount_in_cents = int(plan_details['usd'] * 100)
 
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
@@ -1504,8 +1538,8 @@ def create_stripe_session():
                     'currency': 'usd',
                     'unit_amount': amount_in_cents,
                     'product_data': {
-                        'name': f"Farmerman Systems: {selected_plan['name']}",
-                        'description': f"Payment for {selected_plan['name']}"
+                        'name': f"Farmerman Systems: {plan_details['name']}",
+                        'description': f"Payment for {plan_details['name']}"
                     },
                 },
                 'quantity': 1,
@@ -1514,9 +1548,10 @@ def create_stripe_session():
             # Metadata is crucial for tracking who paid what in the Stripe Dashboard
             metadata={
                 'user_id': session.get('user_id'), 
-                'plan_id': plan_id
+                'plan_id': plan_id,
+                'category': category or ''
             }, 
-            success_url=url_for('stripe_success', plan_id=plan_id, _external=True) + '&session_id={CHECKOUT_SESSION_ID}',
+            success_url=url_for('stripe_success', plan_id=plan_id, category=category or '', _external=True) + '&session_id={CHECKOUT_SESSION_ID}',
             cancel_url=url_for('pricing', _external=True),
         )
         return jsonify({'id': checkout_session.id})
@@ -1529,14 +1564,21 @@ def create_stripe_session():
 def stripe_success():
     """Validates the redirect back from Stripe."""
     plan_id = request.args.get('plan_id', 'bronze')
+    category = request.args.get('category')
     session_id = request.args.get('session_id')
     user_id = session.get('user_id')
     
     # Grab the accurate USD price for the receipt
-    amount_paid = SYSTEM_PRICING.get(plan_id, SYSTEM_PRICING['bronze'])['usd']
+    plan_details = get_plan_price(plan_id, category)
+    amount_paid = plan_details['usd']
     
     if session_id and user_id:
         record_successful_transaction(user_id, plan_id, amount_paid, "Stripe", f"STR_{session_id[-8:]}")
+        if plan_id == 'market_intel' and category:
+            try:
+                rtdb.reference(f'users/{user_id}').update({'organization_category': category})
+            except Exception as ex:
+                print(f"Error saving category to database: {ex}")
         return redirect(url_for('payment_success'))
     
     return redirect(url_for('pricing'))
@@ -1549,13 +1591,20 @@ def paypal_transaction_complete():
         data = request.json
         order_id = data.get('orderID')
         plan_id = data.get('plan', 'bronze')
+        category = data.get('category')
         user_id = session.get('user_id')
         
-        # Grab the accurate USD price for the receipt
-        amount_paid = SYSTEM_PRICING.get(plan_id, SYSTEM_PRICING['bronze'])['usd']
+        # Grab the accurate USD price using get_plan_price
+        plan_details = get_plan_price(plan_id, category)
+        amount_paid = plan_details['usd']
         
         if user_id and order_id:
             record_successful_transaction(user_id, plan_id, amount_paid, "PayPal", f"PAY_{order_id}")
+            if plan_id == 'market_intel' and category:
+                try:
+                    rtdb.reference(f'users/{user_id}').update({'organization_category': category})
+                except Exception as ex:
+                    print(f"Error saving category to database: {ex}")
             return jsonify({"status": "success"}), 200
             
         return jsonify({"status": "failed", "error": "Missing data"}), 400
@@ -1569,6 +1618,7 @@ def paypal_transaction_complete():
 def verify_paystack():
     reference = request.args.get('reference')
     plan_id = request.args.get('plan', 'bronze')
+    category = request.args.get('category')
     user_id = session.get('user_id')
     
     if not reference or not user_id: 
@@ -1588,6 +1638,11 @@ def verify_paystack():
             actual_amount = response_data['data']['amount'] / 100 
             
             record_successful_transaction(user_id, plan_id, actual_amount, "Paystack", reference)
+            if plan_id == 'market_intel' and category:
+                try:
+                    rtdb.reference(f'users/{user_id}').update({'organization_category': category})
+                except Exception as ex:
+                    print(f"Error saving category to database: {ex}")
             
             flash(f"Payment successful! Welcome to the {plan_id.capitalize()} plan.", "success")
             return redirect(url_for('payment_success'))
@@ -2624,7 +2679,21 @@ def page_not_found(e):
 
 if __name__ == "__main__":
     import os
+    import socket
     port = int(os.environ.get("PORT", 5000))
+    
+    # Self-healing dynamic port check to prevent address collisions (WinError 10048)
+    def is_port_in_use(port_to_check):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(('0.0.0.0', port_to_check))
+                return False
+            except socket.error:
+                return True
+                
+    while is_port_in_use(port):
+        print(f" Port {port} is currently in use. Fallback to next address...")
+        port += 1
         
     print(f"\n Farmerman Systems is LIVE!")
     print(f" Click here to open: http://127.0.0.1:{port}\n")
