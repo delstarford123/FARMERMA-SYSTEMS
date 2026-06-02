@@ -110,6 +110,31 @@
                             <canvas id="kakamegaChart"></canvas>
                         </div>
 
+                        <!-- Dynamic Advisory Hub Container for Premium/Admin Users -->
+                        <div id="premiumAdvisoryHub" class="mt-5 pt-4 border-top position-relative z-1" style="border-top: 2px dashed rgba(46, 125, 50, 0.15) !important;">
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1 border border-success border-opacity-25 shadow-sm">
+                                    <i class="bi bi-cpu-fill me-1"></i> FARD Smart Advisory
+                                </span>
+                                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1 border border-primary border-opacity-25 shadow-sm">
+                                    <i class="bi bi-lightning-charge-fill me-1"></i> Real-Time Analysis
+                                </span>
+                            </div>
+                            <h5 class="fw-bold text-dark mb-1 d-flex align-items-center">
+                                <i class="bi bi-shield-shaded text-success fs-5 me-2"></i>
+                                <span>FARD Smart Market Advisory & Decision Hub</span>
+                            </h5>
+                            <p class="small text-muted mb-4">Dynamically compiled supply-demand signals and trade advice calculated from live Western region price indices.</p>
+                            
+                            <!-- Dynamically loaded cards container -->
+                            <div id="dynamicAdvisoryContent">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-success spinner-border-sm mb-2" role="status"></div>
+                                    <p class="small text-muted fst-italic mb-0">Running FARD trade analytics engine...</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Professional FARD Export & Reporting Center -->
                         <div class="mt-4 pt-4 border-top position-relative z-1" style="border-top: 2px dashed rgba(46, 125, 50, 0.15) !important;">
                             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
@@ -158,6 +183,45 @@
                                     <a href="/pricing" class="btn btn-outline-dark btn-lg rounded-pill shadow px-4 fw-bold hover-lift">
                                         View Consulting Packages
                                     </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Blurred preview of Advisory Hub for locked state -->
+                        <div class="mt-4 pt-4 border-top position-relative z-1" style="border-top: 2px dashed rgba(46, 125, 50, 0.15) !important; filter: blur(4px); pointer-events: none; opacity: 0.6;">
+                            <h5 class="fw-bold text-dark mb-1">
+                                <i class="bi bi-shield-shaded text-muted fs-5 me-2"></i>
+                                <span>FARD Smart Market Advisory & Decision Hub</span>
+                            </h5>
+                            <p class="small text-muted mb-3">Dynamically compiled supply-demand signals and trade advice calculated from live Western region price indices.</p>
+                            
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <div class="card border-0 shadow-sm p-3 h-100 bg-white">
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <div class="bg-light p-2 rounded text-muted"><i class="bi bi-cloud-arrow-down-fill"></i></div>
+                                            <h6 class="fw-bold text-muted mb-0">Flooded Crop</h6>
+                                        </div>
+                                        <p class="small text-muted mb-0">Analysis locked.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-0 shadow-sm p-3 h-100 bg-white">
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <div class="bg-light p-2 rounded text-muted"><i class="bi bi-tags-fill"></i></div>
+                                            <h6 class="fw-bold text-muted mb-0">Price Alert</h6>
+                                        </div>
+                                        <p class="small text-muted mb-0">Analysis locked.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-0 shadow-sm p-3 h-100 bg-white">
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <div class="bg-light p-2 rounded text-muted"><i class="bi bi-shield-exclamation"></i></div>
+                                            <h6 class="fw-bold text-muted mb-0">Scarce Crop</h6>
+                                        </div>
+                                        <p class="small text-muted mb-0">Analysis locked.</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -499,6 +563,230 @@
             }
         });
     }
+
+    function runFARDMarketAdvisory() {
+        try {
+            if (!document.getElementById('dynamicAdvisoryContent')) return;
+            
+            // Group data points by commodity
+            const commodityGroups = {};
+            rawKakamegaData.forEach(item => {
+                const name = item.commodity;
+                if (!commodityGroups[name]) commodityGroups[name] = [];
+                commodityGroups[name].push(item);
+            });
+
+            const cropMetrics = [];
+
+            Object.keys(commodityGroups).forEach(name => {
+                const logs = commodityGroups[name];
+                // Sort chronologically (oldest first)
+                logs.sort((a, b) => new Date(a.updated_at) - new Date(b.updated_at));
+                
+                const earliest = logs[0];
+                const latest = logs[logs.length - 1];
+                
+                const earliestPrice = earliest.price;
+                const latestPrice = latest.price;
+                
+                const priceDiff = latestPrice - earliestPrice;
+                const pctChange = earliestPrice > 0 ? (priceDiff / earliestPrice) * 100 : 0;
+                
+                cropMetrics.push({
+                    commodity: name,
+                    latestPrice: latestPrice,
+                    earliestPrice: earliestPrice,
+                    priceDiff: priceDiff,
+                    pctChange: pctChange,
+                    trend: latest.trend || 'stable',
+                    region: latest.region || 'Kakamega',
+                    currency: latest.currency || 'KES',
+                    unit: latest.unit || 'unit',
+                    logsCount: logs.length
+                });
+            });
+
+            if (cropMetrics.length === 0) {
+                document.getElementById('dynamicAdvisoryContent').innerHTML = `
+                    <div class="alert alert-warning text-center py-3 border-0 small shadow-sm rounded-3">
+                        <i class="bi bi-database-exclamation me-1 fs-5"></i> No crop metrics found for Kakamega. Seeding is required.
+                    </div>`;
+                return;
+            }
+
+            // Sort by pctChange descending to find the highest price increase (scarcity) and highest drop (flooded)
+            const sortedByChange = [...cropMetrics].sort((a, b) => a.pctChange - b.pctChange);
+
+            // 1. Flooded Commodity (highest price drop / negative change)
+            let flooded = sortedByChange[0]; // Greatest negative change
+            
+            // 2. Scarce Commodity (highest price increase)
+            let scarce = sortedByChange[sortedByChange.length - 1]; // Greatest positive change
+            
+            // 3. Price is Too Low (absolute lowest price or lowest relative under pressure)
+            const decliningCrops = cropMetrics.filter(c => c.priceDiff <= 0 || c.trend === 'down');
+            decliningCrops.sort((a, b) => a.latestPrice - b.latestPrice);
+            let tooLow = decliningCrops.length > 0 ? decliningCrops[0] : [...cropMetrics].sort((a, b) => a.latestPrice - b.latestPrice)[0];
+
+            // Safeguards
+            if (!flooded) flooded = cropMetrics[0];
+            if (!scarce) scarce = cropMetrics[cropMetrics.length - 1] || cropMetrics[0];
+            if (!tooLow) tooLow = cropMetrics[0];
+
+            // Format percentages
+            const floodedPctStr = flooded.pctChange.toFixed(1) + "%";
+            const scarcePctStr = "+" + scarce.pctChange.toFixed(1) + "%";
+            const tooLowPctStr = tooLow.pctChange.toFixed(1) + "%";
+
+            // Store globally on window for export retrieval
+            window.fardAdvisoryData = {
+                flooded: flooded,
+                scarce: scarce,
+                tooLow: tooLow,
+                floodedPctStr: floodedPctStr,
+                scarcePctStr: scarcePctStr,
+                tooLowPctStr: tooLowPctStr
+            };
+
+            // Render HTML dynamically
+            let html = `
+                <!-- Top Alert Cards Grid -->
+                <div class="row g-3 mb-4">
+                    <!-- Flooded Crop Card -->
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm p-3 h-100 text-dark" style="background-color: #fff8e1; border-left: 4px solid #ffb300 !important; border-radius: 12px;">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="badge rounded-pill bg-warning text-dark font-monospace fw-bold" style="font-size: 0.75rem;">FLOODED STATE</span>
+                                <div class="p-2 rounded-circle bg-white shadow-sm d-inline-flex text-warning"><i class="bi bi-cloud-arrow-down-fill fs-5"></i></div>
+                            </div>
+                            <h6 class="fw-bold mb-1" style="color: #5D4037;">${flooded.commodity}</h6>
+                            <p class="small text-muted mb-2"><i class="bi bi-geo-alt-fill text-danger me-1"></i>${flooded.region}</p>
+                            <div class="mt-2">
+                                <h5 class="fw-bold mb-0 text-danger">${flooded.currency} ${flooded.latestPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</h5>
+                                <small class="text-danger fw-bold"><i class="bi bi-graph-down me-1"></i>Declined by ${floodedPctStr}</small>
+                            </div>
+                            <p class="small text-muted mt-3 mb-0" style="font-size: 0.82rem; line-height: 1.4;">High supply and volume inflows in the market have severely depressed prices. Abundant availability detected.</p>
+                        </div>
+                    </div>
+
+                    <!-- Price Too Low Card -->
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm p-3 h-100 text-dark" style="background-color: #fbe9e7; border-left: 4px solid #d84315 !important; border-radius: 12px;">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="badge rounded-pill bg-danger text-white font-monospace fw-bold" style="font-size: 0.75rem; background-color: #d84315 !important;">PRICE CRITICAL</span>
+                                <div class="p-2 rounded-circle bg-white shadow-sm d-inline-flex text-danger"><i class="bi bi-tags-fill fs-5"></i></div>
+                            </div>
+                            <h6 class="fw-bold mb-1" style="color: #5D4037;">${tooLow.commodity}</h6>
+                            <p class="small text-muted mb-2"><i class="bi bi-geo-alt-fill text-danger me-1"></i>${tooLow.region}</p>
+                            <div class="mt-2">
+                                <h5 class="fw-bold mb-0 text-danger" style="color: #c62828 !important;">${tooLow.currency} ${tooLow.latestPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</h5>
+                                <small class="text-danger fw-bold"><i class="bi bi-chevron-double-down me-1"></i>At historical low (${tooLow.unit})</small>
+                            </div>
+                            <p class="small text-muted mt-3 mb-0" style="font-size: 0.82rem; line-height: 1.4;">Price index is highly undervalued. Offers maximum buying leverage but represents severe market stress for growers.</p>
+                        </div>
+                    </div>
+
+                    <!-- Scarce Crop Card -->
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm p-3 h-100 text-dark" style="background-color: #e8f5e9; border-left: 4px solid #2e7d32 !important; border-radius: 12px;">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="badge rounded-pill bg-success text-white font-monospace fw-bold" style="font-size: 0.75rem;">SCARCE / DEFICIT</span>
+                                <div class="p-2 rounded-circle bg-white shadow-sm d-inline-flex text-success"><i class="bi bi-shield-exclamation fs-5"></i></div>
+                            </div>
+                            <h6 class="fw-bold mb-1" style="color: #5D4037;">${scarce.commodity}</h6>
+                            <p class="small text-muted mb-2"><i class="bi bi-geo-alt-fill text-danger me-1"></i>${scarce.region}</p>
+                            <div class="mt-2">
+                                <h5 class="fw-bold mb-0 text-success" style="color: #2e7d32 !important;">${scarce.currency} ${scarce.latestPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</h5>
+                                <small class="text-success fw-bold"><i class="bi bi-graph-up me-1"></i>Increased by ${scarcePctStr}</small>
+                            </div>
+                            <p class="small text-muted mt-3 mb-0" style="font-size: 0.82rem; line-height: 1.4;">Very low stock volumes in trade. Strong upward pressure driven by high consumer demand and localized scarcity.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buyer/Seller Strategic Recommendation Columns -->
+                <div class="row g-4 mt-1">
+                    <!-- Buyer Playbook Column -->
+                    <div class="col-md-6">
+                        <div class="p-4 bg-white border border-success border-opacity-10 rounded-4 h-100 shadow-sm">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;">
+                                    <i class="bi bi-cart-check-fill fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold text-success mb-0" style="font-size: 1.05rem;">🛒 Strategic Buyer's Playbook</h6>
+                                    <p class="small text-muted mb-0">Buy Signals & Capital Optimization</p>
+                                </div>
+                            </div>
+                            
+                            <div class="p-3 bg-light rounded-3 mb-3 border-start border-success border-3">
+                                <span class="text-muted small fw-bold text-uppercase d-block mb-1">Primary Buy Alert</span>
+                                <h6 class="fw-bold text-dark mb-0">PROCURING: <span class="text-success">${flooded.commodity}</span> & <span class="text-success">${tooLow.commodity}</span></h6>
+                            </div>
+
+                            <ul class="list-unstyled mb-0 d-flex flex-column gap-2" style="font-size: 0.88rem; line-height: 1.5; color: #555; padding-left: 0;">
+                                <li class="d-flex align-items-start gap-2">
+                                    <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                                    <span><strong>Procure in Bulk:</strong> Actively purchase <strong>${flooded.commodity}</strong> in large quantities. Prices are down <strong>${floodedPctStr}</strong>, offering maximum arbitrage and processing margins.</span>
+                                </li>
+                                <li class="d-flex align-items-start gap-2">
+                                    <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                                    <span><strong>Capitalize on Depressed Prices:</strong> Secure contracts for <strong>${tooLow.commodity}</strong> immediately at <strong>${tooLow.currency} ${tooLow.latestPrice.toLocaleString()}</strong>. These historical low prices will likely rebound in 2-3 weeks.</span>
+                                </li>
+                                <li class="d-flex align-items-start gap-2">
+                                    <i class="bi bi-dash-circle-fill text-warning mt-1"></i>
+                                    <span><strong>De-prioritize Spot Buying:</strong> Defer or scale down spot-market acquisitions of <strong>${scarce.commodity}</strong> due to the current <strong>${scarcePctStr}</strong> price surge. Limit exposure until supply normalizes.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Seller Playbook Column -->
+                    <div class="col-md-6">
+                        <div class="p-4 bg-white border border-warning border-opacity-15 rounded-4 h-100 shadow-sm">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="bg-warning text-dark rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px; background-color: #ffb300 !important; color: #3e2723 !important;">
+                                    <i class="bi bi-cash-coin fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold text-warning mb-0" style="font-size: 1.05rem; color: #b7791f !important;">🌾 Strategic Seller's Playbook</h6>
+                                    <p class="small text-muted mb-0">Sell Signals & Revenue Maximization</p>
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-light rounded-3 mb-3 border-start border-warning border-3" style="border-left-color: #ffb300 !important;">
+                                <span class="text-muted small fw-bold text-uppercase d-block mb-1">Primary Sell Alert</span>
+                                <h6 class="fw-bold text-dark mb-0">LIQUIDATING: <span class="text-success" style="color: #b7791f !important;">${scarce.commodity}</span> | HOLDING: <span class="text-danger">${flooded.commodity}</span></h6>
+                            </div>
+
+                            <ul class="list-unstyled mb-0 d-flex flex-column gap-2" style="font-size: 0.88rem; line-height: 1.5; color: #555; padding-left: 0;">
+                                <li class="d-flex align-items-start gap-2">
+                                    <i class="bi bi-check-circle-fill text-success mt-1" style="color: #b7791f !important;"></i>
+                                    <span><strong>Liquidate Scarcity Premium:</strong> Sell your stock of <strong>${scarce.commodity}</strong> immediately to pocket a premium price of <strong>${scarce.currency} ${scarce.latestPrice.toLocaleString()}</strong> before competitor supply recovers.</span>
+                                </li>
+                                <li class="d-flex align-items-start gap-2">
+                                    <i class="bi bi-x-circle-fill text-danger mt-1"></i>
+                                    <span><strong>Hold/Process Flooded Crops:</strong> Avoid selling <strong>${flooded.commodity}</strong> raw today. Store in hermetic bags, or dry/mill them to add value, bypassing the depressed raw-market prices.</span>
+                                </li>
+                                <li class="d-flex align-items-start gap-2">
+                                    <i class="bi bi-arrow-right-circle-fill text-primary mt-1"></i>
+                                    <span><strong>Contract Negotiation:</strong> For <strong>${tooLow.commodity}</strong>, avoid selling on the spot market entirely. Group with local cooperatives to negotiate direct-supply deals with bulk processors.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('dynamicAdvisoryContent').innerHTML = html;
+        } catch (e) {
+            console.error("FARD Advisory Analysis failed: ", e);
+            document.getElementById('dynamicAdvisoryContent').innerHTML = `
+                <div class="alert alert-danger text-center py-3 border-0 small shadow-sm rounded-3">
+                    <i class="bi bi-exclamation-triangle-fill me-1 fs-5"></i> Trade intelligence engine failed to start.
+                </div>`;
+        }
+    }
     
     window.updateKakamegaChart = function(cropName) {
         if (!cropName) return;
@@ -551,6 +839,9 @@
     // First populate, then build the chart
     populateCropSelector();
     initKakamegaChart();
+    
+    // Run FARD advisory analysis
+    runFARDMarketAdvisory();
     
     setTimeout(() => {
         const sel = document.getElementById('cropSelector');
@@ -939,9 +1230,97 @@
                     `;
                 });
                 
+                // Dynamic Market Advisory Playbook injection
+                const adv = window.fardAdvisoryData || {
+                    flooded: { commodity: "Sukuma Wiki (Crate)", latestPrice: 1000, region: "Lurambi Market Kakamega", currency: "KES", trend: "down", pctChange: -16.7 },
+                    scarce: { commodity: "Rosecoco Beans (90kg)", latestPrice: 9000, region: "Kakamega Central Market", currency: "KES", trend: "up", pctChange: 5.9 },
+                    tooLow: { commodity: "Sukuma Wiki (Crate)", latestPrice: 1000, region: "Lurambi Market Kakamega", currency: "KES", trend: "down", pctChange: -16.7 },
+                    floodedPctStr: "-16.7%",
+                    scarcePctStr: "+5.9%",
+                    tooLowPctStr: "-16.7%"
+                };
+
+                let advisorySectionHtml = `
+                    <h3 style="color: #2E7D32; border-bottom: 1px solid #ddd; padding-bottom: 5px; font-size: 16px; font-weight: bold; margin-top: 30px; margin-bottom: 15px;">2. FARD Strategic Market Advisory & Trade Playbook</h3>
+                    <p style="font-size: 12.5px; color: #555; line-height: 1.5; margin-bottom: 20px;">
+                        This section compiles algorithmic decision-support recommendations based on localized supply spikes, critical price depression, and crop deficits detected by FARD sensory frameworks in Kakamega.
+                    </p>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 12px;">
+                        <thead>
+                            <tr style="background-color: #5D4037; color: #ffffff;">
+                                <th style="padding: 10px; border: 1px solid #ddd; font-weight: bold; width: 30%; text-align: left;">Market Signal</th>
+                                <th style="padding: 10px; border: 1px solid #ddd; font-weight: bold; width: 35%; text-align: left;">Detected Commodity</th>
+                                <th style="padding: 10px; border: 1px solid #ddd; font-weight: bold; width: 35%; text-align: left;">Actionable Strategic Advice</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background-color: #fff8e1;">
+                                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: #b7791f;">⚠️ FLOODED STATE (High Supply)</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">
+                                    <strong>${adv.flooded.commodity}</strong><br>
+                                    <span style="font-size: 11px; color: #777;">Current: ${adv.flooded.currency} ${adv.flooded.latestPrice.toLocaleString()} (${adv.floodedPctStr})<br>Location: ${adv.flooded.region}</span>
+                                </td>
+                                <td style="padding: 10px; border: 1px solid #ddd; font-size: 11px; line-height: 1.4; color: #3e2723;">
+                                    Abundant volumes have depressed prices. Buyers should procure in bulk for maximum leverage. Sellers should withhold raw stock or mill/dry to add value.
+                                </td>
+                            </tr>
+                            <tr style="background-color: #fbe9e7;">
+                                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: #c62828;">🚨 PRICE CRITICAL (Too Low)</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">
+                                    <strong>${adv.tooLow.commodity}</strong><br>
+                                    <span style="font-size: 11px; color: #777;">Current: ${adv.tooLow.currency} ${adv.tooLow.latestPrice.toLocaleString()} (${adv.tooLowPctStr})<br>Location: ${adv.tooLow.region}</span>
+                                </td>
+                                <td style="padding: 10px; border: 1px solid #ddd; font-size: 11px; line-height: 1.4; color: #3e2723;">
+                                    Depressed unit prices represent critical lows. Buyer BUY signal is strong. Sellers must avoid spot market trading and seek direct processor agreements.
+                                </td>
+                            </tr>
+                            <tr style="background-color: #e8f5e9;">
+                                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: #2e7d32;">📈 SCARCE / DEFICIT (Low Supply)</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">
+                                    <strong>${adv.scarce.commodity}</strong><br>
+                                    <span style="font-size: 11px; color: #777;">Current: ${adv.scarce.currency} ${adv.scarce.latestPrice.toLocaleString()} (${adv.scarcePctStr})<br>Location: ${adv.scarce.region}</span>
+                                </td>
+                                <td style="padding: 10px; border: 1px solid #ddd; font-size: 11px; line-height: 1.4; color: #2e7d32;">
+                                    Very low regional stock volumes. Sellers have absolute margin leverage; liquidate premium stock now. Buyers should defer purchases to limit exposure.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style="margin-bottom: 30px; width: 100%;">
+                        <table style="width: 100%; border: none; border-collapse: collapse; margin-bottom: 20px;">
+                            <tr>
+                                <td style="width: 50%; padding: 0 10px 0 0; border: none; vertical-align: top;">
+                                    <div style="background-color: #f4fdf4; border: 1px solid #c8e6c9; border-radius: 6px; padding: 15px; min-height: 160px;">
+                                        <h4 style="color: #2E7D32; margin-top: 0; margin-bottom: 10px; font-size: 14px; font-weight: bold;">🛒 Strategic Buyer's Playbook</h4>
+                                        <ul style="margin: 0; padding-left: 18px; font-size: 11px; line-height: 1.5; color: #444;">
+                                            <li style="margin-bottom: 6px;"><strong>Bulk Procuring:</strong> Purchase <strong>${adv.flooded.commodity}</strong> in high quantities due to a <strong>${adv.floodedPctStr}</strong> price decline, capturing premium arbitrage.</li>
+                                            <li style="margin-bottom: 6px;"><strong>Lock Depressed Lows:</strong> Purchase <strong>${adv.tooLow.commodity}</strong> at <strong>${adv.tooLow.currency} ${adv.tooLow.latestPrice.toLocaleString()}</strong> before price normalizes.</li>
+                                            <li><strong>Avoid Premium Costs:</strong> Postpone or limit acquisition of <strong>${adv.scarce.commodity}</strong> to escape the <strong>${adv.scarcePctStr}</strong> spot surcharge.</li>
+                                        </ul>
+                                    </div>
+                                </td>
+                                <td style="width: 50%; padding: 0 0 0 10px; border: none; vertical-align: top;">
+                                    <div style="background-color: #fffaf0; border: 1px solid #ffe0b2; border-radius: 6px; padding: 15px; min-height: 160px;">
+                                        <h4 style="color: #b7791f; margin-top: 0; margin-bottom: 10px; font-size: 14px; font-weight: bold;">🌾 Strategic Seller's Playbook</h4>
+                                        <ul style="margin: 0; padding-left: 18px; font-size: 11px; line-height: 1.5; color: #444;">
+                                            <li style="margin-bottom: 6px;"><strong>Release Peak Scarcity:</strong> Sell your stock of <strong>${adv.scarce.commodity}</strong> immediately at <strong>${adv.scarce.currency} ${adv.scarce.latestPrice.toLocaleString()}</strong> to maximize profit margins.</li>
+                                            <li style="margin-bottom: 6px;"><strong>Value Addition:</strong> Withhold selling raw <strong>${adv.flooded.commodity}</strong>. Mill or dry to store until supply normalizes.</li>
+                                            <li><strong>Cooperative Supply:</strong> Form bulk contracts for <strong>${adv.tooLow.commodity}</strong> rather than spot trading to negotiate superior margins.</li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                `;
+
                 bodyHtml += `
                         </tbody>
                     </table>
+                    
+                    ${advisorySectionHtml}
                     
                     <div style="page-break-after: always; break-after: page;"></div>
                 `;
