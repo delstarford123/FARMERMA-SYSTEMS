@@ -2,24 +2,25 @@ import os
 import requests
 from dotenv import load_dotenv
 
+# Ensure environment variables are loaded if a .env file exists
 load_dotenv()
-
-# Pull configurations
-PESAPAL_CONSUMER_KEY = os.environ.get('PESAPAL_CONSUMER_KEY')
-PESAPAL_CONSUMER_SECRET = os.environ.get('PESAPAL_CONSUMER_SECRET')
-PESAPAL_ENV = os.environ.get('PESAPAL_ENV', 'sandbox').lower()
-
-if PESAPAL_ENV == 'production':
-    BASE_URL = "https://pay.pesapal.com/v3"
-else:
-    BASE_URL = "https://cybqa.pesapal.com/pesapalv3"
 
 def get_pesapal_token():
     """Authenticates with PesaPal v3 and returns a Bearer Token."""
-    api_url = f"{BASE_URL}/api/Auth/RequestToken"
+    consumer_key = os.environ.get('PESAPAL_CONSUMER_KEY')
+    consumer_secret = os.environ.get('PESAPAL_CONSUMER_SECRET')
+    env = os.environ.get('PESAPAL_ENV', 'sandbox').lower()
+    
+    if not consumer_key or not consumer_secret:
+        print("[ERROR] PesaPal credentials missing from environment variables (PESAPAL_CONSUMER_KEY/SECRET)")
+        return None
+
+    base_url = "https://pay.pesapal.com/v3" if env == 'production' else "https://cybqa.pesapal.com/pesapalv3"
+    api_url = f"{base_url}/api/Auth/RequestToken"
+    
     payload = {
-        "consumer_key": PESAPAL_CONSUMER_KEY,
-        "consumer_secret": PESAPAL_CONSUMER_SECRET
+        "consumer_key": consumer_key,
+        "consumer_secret": consumer_secret
     }
     headers = {
         "Accept": "application/json",
@@ -39,7 +40,10 @@ def get_pesapal_token():
 
 def register_pesapal_ipn(token, ipn_url):
     """Registers the Instant Payment Notification (IPN) webhook URL with PesaPal."""
-    api_url = f"{BASE_URL}/api/URLSetup/RegisterIPN"
+    env = os.environ.get('PESAPAL_ENV', 'sandbox').lower()
+    base_url = "https://pay.pesapal.com/v3" if env == 'production' else "https://cybqa.pesapal.com/pesapalv3"
+    
+    api_url = f"{base_url}/api/URLSetup/RegisterIPN"
     payload = {
         "url": ipn_url,
         "ipn_notification_type": "GET"
@@ -59,7 +63,10 @@ def register_pesapal_ipn(token, ipn_url):
 
 def submit_pesapal_order(token, order_reference, amount, currency, description, callback_url, ipn_id, email, phone, first_name, last_name):
     """Submits a checkout order to PesaPal and returns the redirection details."""
-    api_url = f"{BASE_URL}/api/Transactions/SubmitOrderRequest"
+    env = os.environ.get('PESAPAL_ENV', 'sandbox').lower()
+    base_url = "https://pay.pesapal.com/v3" if env == 'production' else "https://cybqa.pesapal.com/pesapalv3"
+    
+    api_url = f"{base_url}/api/Transactions/SubmitOrderRequest"
     
     # Sanitize phone numbers - PesaPal prefers digits or local format
     phone_sanitized = str(phone).strip().replace('+', '')
@@ -99,7 +106,10 @@ def submit_pesapal_order(token, order_reference, amount, currency, description, 
 
 def get_pesapal_transaction_status(token, order_tracking_id):
     """Queries PesaPal to obtain the final status of a transaction."""
-    api_url = f"{BASE_URL}/api/Transactions/GetTransactionStatus?orderTrackingId={order_tracking_id}"
+    env = os.environ.get('PESAPAL_ENV', 'sandbox').lower()
+    base_url = "https://pay.pesapal.com/v3" if env == 'production' else "https://cybqa.pesapal.com/pesapalv3"
+    
+    api_url = f"{base_url}/api/Transactions/GetTransactionStatus?orderTrackingId={order_tracking_id}"
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/json",
