@@ -34,6 +34,7 @@ from firebase_admin import credentials, auth, db as firebase_db, storage # <-- E
 from models import db as sqlalchemy_db, User, MarketData, Transaction 
 from ai_logic.ai_engine import generate_price_forecast
 from mpesa import initiate_stk_push
+from pesapal_helper import get_pesapal_token, register_pesapal_ipn, submit_pesapal_order, get_pesapal_transaction_status
 
 # APScheduler Setup
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -1295,7 +1296,7 @@ PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
 # --- MASTER PRICING DICTIONARY ---
 # Single source of truth for all payment gateways
 SYSTEM_PRICING = {
-    'market_intel': {"name": "Market Intelligence Standalone", "kes": 100, "usd": 1.00},
+    'market_intel': {"name": "Market Intelligence Monthly Standalone", "kes": 50, "usd": 0.50},
     'bronze': {"name": "Bronze Consulting Package", "kes": 1000, "usd": 10.00},
     'silver': {"name": "Silver Consulting Package", "kes": 2000, "usd": 20.00},
     'gold': {"name": "Gold Consulting Package", "kes": 3000, "usd": 30.00},
@@ -1314,8 +1315,8 @@ SYSTEM_PRICING = {
 def get_plan_price(plan_id, category=None):
     """
     Returns Kes & Usd values. For market_intel, supports:
-    individual (100 KSH / $1.00), cbo (300 KSH / $3.00),
-    company (900 KSH / $9.00), ngo / other (2700 KSH / $27.00).
+    individual (50 KSH / $0.50 monthly), cbo (300 KSH / $3.00 monthly),
+    company (900 KSH / $9.00 monthly), ngo / other (2700 KSH / $27.00 monthly).
     """
     base_plan = SYSTEM_PRICING.get(plan_id, SYSTEM_PRICING['bronze'])
     if plan_id == 'market_intel':
@@ -1323,13 +1324,13 @@ def get_plan_price(plan_id, category=None):
             category = 'individual'
         category = str(category).lower().strip()
         if category == 'individual':
-            return {"name": "Market Intelligence - Individual", "kes": 100, "usd": 1.00}
+            return {"name": "Market Intelligence - Individual (Monthly)", "kes": 50, "usd": 0.50}
         elif category == 'cbo':
-            return {"name": "Market Intelligence - CBO", "kes": 300, "usd": 3.00}
+            return {"name": "Market Intelligence - CBO (Monthly)", "kes": 300, "usd": 3.00}
         elif category == 'company':
-            return {"name": "Market Intelligence - Company", "kes": 900, "usd": 9.00}
+            return {"name": "Market Intelligence - Company (Monthly)", "kes": 900, "usd": 9.00}
         elif category in ['ngo', 'other']:
-            return {"name": "Market Intelligence - NGO/Other", "kes": 2700, "usd": 27.00}
+            return {"name": "Market Intelligence - NGO/Other (Monthly)", "kes": 2700, "usd": 27.00}
     return {
         "name": base_plan['name'],
         "kes": base_plan['kes'],
@@ -1653,6 +1654,280 @@ def verify_paystack():
         flash("Server error during verification.", "danger")
         
     return redirect(url_for('pricing'))
+
+def get_pesapal_ipn_id(token, host_url):
+    """Retrieves or registers the IPN ID dynamically, caching it in Firebase for speed."""
+    ipn_cache_key = host_url.replace('.', '_').replace('/', '_').replace(':', '_')
+    try:
+        cached = rtdb.reference(f'pesapal_ipns/{ipn_cache_key}').get()
+        if cached and isinstance(cached, dict) and 'ipn_id' in cached:
+            return cached['ipn_id']
+    except Exception as ex:
+        print(f"Error accessing firebase IPN cache: {ex}")
+        
+    # Register new IPN URL
+    ipn_endpoint = f"{host_url}/pesapal-ipn"
+    res = register_pesapal_ipn(token, ipn_endpoint)
+    if res and isinstance(res, dict):
+        ipn_id = res.get('ipn_id')
+        if ipn_id:
+            try:
+                rtdb.reference(f'pesapal_ipns/{ipn_cache_key}').set({
+                    'ipn_id': ipn_id,
+                    'url': ipn_endpoint,
+                    'registered_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                })
+            except Exception as ex:
+                print(f"Error caching IPN: {ex}")
+            return ipn_id
+    return None
+
+# --- 5. PESAPAL LOGIC ---
+@app.route('/create-pesapal-session', methods=['POST'])
+@login_required
+def create_pesapal_session():
+    try:
+        data = request.json or {}
+        plan_id = data.get('plan', 'bronze')
+        category = data.get('category')
+        
+        plan_details = get_plan_price(plan_id, category)
+        amount = float(plan_details['kes'])
+        currency = "KES"
+        
+        # Generate merchant reference
+        merchant_ref = f"PESA_{session.get('user_id')[-6:]}_{int(time.time())}"
+        
+        # Save pending transaction state
+        rtdb.reference(f'pending_transactions/{merchant_ref}').set({
+            'user_id': session.get('user_id'),
+            'amount': amount,
+            'plan_id': plan_id,
+            'category': category or '',
+            'status': 'awaiting_payment',
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        
+        # Determine host url dynamically
+        host_url = request.host_url.rstrip('/')
+        callback_url = f"{host_url}/pesapal-callback"
+        
+        # Authenticate and obtain token
+        token = get_pesapal_token()
+        if not token:
+            return jsonify({"error": "Failed to authenticate with PesaPal API"}), 500
+            
+        ipn_id = get_pesapal_ipn_id(token, host_url)
+        if not ipn_id:
+            return jsonify({"error": "Failed to register PesaPal IPN URL"}), 500
+            
+        # Prep user info
+        uid = session.get('user_id')
+        user_profile = rtdb.reference(f'users/{uid}').get() or {}
+        email = user_profile.get('email', session.get('user_email', 'customer@example.com'))
+        phone = user_profile.get('phone', '0700000000')
+        full_name = user_profile.get('full_name', 'Valued Farmer')
+        
+        names = full_name.split(' ', 1)
+        first_name = names[0]
+        last_name = names[1] if len(names) > 1 else 'Farmer'
+        
+        # Submit transaction
+        order_res = submit_pesapal_order(
+            token=token,
+            order_reference=merchant_ref,
+            amount=amount,
+            currency=currency,
+            description=f"Farmerman Systems: {plan_details['name']}",
+            callback_url=callback_url,
+            ipn_id=ipn_id,
+            email=email,
+            phone=phone,
+            first_name=first_name,
+            last_name=last_name
+        )
+        
+        if order_res and isinstance(order_res, dict) and order_res.get('redirect_url'):
+            return jsonify({'redirect_url': order_res['redirect_url']})
+            
+        return jsonify({"error": "Failed to initiate transaction with PesaPal", "details": order_res}), 500
+    except Exception as e:
+        print(f"PesaPal checkout creation failed: {e}")
+        return jsonify({"error": "Server error during PesaPal initialization"}), 500
+
+@app.route('/api/create-pesapal-session', methods=['POST'])
+@token_required
+def api_create_pesapal_session():
+    """Allows the mobile app to initiate a PesaPal payment session."""
+    try:
+        data = request.json or {}
+        plan_id = data.get('plan', 'bronze')
+        category = data.get('category')
+        
+        plan_details = get_plan_price(plan_id, category)
+        amount = float(plan_details['kes'])
+        currency = "KES"
+        
+        uid = request.user['uid']
+        # Generate merchant reference
+        merchant_ref = f"PESA_{uid[-6:]}_{int(time.time())}"
+        
+        # Save pending transaction state
+        rtdb.reference(f'pending_transactions/{merchant_ref}').set({
+            'user_id': uid,
+            'amount': amount,
+            'plan_id': plan_id,
+            'category': category or '',
+            'status': 'awaiting_payment',
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'platform': 'mobile_app'
+        })
+        
+        # Determine host url dynamically
+        host_url = request.host_url.rstrip('/')
+        callback_url = f"{host_url}/pesapal-callback"
+        
+        # Authenticate and obtain token
+        token = get_pesapal_token()
+        if not token:
+            return jsonify({"error": "Failed to authenticate with PesaPal API"}), 500
+            
+        ipn_id = get_pesapal_ipn_id(token, host_url)
+        if not ipn_id:
+            return jsonify({"error": "Failed to register PesaPal IPN URL"}), 500
+            
+        # Prep user info
+        user_profile = rtdb.reference(f'users/{uid}').get() or {}
+        email = user_profile.get('email', 'customer@example.com')
+        phone = user_profile.get('phone', '0700000000')
+        full_name = user_profile.get('full_name', 'Valued Farmer')
+        
+        names = full_name.split(' ', 1)
+        first_name = names[0]
+        last_name = names[1] if len(names) > 1 else 'Farmer'
+        
+        # Submit transaction
+        order_res = submit_pesapal_order(
+            token=token,
+            order_reference=merchant_ref,
+            amount=amount,
+            currency=currency,
+            description=f"Farmerman Systems: {plan_details['name']}",
+            callback_url=callback_url,
+            ipn_id=ipn_id,
+            email=email,
+            phone=phone,
+            first_name=first_name,
+            last_name=last_name
+        )
+        
+        if order_res and isinstance(order_res, dict) and order_res.get('redirect_url'):
+            return jsonify({
+                'redirect_url': order_res['redirect_url'],
+                'merchant_reference': merchant_ref
+            })
+            
+        return jsonify({"error": "Failed to initiate transaction with PesaPal", "details": order_res}), 500
+    except Exception as e:
+        print(f"PesaPal API session creation failed: {e}")
+        return jsonify({"error": "Server error during PesaPal initialization"}), 500
+
+@app.route('/pesapal-callback')
+@login_required
+def pesapal_callback():
+    tracking_id = request.args.get('OrderTrackingId')
+    merchant_reference = request.args.get('OrderMerchantReference')
+    
+    if not tracking_id or not merchant_reference:
+        flash("Invalid PesaPal callback details.", "warning")
+        return redirect(url_for('pricing'))
+        
+    try:
+        # Check transaction state
+        token = get_pesapal_token()
+        status_res = get_pesapal_transaction_status(token, tracking_id)
+        
+        payment_status = str(status_res.get('payment_status_description', '')).upper()
+        
+        if payment_status == 'COMPLETED':
+            pending_txn = rtdb.reference(f'pending_transactions/{merchant_reference}').get()
+            if pending_txn:
+                uid = pending_txn.get('user_id')
+                plan_id = pending_txn.get('plan_id')
+                amount = float(status_res.get('amount', pending_txn.get('amount', 0)))
+                category = pending_txn.get('category')
+                
+                record_successful_transaction(uid, plan_id, amount, "PesaPal", tracking_id)
+                if plan_id == 'market_intel' and category:
+                    try:
+                        rtdb.reference(f'users/{uid}').update({'organization_category': category})
+                    except Exception as ex:
+                        print(f"Error saving category to database: {ex}")
+                        
+                rtdb.reference(f'pending_transactions/{merchant_reference}').delete()
+                
+            flash(f"Payment successful! Welcome to your new plan.", "success")
+            return redirect(url_for('payment_success'))
+            
+        elif payment_status in ['FAILED', 'INVALID']:
+            flash(f"Payment failed: {status_res.get('description', 'Rejected by provider')}", "danger")
+            return redirect(url_for('payment_failed'))
+            
+        # Processing state
+        flash("Payment is currently processing. You will receive access as soon as the provider updates the state.", "info")
+        return redirect(url_for('billing_history'))
+    except Exception as e:
+        print(f"PesaPal Callback verification error: {e}")
+        flash("System error validating payment state. Please contact administrator.", "danger")
+        return redirect(url_for('pricing'))
+
+@app.route('/pesapal-ipn', methods=['GET', 'POST'])
+def pesapal_ipn_listener():
+    # Fetch parameters from both GET request query arguments and POST json body
+    # PesaPal v3 uses OrderTrackingId, while some legacy or custom integrations use pesapal_transaction_tracking_id
+    tracking_id = request.args.get('OrderTrackingId') or request.args.get('pesapal_transaction_tracking_id') or request.values.get('pesapal_transaction_tracking_id')
+    merchant_reference = request.args.get('OrderMerchantReference') or request.args.get('pesapal_merchant_reference') or request.values.get('pesapal_merchant_reference')
+    
+    if request.is_json and not tracking_id:
+        tracking_id = request.json.get('OrderTrackingId') or request.json.get('pesapal_transaction_tracking_id')
+        merchant_reference = request.json.get('OrderMerchantReference') or request.json.get('pesapal_merchant_reference')
+        
+    print(f"PesaPal IPN Notification received. Tracking ID: {tracking_id}, Ref: {merchant_reference}")
+    
+    if tracking_id and merchant_reference:
+        try:
+            token = get_pesapal_token()
+            status_res = get_pesapal_transaction_status(token, tracking_id)
+            payment_status = str(status_res.get('payment_status_description', '')).upper()
+            
+            if payment_status == 'COMPLETED':
+                pending_txn = rtdb.reference(f'pending_transactions/{merchant_reference}').get()
+                if pending_txn:
+                    uid = pending_txn.get('user_id')
+                    plan_id = pending_txn.get('plan_id')
+                    amount = float(status_res.get('amount', pending_txn.get('amount', 0)))
+                    category = pending_txn.get('category')
+                    
+                    record_successful_transaction(uid, plan_id, amount, "PesaPal", tracking_id)
+                    if plan_id == 'market_intel' and category:
+                        try:
+                            rtdb.reference(f'users/{uid}').update({'organization_category': category})
+                        except Exception as ex:
+                            print(f"Error saving category to database: {ex}")
+                            
+                    rtdb.reference(f'pending_transactions/{merchant_reference}').delete()
+                    
+            return jsonify({
+                "orderNotificationType": "IPNCHANGE",
+                "orderTrackingId": tracking_id,
+                "orderMerchantReference": merchant_reference,
+                "status": 200
+            }), 200
+        except Exception as e:
+            print(f"PesaPal IPN processing failed: {e}")
+            return jsonify({"error": "Failed to process notification"}), 500
+            
+    return jsonify({"error": "Invalid notification parameters"}), 400
 
 # --- SUCCESS PAGE ---
 @app.route('/success')

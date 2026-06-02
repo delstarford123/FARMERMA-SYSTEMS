@@ -29,6 +29,9 @@
     .btn-stripe { color: #635BFF; border-color: #635BFF; transition: 0.3s; }
     .btn-stripe:hover { background-color: #635BFF; color: white; }
 
+    .btn-pesapal { color: #FF5722; border-color: #FF5722; transition: 0.3s; }
+    .btn-pesapal:hover { background-color: #FF5722; color: white; }
+
     /* Overlay for processing state */
     .processing-overlay {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -76,14 +79,14 @@
                 </label>
                 <div class="position-relative">
                     <select id="category-selector" class="form-select border border-2 rounded-pill px-4 text-center fw-bold shadow-sm" style="height: 52px; font-size: 1.15rem; color: #2E7D32; border-color: #2E7D32 !important; cursor: pointer; transition: 0.3s; background-position: right 20px center;">
-                        <option value="individual" data-kes="100" data-usd="1.00">Individual — KES 100 / day</option>
-                        <option value="cbo" data-kes="300" data-usd="3.00">Community-Based Org (CBO) — KES 300 / day</option>
-                        <option value="company" data-kes="900" data-usd="9.00">Company / Enterprise — KES 900 / day</option>
-                        <option value="ngo" data-kes="2700" data-usd="27.00">NGO / Other — KES 2,700 / day</option>
+                        <option value="individual" data-kes="50" data-usd="0.50">Individual — KES 50 / month</option>
+                        <option value="cbo" data-kes="300" data-usd="3.00">Community-Based Org (CBO) — KES 300 / month</option>
+                        <option value="company" data-kes="900" data-usd="9.00">Company / Enterprise — KES 900 / month</option>
+                        <option value="ngo" data-kes="2700" data-usd="27.00">NGO / Other — KES 2,700 / month</option>
                     </select>
                 </div>
                 <div class="small text-muted mt-3">
-                    <i class="bi bi-info-circle me-1"></i> Special daily tiered rates are dynamically calculated for the selected category.
+                    <i class="bi bi-info-circle me-1"></i> Special monthly tiered rates are dynamically calculated for the selected category.
                 </div>
             </div>
         </div>
@@ -148,6 +151,19 @@
                     <h5 class="fw-bold mb-1">PayPal</h5>
                     <p class="text-muted small mb-4">Fast & Secure Wallet (<span class="usd-price-display">${{ "{:,.2f}".format(amount_usd) }}</span>)</p>
                     <div id="paypal-button-container" class="mt-auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3 payment-card">
+            <div class="card h-100 shadow-sm border-0 border-top border-4 payment-card-body" style="border-color: #FF5722 !important;">
+                <div class="card-body p-4 text-center d-flex flex-column">
+                    <div class="mb-3" style="color: #FF5722;"><i class="bi bi-wallet2" style="font-size: 2.5rem;"></i></div>
+                    <h5 class="fw-bold mb-1">PesaPal Mobile/Card</h5>
+                    <p class="text-muted small mb-4">Mobile & Card (<span class="kes-price-display">KES {{ "{:,.0f}".format(amount_kes) }}</span>)</p>
+                    <button id="pesapal-button" class="btn btn-lg btn-outline-danger mt-auto w-100 fw-bold btn-pesapal">
+                        Use PesaPal
+                    </button>
                 </div>
             </div>
         </div>
@@ -235,6 +251,45 @@
         .then(r => r.json())
         .then(s => stripe.redirectToCheckout({ sessionId: s.id }));
     });
+
+    // 6. PESAPAL
+    const pesapalBtn = document.getElementById('pesapal-button');
+    if (pesapalBtn) {
+        pesapalBtn.addEventListener('click', function() {
+            this.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Connecting...`;
+            this.classList.add('disabled');
+            
+            fetch('/create-pesapal-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    plan: '{{ plan_id }}',
+                    category: selectedCategory
+                })
+            })
+            .then(r => {
+                if (!r.ok) {
+                    throw new Error("HTTP error " + r.status);
+                }
+                return r.json();
+            })
+            .then(data => {
+                if (data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert("Failed to initialize PesaPal checkout: " + (data.error || "Unknown error"));
+                    this.innerHTML = `Use PesaPal`;
+                    this.classList.remove('disabled');
+                }
+            })
+            .catch(err => {
+                console.error("PesaPal initialization failed:", err);
+                alert("Could not connect to PesaPal payment gateway. Please try again.");
+                this.innerHTML = `Use PesaPal`;
+                this.classList.remove('disabled');
+            });
+        });
+    }
 
     // 5. PAYPAL
     paypal.Buttons({

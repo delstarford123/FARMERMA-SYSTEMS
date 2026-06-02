@@ -170,6 +170,55 @@ def api_process_mpesa():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/create-pesapal-session', methods=['POST'])
+@token_required
+def api_create_pesapal_session():
+    """Allows the Flutter app to initiate a PesaPal payment session."""
+    try:
+        data = request.json or {}
+        plan_id = data.get('plan', 'bronze')
+        category = data.get('category')
+
+        from main import get_plan_price, get_pesapal_ipn_id
+        from pesapal_helper import get_pesapal_token, submit_pesapal_order
+
+        plan_details = get_plan_price(plan_id, category)
+        amount = float(plan_details['kes'])
+
+        uid = request.user['uid']
+        merchant_ref = f"PESA_{uid[-6:]}_{int(time.time())}"
+
+        rtdb.reference(f'pending_transactions/{merchant_ref}').set({
+            'user_id': uid,
+            'amount': amount,
+            'plan_id': plan_id,
+            'status': 'awaiting_payment',
+            'platform': 'mobile_app',
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+        host_url = request.host_url.rstrip('/')
+        token = get_pesapal_token()
+        ipn_id = get_pesapal_ipn_id(token, host_url)
+
+        order_res = submit_pesapal_order(
+            token=token,
+            order_reference=merchant_ref,
+            amount=amount,
+            currency='KES',
+            description=f"Farmerman: {plan_details['name']}",
+            callback_url=f"{host_url}/pesapal-callback",
+            ipn_id=ipn_id,
+            email=request.user.get('email', 'customer@example.com'),
+            phone='0700000000',
+            first_name='Farmer',
+            last_name='User'
+        )
+        return jsonify(order_res)
+    except Exception as e:
+        print(f"PesaPal API Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
 
 
 
