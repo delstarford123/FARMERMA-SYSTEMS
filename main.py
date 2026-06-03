@@ -759,7 +759,7 @@ def update_user_role():
     return redirect(url_for('subscriber_management'))
 
 # ==========================================
-# PROTECTED MARKET INTELLIGENCE & AI
+# PUBLIC MARKET INTELLIGENCE & AI
 # ==========================================
 @app.route('/market-intelligence')
 def market_intelligence():
@@ -1339,18 +1339,29 @@ def get_plan_price(plan_id, category=None):
 
 # --- Helper Function for Clean Code ---
 def record_successful_transaction(user_id, plan_id, amount, gateway, receipt_number):
-    """Updates the user tier and logs the transaction securely."""
+    """Updates the user tier and logs the transaction securely. Supports guest users."""
     try:
-        # 1. Upgrade the user's tier
-        rtdb.reference(f'users/{user_id}').update({'subscription_tier': plan_id})
+        # 1. Upgrade the user's tier if they are a registered user
+        if user_id and user_id != 'guest':
+            rtdb.reference(f'users/{user_id}').update({'subscription_tier': plan_id})
         
-        # 2. Update their active session if they are currently logged in
-        if session.get('user_id') == user_id:
-            session['tier'] = plan_id
-            session['subscription_tier'] = plan_id
+        # 2. Update their active session if this is happening in their current thread
+        # Note: session might not be available in async callbacks (like M-Pesa IPN)
+        try:
+            if session.get('user_id') == user_id:
+                session['tier'] = plan_id
+                session['subscription_tier'] = plan_id
+            
+            # If it's a guest purchase for Market Intel, mark the session
+            if plan_id == 'market_intel' and (not user_id or user_id == 'guest'):
+                session['market_intel_guest'] = True
+        except Exception:
+            # Session might be unavailable in background tasks/callbacks
+            pass
             
         # 3. Log the financial transaction
-        rtdb.reference(f'completed_transactions/{user_id}').push({
+        log_id = user_id if user_id and user_id != 'guest' else f"guest_{receipt_number}"
+        rtdb.reference(f'completed_transactions/{log_id}').push({
             'receipt_number': receipt_number, 
             'amount': amount,
             'gateway': gateway,
@@ -1364,12 +1375,14 @@ def record_successful_transaction(user_id, plan_id, amount, gateway, receipt_num
 
 # --- 1. M-PESA LOGIC ---
 @app.route('/process-mpesa', methods=['POST'])
-@login_required
 def process_mpesa():
     phone = request.form.get('phone_number')
     plan_id = request.form.get('plan_id', 'bronze') 
     raw_amount = request.form.get('amount') 
     category = request.form.get('category')
+    
+    # Store plan in session for guest tracking
+    session['pending_plan'] = plan_id
     
     # Validation & Fallbacks - Now uses get_plan_price
     try:
@@ -1383,7 +1396,7 @@ def process_mpesa():
             checkout_id = res.get("CheckoutRequestID")
             # Store pending transaction for callback matching
             rtdb.reference(f'pending_transactions/{checkout_id}').set({
-                'user_id': session.get('user_id'), 
+                'user_id': session.get('user_id', 'guest'), 
                 'amount': amount, 
                 'plan_id': plan_id, 
                 'category': category or '',
@@ -1454,7 +1467,7 @@ def mpesa_callback():
                     plan_bought = pending_data.get('plan_id', 'bronze')
                     category = pending_data.get('category')
                     record_successful_transaction(uid, plan_bought, amount, "M-Pesa", receipt)
-                    if plan_bought == 'market_intel' and category:
+                    if plan_bought == 'market_intel' and category and uid != 'guest':
                         try:
                             rtdb.reference(f'users/{uid}').update({'organization_category': category})
                         except Exception as ex:
@@ -1477,11 +1490,13 @@ def mpesa_callback():
     
     
 @app.route('/checkout')
-@login_required 
 def subscriber_checkout():
     # 1. Get the plan from the URL (e.g., /checkout?plan=silver or ?plan=course_marketing)
     # If no plan is specified, it safely defaults to 'bronze'
     plan_id = request.args.get('plan', 'bronze')
+    
+    # Store plan in session
+    session['pending_plan'] = plan_id
     
     # 2. Look up the exact pricing from our master dictionary (SYSTEM_PRICING)
     selected_plan = SYSTEM_PRICING.get(plan_id, SYSTEM_PRICING['bronze'])
@@ -1499,13 +1514,11 @@ def subscriber_checkout():
     )
 
 @app.route('/payment-processing/<checkout_id>')
-@login_required
 def payment_processing(checkout_id):
     """Renders the waiting room while the user types their M-Pesa PIN."""
     return render_template('payments/payment_processing.html', checkout_id=checkout_id)
 
 @app.route('/api/check-payment/<checkout_id>')
-@login_required
 def check_payment_status(checkout_id):
     """The frontend polls this endpoint every 3 seconds to check for the callback."""
     pending_txn = rtdb.reference(f'pending_transactions/{checkout_id}').get()
@@ -1516,17 +1529,23 @@ def check_payment_status(checkout_id):
         return jsonify({'status': 'pending'})
     
     # If the transaction is GONE, mpesa_callback successfully processed it!
+    # If it was a market_intel plan, grant guest access
+    if session.get('pending_plan') == 'market_intel':
+        session['market_intel_guest'] = True
+        
     return jsonify({'status': 'completed'})
 
 # --- 2. STRIPE LOGIC ---
 @app.route('/create-stripe-session', methods=['POST'])
-@login_required
 def create_stripe_session():
     try:
         data = request.json
         plan_id = data.get('plan', 'bronze')
         category = data.get('category')
         
+        # Store plan in session
+        session['pending_plan'] = plan_id
+
         # Look up the plan using our dynamic get_plan_price function
         plan_details = get_plan_price(plan_id, category)
         # Stripe expects amounts in cents, so we multiply the USD amount by 100
@@ -1548,7 +1567,7 @@ def create_stripe_session():
             mode='payment',
             # Metadata is crucial for tracking who paid what in the Stripe Dashboard
             metadata={
-                'user_id': session.get('user_id'), 
+                'user_id': session.get('user_id', 'guest'), 
                 'plan_id': plan_id,
                 'category': category or ''
             }, 
@@ -1561,51 +1580,57 @@ def create_stripe_session():
         return jsonify(error="Unable to connect to Stripe."), 403
 
 @app.route('/stripe-success')
-@login_required
 def stripe_success():
     """Validates the redirect back from Stripe."""
     plan_id = request.args.get('plan_id', 'bronze')
     category = request.args.get('category')
     session_id = request.args.get('session_id')
-    user_id = session.get('user_id')
+    user_id = session.get('user_id', 'guest')
     
     # Grab the accurate USD price for the receipt
     plan_details = get_plan_price(plan_id, category)
     amount_paid = plan_details['usd']
     
-    if session_id and user_id:
+    if session_id:
         record_successful_transaction(user_id, plan_id, amount_paid, "Stripe", f"STR_{session_id[-8:]}")
-        if plan_id == 'market_intel' and category:
+        if plan_id == 'market_intel' and category and user_id != 'guest':
             try:
                 rtdb.reference(f'users/{user_id}').update({'organization_category': category})
             except Exception as ex:
                 print(f"Error saving category to database: {ex}")
+        
+        if plan_id == 'market_intel':
+            session['market_intel_guest'] = True
+            
         return redirect(url_for('payment_success'))
     
     return redirect(url_for('pricing'))
 
 # --- 3. PAYPAL LOGIC ---
 @app.route('/paypal-transaction-complete', methods=['POST'])
-@login_required
 def paypal_transaction_complete():
     try:
         data = request.json
         order_id = data.get('orderID')
         plan_id = data.get('plan', 'bronze')
         category = data.get('category')
-        user_id = session.get('user_id')
+        user_id = session.get('user_id', 'guest')
         
         # Grab the accurate USD price using get_plan_price
         plan_details = get_plan_price(plan_id, category)
         amount_paid = plan_details['usd']
         
-        if user_id and order_id:
+        if order_id:
             record_successful_transaction(user_id, plan_id, amount_paid, "PayPal", f"PAY_{order_id}")
-            if plan_id == 'market_intel' and category:
+            if plan_id == 'market_intel' and category and user_id != 'guest':
                 try:
                     rtdb.reference(f'users/{user_id}').update({'organization_category': category})
                 except Exception as ex:
                     print(f"Error saving category to database: {ex}")
+            
+            if plan_id == 'market_intel':
+                session['market_intel_guest'] = True
+                
             return jsonify({"status": "success"}), 200
             
         return jsonify({"status": "failed", "error": "Missing data"}), 400
@@ -1615,14 +1640,13 @@ def paypal_transaction_complete():
 
 # --- 4. PAYSTACK LOGIC ---
 @app.route('/verify-paystack')
-@login_required
 def verify_paystack():
     reference = request.args.get('reference')
     plan_id = request.args.get('plan', 'bronze')
     category = request.args.get('category')
-    user_id = session.get('user_id')
+    user_id = session.get('user_id', 'guest')
     
-    if not reference or not user_id: 
+    if not reference: 
         flash("Invalid transaction reference.", "warning")
         return redirect(url_for('pricing'))
     
@@ -1639,12 +1663,15 @@ def verify_paystack():
             actual_amount = response_data['data']['amount'] / 100 
             
             record_successful_transaction(user_id, plan_id, actual_amount, "Paystack", reference)
-            if plan_id == 'market_intel' and category:
+            if plan_id == 'market_intel' and category and user_id != 'guest':
                 try:
                     rtdb.reference(f'users/{user_id}').update({'organization_category': category})
                 except Exception as ex:
                     print(f"Error saving category to database: {ex}")
             
+            if plan_id == 'market_intel':
+                session['market_intel_guest'] = True
+                
             flash(f"Payment successful! Welcome to the {plan_id.capitalize()} plan.", "success")
             return redirect(url_for('payment_success'))
             
@@ -1684,7 +1711,6 @@ def get_pesapal_ipn_id(token, host_url):
 
 # --- 5. PESAPAL LOGIC ---
 @app.route('/create-pesapal-session', methods=['POST'])
-@login_required
 def create_pesapal_session():
     try:
         data = request.json or {}
@@ -1695,12 +1721,13 @@ def create_pesapal_session():
         amount = float(plan_details['kes'])
         currency = "KES"
         
+        user_id = session.get('user_id', 'guest')
         # Generate merchant reference
-        merchant_ref = f"PESA_{session.get('user_id')[-6:]}_{int(time.time())}"
+        merchant_ref = f"PESA_{user_id[-6:]}_{int(time.time())}"
         
         # Save pending transaction state
         rtdb.reference(f'pending_transactions/{merchant_ref}').set({
-            'user_id': session.get('user_id'),
+            'user_id': user_id,
             'amount': amount,
             'plan_id': plan_id,
             'category': category or '',
@@ -1722,8 +1749,7 @@ def create_pesapal_session():
             return jsonify({"error": "Failed to register PesaPal IPN URL"}), 500
             
         # Prep user info
-        uid = session.get('user_id')
-        user_profile = rtdb.reference(f'users/{uid}').get() or {}
+        user_profile = rtdb.reference(f'users/{user_id}').get() or {} if user_id != 'guest' else {}
         email = user_profile.get('email', session.get('user_email', 'customer@example.com'))
         phone = user_profile.get('phone', '0700000000')
         full_name = user_profile.get('full_name', 'Valued Farmer')
@@ -1833,7 +1859,6 @@ def api_create_pesapal_session():
         return jsonify({"error": "Server error during PesaPal initialization"}), 500
 
 @app.route('/pesapal-callback')
-@login_required
 def pesapal_callback():
     tracking_id = request.args.get('OrderTrackingId')
     merchant_reference = request.args.get('OrderMerchantReference')
@@ -1858,11 +1883,14 @@ def pesapal_callback():
                 category = pending_txn.get('category')
                 
                 record_successful_transaction(uid, plan_id, amount, "PesaPal", tracking_id)
-                if plan_id == 'market_intel' and category:
+                if plan_id == 'market_intel' and category and uid != 'guest':
                     try:
                         rtdb.reference(f'users/{uid}').update({'organization_category': category})
                     except Exception as ex:
                         print(f"Error saving category to database: {ex}")
+                
+                if plan_id == 'market_intel':
+                    session['market_intel_guest'] = True
                         
                 rtdb.reference(f'pending_transactions/{merchant_reference}').delete()
                 
@@ -1909,7 +1937,7 @@ def pesapal_ipn_listener():
                     category = pending_txn.get('category')
                     
                     record_successful_transaction(uid, plan_id, amount, "PesaPal", tracking_id)
-                    if plan_id == 'market_intel' and category:
+                    if plan_id == 'market_intel' and category and uid != 'guest':
                         try:
                             rtdb.reference(f'users/{uid}').update({'organization_category': category})
                         except Exception as ex:
@@ -1931,8 +1959,9 @@ def pesapal_ipn_listener():
 
 # --- SUCCESS PAGE ---
 @app.route('/success')
-@login_required
 def payment_success(): 
+    if session.get('pending_plan') == 'market_intel':
+        session['market_intel_guest'] = True
     return render_template('payments/payment_success.html')
 
 #==========================================
