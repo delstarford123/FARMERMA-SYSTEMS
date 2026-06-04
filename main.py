@@ -3107,121 +3107,108 @@ def api_request_withdrawal():
 @app.route("/webhook/twilio/zim-bot", methods=['POST'])
 def zim_bot_webhook():
     incoming_msg = request.values.get('Body', '').strip().lower()
-    user_phone = request.values.get('From', '')
+    raw_phone = request.values.get('From', '') # e.g. "whatsapp:+263771234567"
+    
+    # Clean the phone number to match database format
+    user_phone = raw_phone.replace('whatsapp:', '').replace('+', '').strip()
 
     # --- PERSONA & LOGIC DEFINITIONS ---
     GREETINGS = ['hi', 'hello', 'mhoroi', 'sanibonani', 'hey', 'start', 'tora', 'nzou', 'menu']
-    
     persona_intro = "🇿🇼 *ZimBot: Your AI Agricultural Advisor*\n\n"
-    
-    # --- DEEP INTELLIGENCE DATA ---
-    INTEL_OVERVIEW = (
-        "🧠 *What is Market Intelligence?*\n\n"
-        "It is the systematic collection and analysis of data regarding supply, demand, weather patterns, consumer trends, and geopolitical shifts. "
-        "In agriculture, this intelligence bridges the gap between hoping for a good season and strategically planning for one.\n\n"
-        "Reply with *'Farmer Advice'*, *'Buyer Advice'*, or *'Action Plan'* to dive deeper."
-    )
-    
-    FARMER_STRATEGY = (
-        "🚜 *Strategic Advice for Farmers*\n\n"
-        "1️⃣ *Pre-Season Selection:* Plant based on forecasted shortages, not just tradition. Identify rising premiums for alternatives.\n"
-        "2️⃣ *Timing the Sale:* Track historical curves. Calculate if storage costs will yield higher returns than immediate selling.\n"
-        "3️⃣ *Right Channel:* Evaluate margins. Processors or urban retail might yield 30% higher net profit than local cooperatives.\n"
-        "4️⃣ *Contract Farming:* Use forward data to lock in prices and protect against incoming surpluses."
-    )
-    
-    BUYER_STRATEGY = (
-        "🛒 *Strategic Advice for Buyers*\n\n"
-        "1️⃣ *Sourcing Optimization:* Monitor regional yields and weather. Secure contracts in unaffected regions early.\n"
-        "2️⃣ *Dynamic Pricing:* Adjust buying prices based on consumer demand spikes (e.g., organic produce premiums).\n"
-        "3️⃣ *Inventory Management:* Align storage and logistics with anticipated market arrivals to prevent bottlenecks.\n"
-        "4️⃣ *Supply Chain Hedging:* Use futures markets and intelligence to hedge against rising input and energy costs."
-    )
-    
-    ACTION_PLAN = (
-        "📋 *Action Plan: What to Do When...*\n\n"
-        "📉 *Market Glut:* Farmers should *Hold & Store* or process. Buyers should *Stockpile* at lower prices.\n\n"
-        "📈 *Market Shortage:* Farmers should *Sell Incrementally* in batches. Buyers should *Broaden Sourcing* immediately.\n\n"
-        "⛽ *Input Spikes:* Farmers should *Pivot Crops* (e.g., legumes). Buyers should *Offer Premiums* to protect supply.\n\n"
-        "🌟 *New Trends:* Farmers should *Test Plots* of the new trend. Buyers should *Incentivize* early adopters."
-    )
-
-    standard_help = (
-        "I provide live prices, deep trends, and strategic advice.\n\n"
-        "🔍 *Prices:* Send a crop name (e.g., 'Maize').\n"
-        "🧠 *Strategy:* Send 'Farmer Advice', 'Buyer Advice', or 'Action Plan'.\n"
-        "💡 *What is Intel?* Send 'Market Intel'."
-    )
 
     try:
-        # 1. Fetch Latest Zimbabwe Market Data
-        market_ref = rtdb.reference('market_data')
-        all_data = market_ref.get() or {}
-        zim_items = [item for item in all_data.values() if item.get('country') == 'Zimbabwe']
+        # 1. AUTHENTICATION: Identify User & Subscription Tier
+        user_data = None
+        all_users = rtdb.reference('users').get() or {}
+        for uid, data in all_users.items():
+            # Match by phone (handling various formats)
+            db_phone = str(data.get('phone', '')).replace('+', '').strip()
+            if db_phone and (db_phone in user_phone or user_phone in db_phone):
+                user_data = data
+                break
+
+        user_tier = user_data.get('subscription_tier', 'free') if user_data else 'free'
+        user_status = user_data.get('subscription_status', 'inactive') if user_data else 'inactive'
         
-        # 2. Check for Greetings or Menu
+        # 2. Check for Greetings (Always allowed)
         if any(greet in incoming_msg for greet in GREETINGS):
-            reply_text = f"{persona_intro}Mhoroi! I am ZimBot, your advanced agricultural consultant.\n\n{standard_help}"
-        
-        # 3. Check for Strategic Keywords
-        elif 'market intel' in incoming_msg or 'intelligence' in incoming_msg:
-            reply_text = f"{persona_intro}{INTEL_OVERVIEW}"
-        
-        elif 'farmer advice' in incoming_msg or 'farmer strategy' in incoming_msg:
-            reply_text = f"{persona_intro}{FARMER_STRATEGY}\n\n_Reply with a crop name for specific pricing._"
+            reply_text = f"{persona_intro}Mhoroi! I am ZimBot. I see you are on our *{user_tier.capitalize()}* plan.\n\n"
+            reply_text += "I provide live prices, deep trends, and strategic advice.\n\n"
+            reply_text += "🔍 *Prices:* Send a crop name (e.g., 'Maize').\n"
+            reply_text += "🧠 *Strategy:* Send 'Farmer Advice' or 'Action Plan'."
             
-        elif 'buyer advice' in incoming_msg or 'buyer strategy' in incoming_msg:
-            reply_text = f"{persona_intro}{BUYER_STRATEGY}\n\n_Reply with a crop name for specific pricing._"
+            resp = MessagingResponse()
+            resp.message(reply_text)
+            return str(resp)
+
+        # 3. PAYWALL LOGIC: Restricted Content Check
+        premium_keywords = ['advice', 'plan', 'strategy', 'intel', 'intelligence']
+        is_requesting_premium = any(key in incoming_msg for key in premium_keywords)
+
+        if is_requesting_premium and user_status != 'active':
+            reply_text = f"{persona_intro}⚠️ *Premium Access Required*\n\nOur deep market intelligence and strategic action plans are reserved for **Seed, Growth, and Harvest** subscribers.\n\n"
+            reply_text += "Your current status is: *Inactive/Free*.\n\n"
+            reply_text += f"🚀 *Upgrade now to unlock:* {request.host_url}pricing"
             
-        elif 'action plan' in incoming_msg or 'scenarios' in incoming_msg:
-            reply_text = f"{persona_intro}{ACTION_PLAN}"
+            resp = MessagingResponse()
+            resp.message(reply_text)
+            return str(resp)
+
+        # 4. Fetch Latest Zimbabwe Market Data
+        market_ref = rtdb.reference('market_data')
+        all_market = market_ref.get() or {}
+        zim_items = [item for item in all_market.values() if item.get('country') == 'Zimbabwe']
         
-        else:
-            # 4. Search for a matching commodity
-            found_item = None
-            for item in zim_items:
-                commodity = item.get('commodity', '').lower()
-                if commodity in incoming_msg or incoming_msg in commodity:
-                    found_item = item
-                    break
+        # 5. Search for matching commodity
+        found_item = None
+        for item in zim_items:
+            commodity = item.get('commodity', '').lower()
+            if commodity in incoming_msg or incoming_msg in commodity:
+                found_item = item
+                break
 
-            if found_item:
-                commodity_name = found_item['commodity']
-                price = found_item['price']
-                currency = found_item['currency']
-                unit = found_item['unit']
-                trend = found_item.get('trend', 'stable')
-                region = found_item.get('region', 'Zimbabwe Hubs')
-                date = found_item.get('updated_at', '')[:10]
+        if found_item:
+            commodity_name = found_item['commodity']
+            price = found_item['price']
+            currency = found_item['currency']
+            unit = found_item['unit']
+            trend = found_item.get('trend', 'stable')
+            region = found_item.get('region', 'Zimbabwe Hubs')
+            date = found_item.get('updated_at', '')[:10]
 
-                # --- APPLY STRATEGIC ADVICE LOGIC ---
-                advice = ""
+            # --- TIERED ADVICE LOGIC ---
+            advice = ""
+            if user_status == 'active':
+                # Full Professional Advice for Paid Users
                 if trend == 'up':
-                    trend_icon = "Rising ▲"
-                    advice = f"📈 *Strategic Advice:* {commodity_name} prices are rising. *Action:* Sell in batches to capitalize on the peak. Avoid locking everything into early contracts."
+                    advice = f"📈 *Harvest Strategy:* {commodity_name} prices are rising. *Action:* Sell in batches now to capitalize on the peak. High demand detected."
                 elif trend == 'down':
-                    trend_icon = "Dropping ▼"
-                    advice = f"📉 *Strategic Advice:* Prices are falling. *Action:* Hold and store if possible. Explore value-add processing (drying/pulping) to avoid selling at a loss."
+                    advice = f"📉 *Seed Strategy:* Prices are falling. *Action:* Hold and store. Avoid selling at a loss; prices are expected to correct soon."
                 else:
-                    trend_icon = "Stable ▬"
-                    advice = f"⚖️ *Strategic Advice:* Market is stable. *Action:* This is a safe window for standard supply planning and consistent trading."
-
-                reply_text = f"{persona_intro}*Live Market Data for {commodity_name}*\n\n"
-                reply_text += f"📍 *Market:* {region}\n"
-                reply_text += f"💰 *Price:* {currency} {price:,.2f} per {unit}\n"
-                reply_text += f"📊 *Trend:* {trend_icon}\n"
-                reply_text += f"📅 *As of:* {date}\n\n"
-                reply_text += f"{advice}\n\n"
-                reply_text += "_Send 'Action Plan' for more scenarios._"
-
+                    advice = f"⚖️ *Market Insight:* Market is stable. Safe window for consistent supply."
             else:
-                # 5. Fallback
-                reply_text = f"{persona_intro}I couldn't find a price for '{incoming_msg}'.\n\n"
-                reply_text += "Try a crop like 'Maize' or ask for 'Farmer Advice' to see my strategic capabilities."
+                # Teaser Advice for Free Users
+                trend_desc = "Rising ▲" if trend == 'up' else "Dropping ▼" if trend == 'down' else "Stable ▬"
+                advice = f"📊 *Trend:* {trend_desc}\n_Upgrade to a paid package for strategic 'Sell or Hold' advice._"
+
+            reply_text = f"{persona_intro}*Live Market Data for {commodity_name}*\n\n"
+            reply_text += f"📍 *Market:* {region}\n"
+            reply_text += f"💰 *Price:* {currency} {price:,.2f} per {unit}\n"
+            reply_text += f"📅 *As of:* {date}\n\n"
+            reply_text += f"{advice}"
+
+        elif 'farmer advice' in incoming_msg and user_status == 'active':
+            reply_text = f"{persona_intro}🚜 *Strategic Advice for Farmers*\n\n1️⃣ Pre-Season: Plant based on forecasts.\n2️⃣ Timing: Use storage for higher returns.\n3️⃣ Channels: Direct to retail yields 30% more profit."
+        
+        elif 'action plan' in incoming_msg and user_status == 'active':
+            reply_text = f"{persona_intro}📋 *Action Plan*\n\n📈 *Shortage:* Sell incrementally to ride the peak.\n📉 *Glut:* Hold stock; explore value-add processing."
+            
+        else:
+            reply_text = f"{persona_intro}I couldn't find details for '{incoming_msg}'. Try 'Maize' or 'Mhoroi'."
 
     except Exception as e:
-        print(f"Zim Bot Logic Error: {e}")
-        reply_text = "🇿🇼 *ZimBot System Notice*\n\nI'm currently recalibrating my market insights. Please try again soon."
+        print(f"Zim Bot Twilio Error: {e}")
+        reply_text = "🇿🇼 *ZimBot Notice*\n\nI'm briefly offline for market recalibration. Please try again in 5 minutes."
 
     resp = MessagingResponse()
     resp.message(reply_text)
