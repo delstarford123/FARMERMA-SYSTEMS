@@ -3175,7 +3175,72 @@ def zim_bot_webhook():
         user_tier = user_data.get('subscription_tier', 'free')
         user_status = user_data.get('subscription_status', 'inactive')
         
-        # 4. Check for Greetings
+        # 4. UPGRADE & PAYMENT FLOW
+        UPGRADE_KEYWORDS = ['upgrade', 'pay', 'subscribe', 'package', 'billing']
+        is_requesting_upgrade = any(key in incoming_msg.lower() for key in UPGRADE_KEYWORDS)
+        
+        # Check if user is already in a payment state
+        pay_ref = rtdb.reference(f'pending_payments/{user_phone}')
+        pay_state = pay_ref.get()
+
+        if is_requesting_upgrade and not pay_state:
+            reply_text = f"{persona_intro}Select a premium package to upgrade:\n\n"
+            reply_text += "1️⃣ *Seed ($3)*: 1 weekly update (Fri)\n"
+            reply_text += "2️⃣ *Growth ($5)*: 2 weekly updates (Mon, Fri)\n"
+            reply_text += "3️⃣ *Harvest ($10)*: 3 weekly updates + Action Plans\n\n"
+            reply_text += "Reply with *1*, *2*, or *3* to select."
+            pay_ref.set({'step': 'select_package'})
+            resp = MessagingResponse(); resp.message(reply_text); return str(resp)
+
+        if pay_state:
+            step = pay_state.get('step')
+            
+            if step == 'select_package':
+                selection = incoming_msg.strip()
+                plans = {'1': 'seed', '2': 'growth', '3': 'harvest'}
+                if selection in plans:
+                    plan_id = plans[selection]
+                    plan_name = plan_id.capitalize()
+                    price_kes = SYSTEM_PRICING[plan_id]['kes']
+                    pay_ref.update({'step': 'confirm_phone', 'plan_id': plan_id, 'amount': price_kes})
+                    reply_text = f"You selected the *{plan_name} Package*. \n\nTo pay via M-Pesa, please reply with your **M-Pesa Number** (e.g., 0712345678).\n\nOr pay via Card here: {request.host_url}checkout?plan={plan_id}"
+                else:
+                    reply_text = "Invalid selection. Please reply with 1, 2, or 3."
+                resp = MessagingResponse(); resp.message(reply_text); return str(resp)
+
+            elif step == 'confirm_phone':
+                target_phone = incoming_msg.strip().replace(' ', '').replace('+', '')
+                if len(target_phone) < 10:
+                    reply_text = "Please enter a valid M-Pesa number (e.g., 0712345678)."
+                else:
+                    plan_id = pay_state.get('plan_id')
+                    amount = pay_state.get('amount')
+                    
+                    # Trigger STK Push
+                    try:
+                        res = initiate_stk_push(target_phone, int(amount))
+                        if res and res.get('ResponseCode') == '0':
+                            checkout_id = res.get("CheckoutRequestID")
+                            # Link checkout to user for callback
+                            rtdb.reference(f'pending_transactions/{checkout_id}').set({
+                                'user_id': f"wa_{user_phone}",
+                                'amount': amount,
+                                'plan_id': plan_id,
+                                'status': 'awaiting_payment',
+                                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            })
+                            reply_text = f"🔄 *Initiating M-Pesa STK Push...*\n\nPlease check your phone for the PIN prompt. Your {plan_id.capitalize()} access will be activated instantly upon payment!"
+                            pay_ref.delete()
+                        else:
+                            reply_text = "❌ I couldn't initiate the M-Pesa prompt. Please ensure your number is correct or try paying on our website."
+                            pay_ref.delete()
+                    except:
+                        reply_text = "⚠️ M-Pesa service is currently busy. Please try again in a few minutes."
+                        pay_ref.delete()
+                
+                resp = MessagingResponse(); resp.message(reply_text); return str(resp)
+
+        # 5. Check for Greetings
         if any(greet in incoming_msg.lower() for greet in GREETINGS):
             reply_text = f"{persona_intro}Welcome back! You are on the *{user_tier.capitalize()}* plan.\n\n"
             reply_text += "🔍 *Prices:* Send a crop name (e.g., 'Maize')\n"
