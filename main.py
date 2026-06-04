@@ -45,6 +45,29 @@ from pesapal_helper import get_pesapal_token, register_pesapal_ipn, submit_pesap
 from apscheduler.schedulers.background import BackgroundScheduler
 
 # ==========================================
+# 1. INITIALIZATION & APP CONFIGURATION
+# ==========================================
+load_dotenv()
+
+app = Flask(__name__)
+app.secret_key = 'delstarford_works_secret_key' 
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400 # 24 hours
+
+# Flask-Mail Configuration
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = ('Farmerman Systems', os.environ.get('MAIL_USERNAME'))
+
+mail = Mail(app)
+
+# APScheduler Initialization
+scheduler = BackgroundScheduler()
+scheduler.start()
+
+# ==========================================
 # SUBSCRIPTION RENEWAL REMINDERS
 # ==========================================
 def check_subscription_expirations():
@@ -75,29 +98,6 @@ def check_subscription_expirations():
 
 # Add the job to run every 24 hours
 scheduler.add_job(func=check_subscription_expirations, trigger='interval', hours=24)
-
-# ==========================================
-# 1. INITIALIZATION & APP CONFIGURATION
-# ==========================================
-load_dotenv()
-
-app = Flask(__name__)
-app.secret_key = 'delstarford_works_secret_key' 
-app.config['PERMANENT_SESSION_LIFETIME'] = 86400 # 24 hours
-
-# Flask-Mail Configuration
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = ('Farmerman Systems', os.environ.get('MAIL_USERNAME'))
-
-mail = Mail(app)
-
-# APScheduler Initialization
-scheduler = BackgroundScheduler()
-scheduler.start()
 
 # Database Config
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///farmerman.db'
