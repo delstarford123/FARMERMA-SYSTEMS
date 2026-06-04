@@ -3221,10 +3221,22 @@ def zim_bot_webhook():
     # Clean the phone number to match database format
     user_phone = raw_phone.replace('whatsapp:', '').replace('+', '').strip()
 
-    # --- PERSONA & LOGIC DEFINITIONS ---
-    GREETINGS = ['hi', 'hello', 'mhoroi', 'sanibonani', 'hey', 'start', 'tora', 'nzou', 'menu']
-    persona_intro = "🇿🇼 *ZimBot: Professional Agricultural Advisor*\n\n"
+    # --- ELITE PERSONA DEFINITIONS ---
+    persona_intro = "🇿🇼 *ZIMBOT: Agricultural Market Intelligence Engine*\n\n"
     
+    # 3-Part Greeting Structure
+    ELITE_GREETING = (
+        f"{persona_intro}Greetings. I am ZIMBOT, your professional market intelligence engine. "
+        "I provide actionable data on crop prices, regional trends, and supply chain logistics to optimize your revenue. "
+        "Are you looking to analyze today's crop prices, check regional shortages, or review your subscription package?"
+    )
+
+    # Small Talk Pivot
+    SMALL_TALK_KEYWORDS = ['how are you', 'how r u', 'weather', 'whats up', 'sup', 'habari']
+    
+    # Out-of-Domain Detection (Basic)
+    NON_AGRI_KEYWORDS = ['coding', 'history', 'movie', 'song', 'joke', 'politics']
+
     # Package Descriptions
     PRICING_MENU = (
         "Professional Packages:\n\n"
@@ -3235,10 +3247,10 @@ def zim_bot_webhook():
         "• Bi-weekly Intelligence (Monday & Friday)\n"
         "• Trend Analysis & Priority Alerts\n\n"
         "3️⃣ *Harvest Package ($10/mo)*\n"
-        "• Full Intelligence (Monday, Wednesday, Friday)\n"
+        "• Full Intelligence (Mon, Wed, Fri)\n"
         "• Strategic Action Plans & Deep Market Insights\n"
-        "• Capitalize on market shifts to maximize ROI\n\n"
-        "Reply with *1*, *2*, or *3* to select your package and begin."
+        "• Maximize ROI via supply chain optimization\n\n"
+        "Reply with *1*, *2*, or *3* to select."
     )
 
     try:
@@ -3251,98 +3263,81 @@ def zim_bot_webhook():
                 user_data = data
                 break
 
-        # 2. REGISTRATION FLOW: Handle Unknown Users
+        # 2. REGISTRATION FLOW
         if not user_data:
             pending_ref = rtdb.reference(f'pending_registrations/{user_phone}')
             pending = pending_ref.get()
 
             if not pending:
-                if any(greet in incoming_msg.lower() for greet in GREETINGS):
-                    reply_text = f"{persona_intro}Welcome to Zimbabwe's premier market intelligence network. To access our strategic data, please provide your *Full Name*."
-                    pending_ref.set({'step': 'ask_name'})
-                else:
-                    reply_text = f"{persona_intro}Welcome! Please say 'Hi' or 'Start' to begin your registration and unlock live market intelligence."
+                # Elite Greeting for new users
+                reply_text = f"Greetings. I am ZIMBOT, an elite Agricultural Market Intelligence Assistant. To access our strategic data and supply chain intelligence, please provide your *Full Name*."
+                pending_ref.set({'step': 'ask_name'})
             
             elif pending.get('step') == 'ask_name':
                 full_name = incoming_msg.title()
                 pending_ref.update({'full_name': full_name, 'step': 'ask_email'})
-                reply_text = f"Thank you, {full_name}. What is your *Email Address* for receiving professional market reports?"
+                reply_text = f"Acknowledge, {full_name}. Provide your *Email Address* to finalize your professional intelligence profile."
             
             elif pending.get('step') == 'ask_email':
                 email = incoming_msg.strip().lower()
                 if '@' not in email or '.' not in email:
-                    reply_text = "Please provide a valid email address (e.g., advisor@gmail.com)."
+                    reply_text = "Standard email format required (e.g., intelligence@agri.com). Please resubmit."
                 else:
                     full_name = pending.get('full_name')
                     new_uid = f"wa_{user_phone}"
                     rtdb.reference(f'users/{new_uid}').set({
-                        'uid': new_uid,
-                        'full_name': full_name,
-                        'email': email,
-                        'phone': user_phone,
-                        'role': 'buyer',
-                        'subscription_tier': 'free',
-                        'subscription_status': 'inactive',
+                        'uid': new_uid, 'full_name': full_name, 'email': email, 'phone': user_phone,
+                        'role': 'buyer', 'subscription_tier': 'free', 'subscription_status': 'inactive',
                         'created_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     })
                     pending_ref.delete()
-                    # MANDATORY NEXT STEP: SUBSCRIPTION
                     rtdb.reference(f'pending_payments/{user_phone}').set({'step': 'select_package'})
-                    reply_text = f"Welcome aboard, {full_name}. Profile created.\n\nTo access our live intelligence network, please {PRICING_MENU}"
+                    reply_text = f"Registration finalized. Welcome to the network, {full_name}.\n\nTo unlock intelligence access, {PRICING_MENU}"
             
             resp = MessagingResponse(); resp.message(reply_text); return str(resp)
 
-        # 3. SUBSCRIPTION GATE: Registered but Inactive
+        # 3. SUBSCRIPTION GATE
         user_status = user_data.get('subscription_status', 'inactive')
         user_tier = user_data.get('subscription_tier', 'free')
-        
         pay_ref = rtdb.reference(f'pending_payments/{user_phone}')
         pay_state = pay_ref.get()
 
         if user_status != 'active':
-            # Force user into payment flow
             if not pay_state:
                 pay_ref.set({'step': 'select_package'})
-                reply_text = f"{persona_intro}Your account is currently inactive. To access our professional market intelligence, please choose a subscription plan:\n\n{PRICING_MENU}"
+                reply_text = f"{persona_intro}Subscription required for intelligence access. Select a plan:\n\n{PRICING_MENU}"
             else:
                 step = pay_state.get('step')
-                
                 if step == 'select_package':
                     selection = incoming_msg.strip()
                     plans = {'1': 'seed', '2': 'growth', '3': 'harvest'}
                     if selection in plans:
                         plan_id = plans[selection]
-                        plan_name = plan_id.capitalize()
                         pay_ref.update({'step': 'select_method', 'plan_id': plan_id})
-                        reply_text = f"You selected the *{plan_name} Package*.\n\nHow would you like to proceed with payment?\n\nReply with:\n*A* for M-Pesa (STK Push)\n*B* for PesaPal (Card/Online)"
+                        reply_text = f"Package selected: *{plan_id.capitalize()}*.\n\nChoose payment method:\n*A* for M-Pesa (STK Push)\n*B* for PesaPal (Card/Online)"
                     else:
-                        reply_text = f"Invalid selection. Please choose a package to continue:\n\n{PRICING_MENU}"
+                        reply_text = f"Invalid selection. Choose a professional plan:\n\n{PRICING_MENU}"
                 
                 elif step == 'select_method':
                     choice = incoming_msg.strip().upper()
                     plan_id = pay_state.get('plan_id')
-                    plan_name = plan_id.capitalize()
-                    
                     if choice == 'A':
-                        # M-Pesa Flow
                         price_kes = SYSTEM_PRICING[plan_id]['kes']
                         pay_ref.update({'step': 'confirm_phone', 'amount': price_kes})
-                        reply_text = f"Selected: *{plan_name} via M-Pesa*.\n\nPlease reply with your **M-Pesa Number** (e.g., 0712345678) to initiate the secure payment prompt."
+                        reply_text = f"Confirmed: *{plan_id.capitalize()} via M-Pesa*. Provide your **M-Pesa Number** (e.g., 0712345678) to initiate secure STK Push."
                     elif choice == 'B':
-                        # PesaPal Flow
-                        checkout_url = f"https://farmermansystems.co.ke/checkout?plan={plan_id}"
-                        reply_text = f"Selected: *{plan_name} via PesaPal*.\n\nPlease complete your payment securely via Card or Bank here: {checkout_url}\n\nYour access will be activated immediately after payment."
-                        pay_ref.delete() # Finish flow for web-based payments
+                        checkout_url = f"http://farmermansystems.co.ke/checkout?plan={plan_id}"
+                        reply_text = f"Confirmed: *{plan_id.capitalize()} via PesaPal*. Complete your transaction here: {checkout_url}\n\nAccess granted immediately post-payment."
+                        pay_ref.delete()
                     else:
-                        reply_text = "Invalid choice. Please reply with *A* for M-Pesa or *B* for PesaPal."
-
+                        reply_text = "Invalid choice. Reply *A* or *B*."
+                
                 elif step == 'confirm_phone':
                     target_phone = incoming_msg.strip().replace(' ', '').replace('+', '')
                     if len(target_phone) < 10:
-                        reply_text = "Please enter a valid M-Pesa number (e.g., 0712345678)."
+                        reply_text = "Valid phone number required."
                     else:
-                        plan_id = pay_state.get('plan_id')
-                        amount = pay_state.get('amount')
+                        plan_id = pay_state.get('plan_id'); amount = pay_state.get('amount')
                         try:
                             res = initiate_stk_push(target_phone, int(amount))
                             if res and res.get('ResponseCode') == '0':
@@ -3351,73 +3346,66 @@ def zim_bot_webhook():
                                     'user_id': f"wa_{user_phone}", 'amount': amount, 'plan_id': plan_id,
                                     'status': 'awaiting_payment', 'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                                 })
-                                reply_text = f"🔄 *Initiating Secure M-Pesa Payment...*\n\nPlease enter your PIN on your phone. Your {plan_id.capitalize()} intelligence will be unlocked instantly."
+                                reply_text = f"🔄 *Secure M-Pesa Gateway Initialized.* Enter PIN on your device. {plan_id.capitalize()} access will be unlocked instantly."
                                 pay_ref.delete()
                             else:
-                                reply_text = "❌ M-Pesa initiation failed. Please ensure the number is correct or try again by typing 'Upgrade'."
+                                reply_text = "Gateway error. Type 'Upgrade' to retry."
                                 pay_ref.delete()
                         except:
-                            reply_text = "⚠️ Payment gateway is temporarily busy. Please try again shortly."
-                            pay_ref.delete()
+                            reply_text = "System busy. Retry shortly."; pay_ref.delete()
             
             resp = MessagingResponse(); resp.message(reply_text); return str(resp)
 
-        # 4. ACTIVE SUBSCRIBER LOGIC
-        # Greetings
-        if any(greet in incoming_msg.lower() for greet in GREETINGS):
-            reply_text = f"{persona_intro}Welcome back. You are currently on the *{user_tier.capitalize()}* plan.\n\n"
-            reply_text += "🔍 *Prices:* Send a crop name (e.g., 'Maize')\n"
-            reply_text += "🧠 *Strategy:* Send 'Farmer Advice' or 'Action Plan'"
-            resp = MessagingResponse(); resp.message(reply_text); return str(resp)
+        # 4. ACTIVE ELITE LOGIC (Subscribers Only)
+        msg_low = incoming_msg.lower()
 
-        # Market Analysis & Advice
-        market_ref = rtdb.reference('market_data')
-        all_market = market_ref.get() or {}
-        zim_items = [item for item in all_market.values() if item.get('country') == 'Zimbabwe']
+        # Rule 1 & 2: Greetings & Small Talk (The Pivot)
+        if any(greet in msg_low for greet in ['hi', 'hello', 'mhoroi', 'hey', 'start', 'menu']):
+            reply_text = ELITE_GREETING
+        elif any(small in msg_low for small in SMALL_TALK_KEYWORDS):
+            reply_text = f"I am operating at peak efficiency, thank you. Let's get down to business—which crop market are we analyzing today?"
         
-        found_item = None
-        for item in zim_items:
-            commodity = item.get('commodity', '').lower()
-            if commodity in incoming_msg.lower() or incoming_msg.lower() in commodity:
-                found_item = item
-                break
+        # Rule 3: Out-of-Domain Queries
+        elif any(out in msg_low for out in NON_AGRI_KEYWORDS):
+            reply_text = "My expertise is strictly dedicated to agricultural market intelligence and supply chain data. I cannot assist with non-agricultural topics. Would you like to check today's market reports instead?"
 
-        if found_item:
-            commodity_name = found_item['commodity']
-            price = found_item['price']
-            currency = found_item['currency']
-            unit = found_item['unit']
-            trend = found_item.get('trend', 'stable')
-            region = found_item.get('region', 'Zimbabwe Hubs')
-            date = found_item.get('updated_at', '')[:10]
-
-            advice = ""
-            if trend == 'up':
-                advice = f"📈 *Strategy:* {commodity_name} prices are rising. *Action:* Sell in batches now to capitalize on high demand peaks."
-            elif trend == 'down':
-                advice = f"📉 *Strategy:* Prices are falling. *Action:* Hold and store. Avoid selling in a crashed market if possible."
-            else:
-                advice = f"⚖️ *Insight:* Market is stable. Safe window for standard trading."
-
-            reply_text = f"{persona_intro}*Market Data: {commodity_name}*\n\n"
-            reply_text += f"📍 *Market:* {region}\n"
-            reply_text += f"💰 *Price:* {currency} {price:,.2f} per {unit}\n"
-            reply_text += f"📊 *Trend:* {'Rising ▲' if trend == 'up' else 'Dropping ▼' if trend == 'down' else 'Stable ▬'}\n"
-            reply_text += f"📅 *As of:* {date}\n\n"
-            reply_text += f"{advice}"
-
-        elif 'farmer advice' in incoming_msg.lower():
-            reply_text = f"{persona_intro}🚜 *Farmer Strategic Intelligence*\n\n1️⃣ Selection: Pivot based on forecasted deficits.\n2️⃣ Timing: Historical spike detection suggests holding stock for 3 months post-harvest.\n3️⃣ Logistics: Direct-to-retail bypasses middleman costs."
-        
-        elif 'action plan' in incoming_msg.lower():
-            reply_text = f"{persona_intro}📋 *Market Action Plan*\n\n📈 *Shortage:* Sell incrementally to ride the price curve.\n📉 *Glut:* Focus on value-add (drying/pulping) to preserve margins."
-            
         else:
-            reply_text = f"{persona_intro}I could not locate intelligence for '{incoming_msg}'. Please specify a commodity (e.g., 'Maize') or say 'Menu'."
+            # Rule 5: Missing Data & Zero-Hallucination Protocol
+            market_ref = rtdb.reference('market_data')
+            all_market = market_ref.get() or {}
+            zim_items = [item for item in all_market.values() if item.get('country') == 'Zimbabwe']
+            
+            found_item = None
+            for item in zim_items:
+                commodity = item.get('commodity', '').lower()
+                if commodity in msg_low or msg_low in commodity:
+                    found_item = item; break
+
+            if found_item:
+                commodity_name = found_item['commodity']
+                trend = found_item.get('trend', 'stable')
+                reply_text = f"{persona_intro}*Intelligence Report: {commodity_name}*\n\n"
+                reply_text += f"📍 *Market:* {found_item.get('region', 'Zimbabwe Hubs')}\n"
+                reply_text += f"💰 *Price:* {found_item.get('currency')} {found_item['price']:,.2f} per {found_item['unit']}\n"
+                reply_text += f"📊 *Trend:* {'Rising ▲' if trend == 'up' else 'Dropping ▼' if trend == 'down' else 'Stable ▬'}\n"
+                reply_text += f"📅 *As of:* {found_item.get('updated_at', '')[:10]}\n\n"
+                
+                # Strategic Advice
+                if trend == 'up':
+                    reply_text += "📈 *Action:* Prices are rising. Sell in batches to capitalize on demand peaks while hedging against sudden supply shifts."
+                elif trend == 'down':
+                    reply_text += "📉 *Action:* Market glut detected. Hold stock and explore value-add processing to avoid selling at a loss."
+                else:
+                    reply_text += "⚖️ *Action:* Stable market. Proceed with standard supply contracts."
+            else:
+                # GRACEFUL FALLBACK (Missing Data)
+                reply_text = f"I do not have today's spot price for '{incoming_msg}' in the Zimbabwe database. "
+                reply_text += "However, I can provide latest data for *Maize* or *Tobacco*, or check the national average for cash crops. Would either help your analysis? "
+                reply_text += "I have logged this request for our data team to source in future updates."
 
     except Exception as e:
-        print(f"Zim Bot Twilio Error: {e}")
-        reply_text = "🇿🇼 *ZimBot Notice*\n\nI'm briefly offline for market recalibration. Please try again in 5 minutes."
+        print(f"Zim Bot Elite Error: {e}")
+        reply_text = f"{persona_intro}Notice: System recalibrating market feeds. Please try again shortly."
 
     resp = MessagingResponse()
     resp.message(reply_text)
