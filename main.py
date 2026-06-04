@@ -3068,10 +3068,48 @@ def zim_bot_webhook():
     user_phone = request.values.get('From', '')
 
     # --- PERSONA & LOGIC DEFINITIONS ---
-    GREETINGS = ['hi', 'hello', 'mhoroi', 'sanibonani', 'hey', 'start', 'tora', 'nzou']
+    GREETINGS = ['hi', 'hello', 'mhoroi', 'sanibonani', 'hey', 'start', 'tora', 'nzou', 'menu']
     
     persona_intro = "🇿🇼 *ZimBot: Your AI Agricultural Advisor*\n\n"
-    standard_help = "I can help you track live market prices across Zimbabwe, analyze trends, and provide strategic trading advice. Just send me the name of a crop (e.g., 'Maize', 'Tobacco') to get started."
+    
+    # --- DEEP INTELLIGENCE DATA ---
+    INTEL_OVERVIEW = (
+        "🧠 *What is Market Intelligence?*\n\n"
+        "It is the systematic collection and analysis of data regarding supply, demand, weather patterns, consumer trends, and geopolitical shifts. "
+        "In agriculture, this intelligence bridges the gap between hoping for a good season and strategically planning for one.\n\n"
+        "Reply with *'Farmer Advice'*, *'Buyer Advice'*, or *'Action Plan'* to dive deeper."
+    )
+    
+    FARMER_STRATEGY = (
+        "🚜 *Strategic Advice for Farmers*\n\n"
+        "1️⃣ *Pre-Season Selection:* Plant based on forecasted shortages, not just tradition. Identify rising premiums for alternatives.\n"
+        "2️⃣ *Timing the Sale:* Track historical curves. Calculate if storage costs will yield higher returns than immediate selling.\n"
+        "3️⃣ *Right Channel:* Evaluate margins. Processors or urban retail might yield 30% higher net profit than local cooperatives.\n"
+        "4️⃣ *Contract Farming:* Use forward data to lock in prices and protect against incoming surpluses."
+    )
+    
+    BUYER_STRATEGY = (
+        "🛒 *Strategic Advice for Buyers*\n\n"
+        "1️⃣ *Sourcing Optimization:* Monitor regional yields and weather. Secure contracts in unaffected regions early.\n"
+        "2️⃣ *Dynamic Pricing:* Adjust buying prices based on consumer demand spikes (e.g., organic produce premiums).\n"
+        "3️⃣ *Inventory Management:* Align storage and logistics with anticipated market arrivals to prevent bottlenecks.\n"
+        "4️⃣ *Supply Chain Hedging:* Use futures markets and intelligence to hedge against rising input and energy costs."
+    )
+    
+    ACTION_PLAN = (
+        "📋 *Action Plan: What to Do When...*\n\n"
+        "📉 *Market Glut:* Farmers should *Hold & Store* or process. Buyers should *Stockpile* at lower prices.\n\n"
+        "📈 *Market Shortage:* Farmers should *Sell Incrementally* in batches. Buyers should *Broaden Sourcing* immediately.\n\n"
+        "⛽ *Input Spikes:* Farmers should *Pivot Crops* (e.g., legumes). Buyers should *Offer Premiums* to protect supply.\n\n"
+        "🌟 *New Trends:* Farmers should *Test Plots* of the new trend. Buyers should *Incentivize* early adopters."
+    )
+
+    standard_help = (
+        "I provide live prices, deep trends, and strategic advice.\n\n"
+        "🔍 *Prices:* Send a crop name (e.g., 'Maize').\n"
+        "🧠 *Strategy:* Send 'Farmer Advice', 'Buyer Advice', or 'Action Plan'.\n"
+        "💡 *What is Intel?* Send 'Market Intel'."
+    )
 
     try:
         # 1. Fetch Latest Zimbabwe Market Data
@@ -3079,16 +3117,28 @@ def zim_bot_webhook():
         all_data = market_ref.get() or {}
         zim_items = [item for item in all_data.values() if item.get('country') == 'Zimbabwe']
         
-        # 2. Check for Greetings
+        # 2. Check for Greetings or Menu
         if any(greet in incoming_msg for greet in GREETINGS):
-            reply_text = f"{persona_intro}Mhoroi! I am ZimBot, your dedicated agricultural assistant.\n\n{standard_help}"
+            reply_text = f"{persona_intro}Mhoroi! I am ZimBot, your advanced agricultural consultant.\n\n{standard_help}"
+        
+        # 3. Check for Strategic Keywords
+        elif 'market intel' in incoming_msg or 'intelligence' in incoming_msg:
+            reply_text = f"{persona_intro}{INTEL_OVERVIEW}"
+        
+        elif 'farmer advice' in incoming_msg or 'farmer strategy' in incoming_msg:
+            reply_text = f"{persona_intro}{FARMER_STRATEGY}\n\n_Reply with a crop name for specific pricing._"
+            
+        elif 'buyer advice' in incoming_msg or 'buyer strategy' in incoming_msg:
+            reply_text = f"{persona_intro}{BUYER_STRATEGY}\n\n_Reply with a crop name for specific pricing._"
+            
+        elif 'action plan' in incoming_msg or 'scenarios' in incoming_msg:
+            reply_text = f"{persona_intro}{ACTION_PLAN}"
         
         else:
-            # 3. Search for a matching commodity in the message
+            # 4. Search for a matching commodity
             found_item = None
             for item in zim_items:
                 commodity = item.get('commodity', '').lower()
-                # Match if commodity is in message or vice-versa
                 if commodity in incoming_msg or incoming_msg in commodity:
                     found_item = item
                     break
@@ -3106,13 +3156,13 @@ def zim_bot_webhook():
                 advice = ""
                 if trend == 'up':
                     trend_icon = "Rising ▲"
-                    advice = f"📈 *Strategic Advice:* {commodity_name} prices are currently on a strong upward trend due to high demand. If you have mature stock ready, this is an excellent window to sell and maximize your profit margins."
+                    advice = f"📈 *Strategic Advice:* {commodity_name} prices are rising. *Action:* Sell in batches to capitalize on the peak. Avoid locking everything into early contracts."
                 elif trend == 'down':
                     trend_icon = "Dropping ▼"
-                    advice = f"📉 *Strategic Advice:* The price of {commodity_name} is currently falling. I advise caution; avoid selling right now if you can hold your stock. Approaching the market during this dip may minimize your returns."
+                    advice = f"📉 *Strategic Advice:* Prices are falling. *Action:* Hold and store if possible. Explore value-add processing (drying/pulping) to avoid selling at a loss."
                 else:
                     trend_icon = "Stable ▬"
-                    advice = f"⚖️ *Strategic Advice:* The market for {commodity_name} is currently stable. This is a safe window for standard trading and consistent supply planning."
+                    advice = f"⚖️ *Strategic Advice:* Market is stable. *Action:* This is a safe window for standard supply planning and consistent trading."
 
                 reply_text = f"{persona_intro}*Live Market Data for {commodity_name}*\n\n"
                 reply_text += f"📍 *Market:* {region}\n"
@@ -3120,16 +3170,16 @@ def zim_bot_webhook():
                 reply_text += f"📊 *Trend:* {trend_icon}\n"
                 reply_text += f"📅 *As of:* {date}\n\n"
                 reply_text += f"{advice}\n\n"
-                reply_text += "_Reply with another crop name for more insights._"
+                reply_text += "_Send 'Action Plan' for more scenarios._"
 
             else:
-                # 4. Fallback if no crop found
-                reply_text = f"{persona_intro}I couldn't find a price for '{incoming_msg}' in my current Zimbabwe bulletin.\n\n"
-                reply_text += "Please ensure the name is correct or try a major commodity like 'Maize' or 'Tobacco'. I am constantly updating my records from hubs like Mbare Musika."
+                # 5. Fallback
+                reply_text = f"{persona_intro}I couldn't find a price for '{incoming_msg}'.\n\n"
+                reply_text += "Try a crop like 'Maize' or ask for 'Farmer Advice' to see my strategic capabilities."
 
     except Exception as e:
         print(f"Zim Bot Logic Error: {e}")
-        reply_text = "🇿🇼 *ZimBot System Notice*\n\nI'm currently recalibrating my market insights. Please try again in a few moments."
+        reply_text = "🇿🇼 *ZimBot System Notice*\n\nI'm currently recalibrating my market insights. Please try again soon."
 
     resp = MessagingResponse()
     resp.message(reply_text)
