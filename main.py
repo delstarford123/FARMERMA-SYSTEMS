@@ -45,6 +45,38 @@ from pesapal_helper import get_pesapal_token, register_pesapal_ipn, submit_pesap
 from apscheduler.schedulers.background import BackgroundScheduler
 
 # ==========================================
+# SUBSCRIPTION RENEWAL REMINDERS
+# ==========================================
+def check_subscription_expirations():
+    """Daily task to send payment reminders 3 days before expiry."""
+    with app.app_context():
+        try:
+            eat_tz = timezone(timedelta(hours=3))
+            now = datetime.now(eat_tz)
+            reminder_date = (now + timedelta(days=3)).strftime("%Y-%m-%d")
+            
+            all_users = rtdb.reference('users').get() or {}
+            for uid, data in all_users.items():
+                expiry_str = data.get('subscription_expiry')
+                if expiry_str:
+                    # Check if the date matches our 3-day window
+                    if expiry_str.startswith(reminder_date):
+                        email = data.get('email')
+                        name = data.get('full_name', 'Valued Farmer')
+                        plan = data.get('subscription_tier', 'Seed').capitalize()
+                        
+                        # Send Renewal Email
+                        msg = Message(f"⚠️ Your ZIMBOT {plan} Package expires soon!", recipients=[email])
+                        msg.body = f"Hello {name},\n\nYour {plan} subscription will expire in 3 days. Please visit your dashboard to renew and maintain uninterrupted access to market intelligence.\n\nRenew here: {request.host_url}pricing\n\nBest regards,\nZimBot Team"
+                        mail.send(msg)
+                        print(f"Renewal reminder sent to {email}")
+        except Exception as e:
+            print(f"Reminder Job Error: {e}")
+
+# Add the job to run every 24 hours
+scheduler.add_job(func=check_subscription_expirations, trigger='interval', hours=24)
+
+# ==========================================
 # 1. INITIALIZATION & APP CONFIGURATION
 # ==========================================
 load_dotenv()
@@ -1349,6 +1381,9 @@ PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
 # --- MASTER PRICING DICTIONARY ---
 # Single source of truth for all payment gateways
 SYSTEM_PRICING = {
+    'seed': {"name": "Seed Package", "kes": 450, "usd": 3.00, "frequency": "1 update/week"},
+    'growth': {"name": "Growth Package", "kes": 750, "usd": 5.00, "frequency": "2 updates/week"},
+    'harvest': {"name": "Harvest Package", "kes": 1500, "usd": 10.00, "frequency": "3 updates/week"},
     'market_intel': {"name": "Market Intelligence Monthly Standalone", "kes": 50, "usd": 0.50},
     'bronze': {"name": "Bronze Consulting Package", "kes": 1000, "usd": 10.00},
     'silver': {"name": "Silver Consulting Package", "kes": 2000, "usd": 20.00},
@@ -1390,40 +1425,54 @@ def get_plan_price(plan_id, category=None):
         "usd": base_plan['usd']
     }
 
-# --- Helper Function for Clean Code ---
 def record_successful_transaction(user_id, plan_id, amount, gateway, receipt_number):
-    """Updates the user tier and logs the transaction securely. Supports guest users."""
+    """Updates the user tier, status, and expiry date. Logs the transaction."""
     try:
-        # 1. Upgrade the user's tier if they are a registered user
-        if user_id and user_id != 'guest':
-            rtdb.reference(f'users/{user_id}').update({'subscription_tier': plan_id})
+        # 1. Calculate Expiry (30 days from now)
+        eat_tz = timezone(timedelta(hours=3))
+        now = datetime.now(eat_tz)
+        expiry_date = now + timedelta(days=30)
         
-        # 2. Update their active session if this is happening in their current thread
-        # Note: session might not be available in async callbacks (like M-Pesa IPN)
+        # 2. Upgrade the user's tier if they are a registered user
+        if user_id and user_id != 'guest':
+            rtdb.reference(f'users/{user_id}').update({
+                'subscription_tier': plan_id,
+                'subscription_status': 'active',
+                'subscription_expiry': expiry_date.strftime("%Y-%m-%d %H:%M:%S")
+            })
+            
+            # Sync with SQLAlchemy for local analytics if needed
+            local_user = sqlalchemy_db.session.get(User, user_id) if isinstance(user_id, int) else User.query.filter_by(email=user_id).first()
+            if local_user:
+                local_user.subscription_tier = plan_id
+                local_user.subscription_status = 'active'
+                local_user.subscription_expiry = expiry_date
+                sqlalchemy_db.session.commit()
+        
+        # 3. Update active session
         try:
             if session.get('user_id') == user_id:
                 session['tier'] = plan_id
                 session['subscription_tier'] = plan_id
+                session['subscription_status'] = 'active'
             
-            # If it's a guest purchase for Market Intel, mark the session
-            if plan_id == 'market_intel' and (not user_id or user_id == 'guest'):
+            if plan_id in ['seed', 'growth', 'harvest', 'market_intel'] and (not user_id or user_id == 'guest'):
                 session['market_intel_guest'] = True
         except Exception:
-            # Session might be unavailable in background tasks/callbacks
             pass
             
-        # 3. Log the financial transaction
+        # 4. Log the transaction
         log_id = user_id if user_id and user_id != 'guest' else f"guest_{receipt_number}"
         rtdb.reference(f'completed_transactions/{log_id}').push({
             'receipt_number': receipt_number, 
             'amount': amount,
             'gateway': gateway,
             'plan_purchased': plan_id,
-            'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            'date': now.strftime("%Y-%m-%d %H:%M:%S")
         })
         return True
     except Exception as e:
-        print(f"CRITICAL: Failed to record successful transaction for {user_id}. Error: {e}")
+        print(f"CRITICAL: Transaction Sync Error: {e}")
         return False
 
 # --- 1. M-PESA LOGIC ---
@@ -3053,13 +3102,6 @@ def api_request_withdrawal():
 # ==========================================
 # ZIM BOT (WHATSAPP AGRICULTURAL ASSISTANT)
 # ==========================================
-
-
-
-
-
-
-
 
 
 @app.route("/webhook/twilio/zim-bot", methods=['POST'])
