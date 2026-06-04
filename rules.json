@@ -65,6 +65,12 @@
       ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
     },
 
+    "pending_registrations": {
+      // 11. WhatsApp Onboarding: ZimBot can write pending states here
+      ".write": true,
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
+
     "diagnostic_history": {
       // 10. AI Scans: Admins can view all global diagnostic trends if needed
       ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",

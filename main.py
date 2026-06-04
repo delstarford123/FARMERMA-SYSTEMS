@@ -3106,7 +3106,7 @@ def api_request_withdrawal():
 
 @app.route("/webhook/twilio/zim-bot", methods=['POST'])
 def zim_bot_webhook():
-    incoming_msg = request.values.get('Body', '').strip().lower()
+    incoming_msg = request.values.get('Body', '').strip()
     raw_phone = request.values.get('From', '') # e.g. "whatsapp:+263771234567"
     
     # Clean the phone number to match database format
@@ -3117,21 +3117,66 @@ def zim_bot_webhook():
     persona_intro = "🇿🇼 *ZimBot: Your AI Agricultural Advisor*\n\n"
 
     try:
-        # 1. AUTHENTICATION: Identify User & Subscription Tier
+        # 1. AUTHENTICATION: Identify User
         user_data = None
         all_users = rtdb.reference('users').get() or {}
         for uid, data in all_users.items():
-            # Match by phone (handling various formats)
             db_phone = str(data.get('phone', '')).replace('+', '').strip()
             if db_phone and (db_phone in user_phone or user_phone in db_phone):
                 user_data = data
                 break
 
-        user_tier = user_data.get('subscription_tier', 'free') if user_data else 'free'
-        user_status = user_data.get('subscription_status', 'inactive') if user_data else 'inactive'
+        # 2. REGISTRATION FLOW: Handle Unknown Users
+        if not user_data:
+            pending_ref = rtdb.reference(f'pending_registrations/{user_phone}')
+            pending = pending_ref.get()
+
+            if not pending:
+                # Step 1: Ask for Name
+                if any(greet in incoming_msg.lower() for greet in GREETINGS):
+                    reply_text = f"{persona_intro}Mhoroi! I don't recognize this number. To help you better, what is your *Full Name*?"
+                    pending_ref.set({'step': 'ask_name'})
+                else:
+                    reply_text = "Welcome to ZimBot! Please say 'Hi' or 'Mhoroi' to begin your registration and access market data."
+            
+            elif pending.get('step') == 'ask_name':
+                # Step 2: Save Name, Ask for Email
+                full_name = incoming_msg.title()
+                pending_ref.update({'full_name': full_name, 'step': 'ask_email'})
+                reply_text = f"Thank you, {full_name}. What is your *Email Address*? (We'll use this for strategic reports and receipts)."
+            
+            elif pending.get('step') == 'ask_email':
+                # Step 3: Finalize Registration
+                email = incoming_msg.strip().lower()
+                if '@' not in email or '.' not in email:
+                    reply_text = "That doesn't look like a valid email. Please send a valid email address (e.g., farmerman@gmail.com)."
+                else:
+                    full_name = pending.get('full_name')
+                    # Create User in Firebase
+                    new_uid = f"wa_{user_phone}"
+                    rtdb.reference(f'users/{new_uid}').set({
+                        'uid': new_uid,
+                        'full_name': full_name,
+                        'email': email,
+                        'phone': user_phone,
+                        'role': 'buyer',
+                        'subscription_tier': 'free',
+                        'subscription_status': 'inactive',
+                        'created_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    })
+                    pending_ref.delete()
+                    reply_text = f"Congratulations {full_name}! 🎊 Your account is set up. You can now ask me for crop prices (e.g., 'Maize') or say 'Menu' for options."
+            
+            resp = MessagingResponse()
+            resp.message(reply_text)
+            return str(resp)
+
+        # 3. STANDARD LOGIC: For Registered Users
+        user_tier = user_data.get('subscription_tier', 'free')
+        user_status = user_data.get('subscription_status', 'inactive')
         
-        # 2. Check for Greetings (Always allowed)
-        if any(greet in incoming_msg for greet in GREETINGS):
+        # 4. Check for Greetings
+        if any(greet in incoming_msg.lower() for greet in GREETINGS):
             reply_text = f"{persona_intro}Mhoroi! I am ZimBot. I see you are on our *{user_tier.capitalize()}* plan.\n\n"
             reply_text += "I provide live prices, deep trends, and strategic advice.\n\n"
             reply_text += "🔍 *Prices:* Send a crop name (e.g., 'Maize').\n"
@@ -3141,9 +3186,9 @@ def zim_bot_webhook():
             resp.message(reply_text)
             return str(resp)
 
-        # 3. PAYWALL LOGIC: Restricted Content Check
+        # 5. PAYWALL LOGIC
         premium_keywords = ['advice', 'plan', 'strategy', 'intel', 'intelligence']
-        is_requesting_premium = any(key in incoming_msg for key in premium_keywords)
+        is_requesting_premium = any(key in incoming_msg.lower() for key in premium_keywords)
 
         if is_requesting_premium and user_status != 'active':
             reply_text = f"{persona_intro}⚠️ *Premium Access Required*\n\nOur deep market intelligence and strategic action plans are reserved for **Seed, Growth, and Harvest** subscribers.\n\n"
@@ -3154,16 +3199,16 @@ def zim_bot_webhook():
             resp.message(reply_text)
             return str(resp)
 
-        # 4. Fetch Latest Zimbabwe Market Data
+        # 6. Fetch Latest Zimbabwe Market Data
         market_ref = rtdb.reference('market_data')
         all_market = market_ref.get() or {}
         zim_items = [item for item in all_market.values() if item.get('country') == 'Zimbabwe']
         
-        # 5. Search for matching commodity
+        # 7. Search for matching commodity
         found_item = None
         for item in zim_items:
             commodity = item.get('commodity', '').lower()
-            if commodity in incoming_msg or incoming_msg in commodity:
+            if commodity in incoming_msg.lower() or incoming_msg.lower() in commodity:
                 found_item = item
                 break
 
@@ -3179,7 +3224,6 @@ def zim_bot_webhook():
             # --- TIERED ADVICE LOGIC ---
             advice = ""
             if user_status == 'active':
-                # Full Professional Advice for Paid Users
                 if trend == 'up':
                     advice = f"📈 *Harvest Strategy:* {commodity_name} prices are rising. *Action:* Sell in batches now to capitalize on the peak. High demand detected."
                 elif trend == 'down':
@@ -3187,7 +3231,6 @@ def zim_bot_webhook():
                 else:
                     advice = f"⚖️ *Market Insight:* Market is stable. Safe window for consistent supply."
             else:
-                # Teaser Advice for Free Users
                 trend_desc = "Rising ▲" if trend == 'up' else "Dropping ▼" if trend == 'down' else "Stable ▬"
                 advice = f"📊 *Trend:* {trend_desc}\n_Upgrade to a paid package for strategic 'Sell or Hold' advice._"
 
@@ -3197,10 +3240,10 @@ def zim_bot_webhook():
             reply_text += f"📅 *As of:* {date}\n\n"
             reply_text += f"{advice}"
 
-        elif 'farmer advice' in incoming_msg and user_status == 'active':
+        elif 'farmer advice' in incoming_msg.lower() and user_status == 'active':
             reply_text = f"{persona_intro}🚜 *Strategic Advice for Farmers*\n\n1️⃣ Pre-Season: Plant based on forecasts.\n2️⃣ Timing: Use storage for higher returns.\n3️⃣ Channels: Direct to retail yields 30% more profit."
         
-        elif 'action plan' in incoming_msg and user_status == 'active':
+        elif 'action plan' in incoming_msg.lower() and user_status == 'active':
             reply_text = f"{persona_intro}📋 *Action Plan*\n\n📈 *Shortage:* Sell incrementally to ride the peak.\n📉 *Glut:* Hold stock; explore value-add processing."
             
         else:
