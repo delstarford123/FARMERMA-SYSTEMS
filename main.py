@@ -3064,49 +3064,87 @@ def api_request_withdrawal():
 
 @app.route("/webhook/twilio/zim-bot", methods=['POST'])
 def zim_bot_webhook():
-    incoming_msg = request.values.get('Body', '').strip().lower()
+    incoming_msg = request.values.get('Body', '').strip()
     user_phone = request.values.get('From', '')
 
+    # Initialize Gemini Client
+    # Ensure GOOGLE_API_KEY is set in your environment or .env
+    client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
+
     try:
-        # Search Firebase for Zimbabwe market data
+        # 1. Fetch Latest Zimbabwe Market Data for Context
         market_ref = rtdb.reference('market_data')
         all_data = market_ref.get() or {}
-        
-        # 1. Filter all Zimbabwe items first
         zim_items = [item for item in all_data.values() if item.get('country') == 'Zimbabwe']
         
-        # 2. Simple Keyword Matching: Check if user mentioned any crop we have
-        found_item = None
-        for item in zim_items:
-            commodity = item.get('commodity', '').lower()
-            # If the commodity name is inside the message (e.g. "maize" in "what is the price of maize?")
-            if commodity in incoming_msg or incoming_msg in commodity:
-                found_item = item
-                break # Just take the first match for simplicity
-        
-        if found_item:
-            # Format the live price response
-            reply_text = f"🇿🇼 *Zim Bot Live Market Data*\n\n"
-            reply_text += f"*Commodity:* {found_item['commodity']}\n"
-            reply_text += f"*Price:* {found_item['currency']} {found_item['price']:.2f} per {found_item['unit']}\n"
-            reply_text += f"*Market:* {found_item['region']}\n"
-            reply_text += f"*Trend:* {'Rising ▲' if found_item['trend'] == 'up' else 'Dropping ▼' if found_item['trend'] == 'down' else 'Stable ▬'}\n"
-            reply_text += f"*As of:* {found_item['updated_at'][:10]}\n\n"
-            reply_text += "_Reply with another crop name to get more prices._"
+        # Format market data into a readable string for Gemini context
+        market_context = ""
+        if zim_items:
+            market_context = "CURRENT ZIMBABWE MARKET DATA:\n"
+            for item in zim_items:
+                trend_desc = "Rising ▲" if item.get('trend') == 'up' else "Dropping ▼" if item.get('trend') == 'down' else "Stable ▬"
+                market_context += f"- {item.get('commodity')}: {item.get('currency')} {item.get('price')} per {item.get('unit')} ({item.get('region')}). Trend: {trend_desc}. Last Updated: {item.get('updated_at')}\n"
         else:
-            # Fallback for greetings or unknown crops
-            if any(greet in incoming_msg for greet in ['hi', 'hello', 'hey', 'start']):
-                reply_text = "🇿🇼 *Welcome to Zim Bot!*\n\nI am your agricultural assistant. Please send me the name of a crop (e.g., 'Maize', 'Tobacco', 'Wheat') to get the latest market prices in Zimbabwe."
-            else:
-                reply_text = "I couldn't find a price for that crop. Please ensure you typed the name correctly (e.g., Maize) or check back later as we update the bulletin."
+            market_context = "No real-time market data available for Zimbabwe at the moment."
+
+        # 2. System Instruction / Persona
+        system_instruction = f"""
+        You are ZimBot, an advanced, professional AI Agricultural Agent dedicated to empowering farmers, traders, and agribusinesses across Zimbabwe.
+        Your goal is to provide warm interactions, deep market insights, and highly actionable business advice.
+
+        PERSONA:
+        - Professional & Grounded: Seasoned agricultural economist and trusted local advisor.
+        - Empathetic & Supportive: Understand the hard work in Zimbabwean farming.
+        - Clear & Concise: Use direct language suitable for WhatsApp.
+
+        CORE CAPABILITIES:
+        - Greetings: Respond warmly (Mhoroi, Sanibonani, Hello) and state how you can help.
+        - Strategic Advice: 
+            * If prices are FALLING (Dropping ▼): Advise caution. Suggest holding stock if possible.
+            * If prices are HIGH/RISING (Rising ▲): Advise capitalizing on peaks to maximize profit.
+        - Localization: Focus on Zimbabwe hubs (Mbare Musika, etc.). Use local units (buckets, 50kg bags).
+        
+        {market_context}
+        
+        If you lack specific data for a crop, offer general seasonal advice or historical trends. Never fabricate prices.
+        """
+
+        # 3. Generate Response using Gemini
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction
+            ),
+            contents=[incoming_msg]
+        )
+        
+        reply_text = response.text.strip()
 
     except Exception as e:
         print(f"Zim Bot Error: {e}")
-        reply_text = "Sorry, I'm having trouble connecting to the market right now. Please try again later."
+        reply_text = "🇿🇼 *Zim Bot Notice*\n\nI'm currently recalibrating my market insights. Please try again in a few moments or contact support if the issue persists."
 
     resp = MessagingResponse()
     resp.message(reply_text)
     return str(resp)
+
+# Helper function for Proactive Broadcasts (can be called by a cron job or admin action)
+def generate_zim_market_alert(affected_crops_info):
+    """
+    affected_crops_info: list of dicts with {'commodity': '...', 'trend': '...', 'advice_context': '...'}
+    """
+    client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
+    
+    prompt = f"Generate an urgent yet professional WhatsApp broadcast alert for these changes: {affected_crops_info}. Include the ⚠️ ALERT: MARKET UPDATE header and strategic advice."
+    
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=[prompt]
+        )
+        return response.text.strip()
+    except:
+        return "⚠️ ALERT: MARKET UPDATE\nSignificant price shifts detected in the market. Check the dashboard for details."
 
 @app.errorhandler(404)
 def page_not_found(e):
