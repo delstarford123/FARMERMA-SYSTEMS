@@ -33,3 +33,4 @@ scipy
 # Zim Bot Integration
 twilio
 google-genai
+python-docx

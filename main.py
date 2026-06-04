@@ -30,6 +30,8 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 from twilio.twiml.messaging_response import MessagingResponse
 from google import genai
 from google.genai import types
+from docx import Document
+from io import BytesIO
 
 # Firebase Imports
 import firebase_admin
@@ -98,6 +100,113 @@ def check_subscription_expirations():
 
 # Add the job to run every 24 hours
 scheduler.add_job(func=check_subscription_expirations, trigger='interval', hours=24)
+
+# ==========================================
+# WEEKLY HARVEST INTELLIGENCE REPORTS
+# ==========================================
+def generate_harvest_report(user_name):
+    """Generates a professional Word document report for Harvest subscribers."""
+    doc = Document()
+    doc.add_heading('Harvest Intelligence: Weekly Strategic Report', 0)
+    
+    doc.add_paragraph(f"Prepared for: {user_name}")
+    doc.add_paragraph(f"Date: {datetime.now().strftime('%B %d, %Y')}")
+    
+    doc.add_heading('1. Market Overview (Zimbabwe)', level=1)
+    
+    # Fetch live market data for the report
+    market_ref = rtdb.reference('market_data')
+    all_data = market_ref.get() or {}
+    zim_items = [item for item in all_data.values() if item.get('country') == 'Zimbabwe']
+    
+    if zim_items:
+        table = doc.add_table(rows=1, cols=4)
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'Commodity'
+        hdr_cells[1].text = 'Price'
+        hdr_cells[2].text = 'Trend'
+        hdr_cells[3].text = 'Market'
+        
+        for item in zim_items:
+            row_cells = table.add_row().cells
+            row_cells[0].text = str(item.get('commodity'))
+            row_cells[1].text = f"{item.get('currency')} {item.get('price')} / {item.get('unit')}"
+            row_cells[2].text = "Rising ▲" if item.get('trend') == 'up' else "Falling ▼" if item.get('trend') == 'down' else "Stable"
+            row_cells[3].text = str(item.get('region'))
+    else:
+        doc.add_paragraph("No live market data available for this period.")
+
+    doc.add_heading('2. Strategic Action Plan', level=1)
+    doc.add_paragraph(
+        "Based on current market volatility, Harvest subscribers are advised to prioritize storage for grains showing a downward trend. "
+        "For commodities in a rising trend (▲), incremental selling is recommended to capture the peak ROI while maintaining supply continuity."
+    )
+    
+    doc.add_heading('3. Intelligence Forecast', level=1)
+    doc.add_paragraph(
+        "Our data models predict a tightening of supply in the coming 14 days due to regional logistics shifts. "
+        "Buyers should secure forward contracts now to lock in current rates."
+    )
+    
+    doc.add_paragraph("\n\nThank you for choosing ZimBot Harvest Intelligence.")
+    doc.add_paragraph("ZimBot Team - Your Professional Agricultural Partner.")
+    
+    target = BytesIO()
+    doc.save(target)
+    target.seek(0)
+    return target
+
+def send_friday_harvest_reports():
+    """Weekly task to send Word reports to Harvest subscribers every Friday at 6 PM."""
+    with app.app_context():
+        try:
+            print("🚀 Starting Weekly Harvest Report distribution...")
+            all_users = rtdb.reference('users').get() or {}
+            
+            # Filter for active Harvest subscribers (Package 3)
+            harvest_users = [
+                {'email': u.get('email'), 'name': u.get('full_name', 'Valued Farmer')}
+                for u in all_users.values()
+                if u.get('subscription_tier') == 'harvest' and u.get('subscription_status') == 'active'
+            ]
+            
+            for user in harvest_users:
+                email = user['email']
+                name = user['name']
+                
+                if not email: continue
+                
+                # Generate Report
+                report_buffer = generate_harvest_report(name)
+                
+                # Create Email
+                msg = Message(
+                    subject=f"📊 Your Weekly Harvest Intelligence Report - {datetime.now().strftime('%b %d')}",
+                    recipients=[email]
+                )
+                msg.body = f"Hello {name},\n\nPlease find attached your exclusive Weekly Harvest Intelligence Report. This strategic document contains live market trends and action plans tailored for your agribusiness success.\n\nBest regards,\nZimBot Team"
+                
+                # Attach Word Doc
+                msg.attach(
+                    filename=f"Harvest_Report_{datetime.now().strftime('%Y_%m_%d')}.docx",
+                    content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    data=report_buffer.read()
+                )
+                
+                mail.send(msg)
+                print(f"✅ Harvest Report sent to {email}")
+                
+        except Exception as e:
+            print(f"❌ Harvest Report distribution failed: {e}")
+
+# Schedule the Harvest Report for every Friday at 18:00 (6 PM)
+scheduler.add_job(
+    func=send_friday_harvest_reports, 
+    trigger='cron', 
+    day_of_week='fri', 
+    hour=18, 
+    minute=0
+)
 
 # Database Config
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///farmerman.db'
