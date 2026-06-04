@@ -3303,21 +3303,39 @@ def zim_bot_webhook():
             # Force user into payment flow
             if not pay_state:
                 pay_ref.set({'step': 'select_package'})
-                reply_text = f"{persona_intro}Your account is currently inactive. To access market intelligence, please choose a subscription plan:\n\n{PRICING_MENU}"
+                reply_text = f"{persona_intro}Your account is currently inactive. To access our professional market intelligence, please choose a subscription plan:\n\n{PRICING_MENU}"
             else:
                 step = pay_state.get('step')
+                
                 if step == 'select_package':
                     selection = incoming_msg.strip()
                     plans = {'1': 'seed', '2': 'growth', '3': 'harvest'}
                     if selection in plans:
                         plan_id = plans[selection]
                         plan_name = plan_id.capitalize()
-                        price_kes = SYSTEM_PRICING[plan_id]['kes']
-                        pay_ref.update({'step': 'confirm_phone', 'plan_id': plan_id, 'amount': price_kes})
-                        reply_text = f"Selected: *{plan_name} Package*.\n\nPlease reply with your **M-Pesa Number** (e.g., 0712345678) to initiate secure payment via STK Push."
+                        pay_ref.update({'step': 'select_method', 'plan_id': plan_id})
+                        reply_text = f"You selected the *{plan_name} Package*.\n\nHow would you like to proceed with payment?\n\nReply with:\n*A* for M-Pesa (STK Push)\n*B* for PesaPal (Card/Online)"
                     else:
                         reply_text = f"Invalid selection. Please choose a package to continue:\n\n{PRICING_MENU}"
                 
+                elif step == 'select_method':
+                    choice = incoming_msg.strip().upper()
+                    plan_id = pay_state.get('plan_id')
+                    plan_name = plan_id.capitalize()
+                    
+                    if choice == 'A':
+                        # M-Pesa Flow
+                        price_kes = SYSTEM_PRICING[plan_id]['kes']
+                        pay_ref.update({'step': 'confirm_phone', 'amount': price_kes})
+                        reply_text = f"Selected: *{plan_name} via M-Pesa*.\n\nPlease reply with your **M-Pesa Number** (e.g., 0712345678) to initiate the secure payment prompt."
+                    elif choice == 'B':
+                        # PesaPal Flow
+                        checkout_url = f"https://farmermansystems.co.ke/checkout?plan={plan_id}"
+                        reply_text = f"Selected: *{plan_name} via PesaPal*.\n\nPlease complete your payment securely via Card or Bank here: {checkout_url}\n\nYour access will be activated immediately after payment."
+                        pay_ref.delete() # Finish flow for web-based payments
+                    else:
+                        reply_text = "Invalid choice. Please reply with *A* for M-Pesa or *B* for PesaPal."
+
                 elif step == 'confirm_phone':
                     target_phone = incoming_msg.strip().replace(' ', '').replace('+', '')
                     if len(target_phone) < 10:
