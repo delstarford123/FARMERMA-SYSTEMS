@@ -21,10 +21,15 @@ from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import NotFound
 from logic import analyze_weather_and_generate_alerts, update_firebase_alerts
-# Flask & Extensions
+# Flask & SocketIO
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, flash, send_from_directory, abort
 from flask_mail import Mail, Message
 from flask_socketio import SocketIO, emit, join_room, leave_room
+
+# Twilio & Google GenAI Imports
+from twilio.twiml.messaging_response import MessagingResponse
+from google import genai
+from google.genai import types
 
 # Firebase Imports
 import firebase_admin
@@ -705,6 +710,54 @@ def delete_market_data(item_id):
     except Exception: 
         flash("Error.", "danger")
     return redirect(url_for('market_data_manager'))
+
+@app.route('/admin/zim-data-manager', methods=['GET', 'POST'])
+@admin_required
+def zim_market_data_manager():
+    if request.method == 'POST':
+        try:
+            numeric_price = float(request.form.get('price', 0))
+        except ValueError:
+            numeric_price = 0.0
+        custom_date = request.form.get('updated_at')
+        if custom_date:
+            updated_at_str = f"{custom_date} {datetime.now().strftime('%H:%M:%S')}"
+        else:
+            updated_at_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        rtdb.reference('market_data').push({
+            "commodity": request.form.get('commodity').strip(),
+            "category": request.form.get('category', 'Other'), 
+            "region": request.form.get('region'),
+            "price": numeric_price,
+            "unit": request.form.get('unit', 'kg'), 
+            "currency": request.form.get('currency', 'USD'),
+            "trend": request.form.get('trend'),
+            "updated_at": updated_at_str,
+            "country": "Zimbabwe"
+        })
+
+        flash(f"Zimbabwe Market data for {request.form.get('commodity')} published successfully!", "success")
+        return redirect(url_for('zim_market_data_manager'))
+        
+    items = rtdb.reference('market_data').get() or {}
+    market_list = []
+    for k, v in items.items():
+        if v.get('country') == 'Zimbabwe':
+            v['id'] = k
+            market_list.append(v)
+        
+    return render_template('zim_market_data_manager.html', market_items=list(reversed(market_list)))
+
+@app.route('/admin/delete-zim-market-data/<item_id>', methods=['POST'])
+@admin_required
+def delete_zim_market_data(item_id):
+    try: 
+        rtdb.reference(f'market_data/{item_id}').delete()
+        flash("Removed Zimbabwe market record.", "success")
+    except Exception: 
+        flash("Error.", "danger")
+    return redirect(url_for('zim_market_data_manager'))
 
 @app.route('/admin/content', methods=['GET', 'POST'])
 @admin_required
@@ -2928,9 +2981,22 @@ def api_request_loan():
     except Exception as e:
         print(f"API Loan Request Error: {e}")
         return jsonify({"error": "Failed to process loan request"}), 500
+    
+    
+    
+   
+   
+   
+    
 # ==========================================
 # MOBILE APP WITHDRAWAL REQUEST API
 # ==========================================
+
+
+
+
+
+
 @app.route('/api/banking/withdraw', methods=['POST'])
 @token_required 
 def api_request_withdrawal():
@@ -2977,9 +3043,75 @@ def api_request_withdrawal():
         print(f"API Withdrawal Error: {e}")
         return jsonify({"error": "Failed to process withdrawal"}), 500
         
+        
+        
+        
+        
+        
+        
+        
+# ==========================================
+# ZIM BOT (WHATSAPP AGRICULTURAL ASSISTANT)
+# ==========================================
+
+
+
+
+
+
+
+
+
+@app.route("/webhook/twilio/zim-bot", methods=['POST'])
+def zim_bot_webhook():
+    incoming_msg = request.values.get('Body', '').strip().lower()
+    user_phone = request.values.get('From', '')
+
+    try:
+        # Search Firebase for Zimbabwe market data
+        market_ref = rtdb.reference('market_data')
+        all_data = market_ref.get() or {}
+        
+        # 1. Filter all Zimbabwe items first
+        zim_items = [item for item in all_data.values() if item.get('country') == 'Zimbabwe']
+        
+        # 2. Simple Keyword Matching: Check if user mentioned any crop we have
+        found_item = None
+        for item in zim_items:
+            commodity = item.get('commodity', '').lower()
+            # If the commodity name is inside the message (e.g. "maize" in "what is the price of maize?")
+            if commodity in incoming_msg or incoming_msg in commodity:
+                found_item = item
+                break # Just take the first match for simplicity
+        
+        if found_item:
+            # Format the live price response
+            reply_text = f"🇿🇼 *Zim Bot Live Market Data*\n\n"
+            reply_text += f"*Commodity:* {found_item['commodity']}\n"
+            reply_text += f"*Price:* {found_item['currency']} {found_item['price']:.2f} per {found_item['unit']}\n"
+            reply_text += f"*Market:* {found_item['region']}\n"
+            reply_text += f"*Trend:* {'Rising ▲' if found_item['trend'] == 'up' else 'Dropping ▼' if found_item['trend'] == 'down' else 'Stable ▬'}\n"
+            reply_text += f"*As of:* {found_item['updated_at'][:10]}\n\n"
+            reply_text += "_Reply with another crop name to get more prices._"
+        else:
+            # Fallback for greetings or unknown crops
+            if any(greet in incoming_msg for greet in ['hi', 'hello', 'hey', 'start']):
+                reply_text = "🇿🇼 *Welcome to Zim Bot!*\n\nI am your agricultural assistant. Please send me the name of a crop (e.g., 'Maize', 'Tobacco', 'Wheat') to get the latest market prices in Zimbabwe."
+            else:
+                reply_text = "I couldn't find a price for that crop. Please ensure you typed the name correctly (e.g., Maize) or check back later as we update the bulletin."
+
+    except Exception as e:
+        print(f"Zim Bot Error: {e}")
+        reply_text = "Sorry, I'm having trouble connecting to the market right now. Please try again later."
+
+    resp = MessagingResponse()
+    resp.message(reply_text)
+    return str(resp)
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
+
 
 if __name__ == "__main__":
     import os
@@ -3003,3 +3135,5 @@ if __name__ == "__main__":
     print(f" Click here to open: http://127.0.0.1:{port}\n")
     
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
+    
+    

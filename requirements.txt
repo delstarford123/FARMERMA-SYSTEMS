@@ -29,3 +29,7 @@ pillow
 python-dotenv
 scikit-learn
 scipy
+
+# Zim Bot Integration
+twilio
+google-genai
