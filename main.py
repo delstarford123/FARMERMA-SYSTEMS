@@ -3114,7 +3114,7 @@ def zim_bot_webhook():
 
     # --- PERSONA & LOGIC DEFINITIONS ---
     GREETINGS = ['hi', 'hello', 'mhoroi', 'sanibonani', 'hey', 'start', 'tora', 'nzou', 'menu']
-    persona_intro = "🇿🇼 *ZimBot: Your AI Agricultural Advisor*\n\n"
+    persona_intro = "🇿🇼 *ZimBot: AI Agricultural Advisor*\n\n"
 
     try:
         # 1. AUTHENTICATION: Identify User
@@ -3134,22 +3134,22 @@ def zim_bot_webhook():
             if not pending:
                 # Step 1: Ask for Name
                 if any(greet in incoming_msg.lower() for greet in GREETINGS):
-                    reply_text = f"{persona_intro}Mhoroi! I don't recognize this number. To help you better, what is your *Full Name*?"
+                    reply_text = f"{persona_intro}Welcome! I provide live Zimbabwe market intelligence and strategic advice. To begin, please send your *Full Name*."
                     pending_ref.set({'step': 'ask_name'})
                 else:
-                    reply_text = "Welcome to ZimBot! Please say 'Hi' or 'Mhoroi' to begin your registration and access market data."
+                    reply_text = f"{persona_intro}Welcome! Please say 'Hi' or 'Mhoroi' to begin your registration and access live market data."
             
             elif pending.get('step') == 'ask_name':
                 # Step 2: Save Name, Ask for Email
                 full_name = incoming_msg.title()
                 pending_ref.update({'full_name': full_name, 'step': 'ask_email'})
-                reply_text = f"Thank you, {full_name}. What is your *Email Address*? (We'll use this for strategic reports and receipts)."
+                reply_text = f"Thank you, {full_name}. What is your *Email Address* for receiving strategic reports?"
             
             elif pending.get('step') == 'ask_email':
                 # Step 3: Finalize Registration
                 email = incoming_msg.strip().lower()
                 if '@' not in email or '.' not in email:
-                    reply_text = "That doesn't look like a valid email. Please send a valid email address (e.g., farmerman@gmail.com)."
+                    reply_text = "Please provide a valid email address (e.g., name@gmail.com)."
                 else:
                     full_name = pending.get('full_name')
                     # Create User in Firebase
@@ -3165,7 +3165,7 @@ def zim_bot_webhook():
                         'created_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     })
                     pending_ref.delete()
-                    reply_text = f"Congratulations {full_name}! 🎊 Your account is set up. You can now ask me for crop prices (e.g., 'Maize') or say 'Menu' for options."
+                    reply_text = f"Registration complete! 🎊 Welcome {full_name}. You can now send a crop name (e.g., 'Maize') for live prices or say 'Menu' for options."
             
             resp = MessagingResponse()
             resp.message(reply_text)
@@ -3177,10 +3177,9 @@ def zim_bot_webhook():
         
         # 4. Check for Greetings
         if any(greet in incoming_msg.lower() for greet in GREETINGS):
-            reply_text = f"{persona_intro}Mhoroi! I am ZimBot. I see you are on our *{user_tier.capitalize()}* plan.\n\n"
-            reply_text += "I provide live prices, deep trends, and strategic advice.\n\n"
-            reply_text += "🔍 *Prices:* Send a crop name (e.g., 'Maize').\n"
-            reply_text += "🧠 *Strategy:* Send 'Farmer Advice' or 'Action Plan'."
+            reply_text = f"{persona_intro}Welcome back! You are on the *{user_tier.capitalize()}* plan.\n\n"
+            reply_text += "🔍 *Prices:* Send a crop name (e.g., 'Maize')\n"
+            reply_text += "🧠 *Strategy:* Send 'Farmer Advice' or 'Action Plan'"
             
             resp = MessagingResponse()
             resp.message(reply_text)
