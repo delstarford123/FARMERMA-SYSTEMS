@@ -227,6 +227,34 @@ os.makedirs(CHAT_MEDIA_FOLDER, exist_ok=True)
 # CONSTANTS & UPLOAD CONFIGURATIONS
 # ==========================================
 FIREBASE_WEB_API_KEY = "AIzaSyDy41jUJ8h7zYE9Ocj7pPNGGXCq5RRbN-s"
+
+# --- ZIMBABWE MARKET HIERARCHY ---
+ZIM_REGIONS_MARKETS = {
+    "Beitbridge": ["Mashavire Bulk Market"],
+    "Bindura": ["Chipadze Market"],
+    "Bulawayo": ["5th Avenue Market", "Shasha Market"],
+    "Chimanimani": ["Nhedziwa Farmers Market"],
+    "Chinhoyi": ["Gadzema Market", "Makonde Horticulture Market"],
+    "Chitungwiza": ["Guzha - Chikwanha Market"],
+    "Gokwe": ["Craft Centre Market"],
+    "Gokwe North": ["Nembudziya - Mutora Market"],
+    "Gwanda": ["Jahunda Market"],
+    "Gweru": ["Mutapa Market"],
+    "Harare": ["Mbare Market", "Coca Cola Market", "BAC Market"],
+    "Highfield": ["Lusaka Market"],
+    "Kadoma": ["Rimuka Market", "City Market"],
+    "Kariba": ["Nyamhunga Market"],
+    "Kwekwe": ["Kwekwe Market"],
+    "Lupane": ["Lupane Market"],
+    "Marondera": ["Dombotombo Market"],
+    "Masvingo": ["Garikayi Market"],
+    "Mutare": ["Sakubva Market", "Chikanga Market"],
+    "Nyanga": ["Nyamanda Market"],
+    "Rusape": ["Rusape Market", "Evergreen Market"],
+    "Ruwa": ["George Market"],
+    "Zvishavane": ["Mandava Market"]
+}
+
 ALLOWED_TRAINING_EXTENSIONS = {'mp4', 'pdf', 'png', 'jpg', 'jpeg', 'docx', 'mp3', 'wav', 'avi', 'webp'}
 PREMIUM_CONTENT_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'premium_content')
 os.makedirs(PREMIUM_CONTENT_FOLDER, exist_ok=True) 
@@ -860,16 +888,19 @@ def zim_market_data_manager():
             numeric_price = float(request.form.get('price', 0))
         except ValueError:
             numeric_price = 0.0
+            
         custom_date = request.form.get('updated_at')
-        if custom_date:
-            updated_at_str = f"{custom_date} {datetime.now().strftime('%H:%M:%S')}"
-        else:
-            updated_at_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        updated_at_str = f"{custom_date} {datetime.now().strftime('%H:%M:%S')}" if custom_date else datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # Capture specific region and market
+        region_name = request.form.get('region')
+        market_name = request.form.get('market')
 
         rtdb.reference('market_data').push({
             "commodity": request.form.get('commodity').strip(),
             "category": request.form.get('category', 'Other'), 
-            "region": request.form.get('region'),
+            "region": region_name,
+            "market": market_name,
             "price": numeric_price,
             "unit": request.form.get('unit', 'kg'), 
             "currency": request.form.get('currency', 'USD'),
@@ -878,7 +909,7 @@ def zim_market_data_manager():
             "country": "Zimbabwe"
         })
 
-        flash(f"Zimbabwe Market data for {request.form.get('commodity')} published successfully!", "success")
+        flash(f"Intelligence published for {request.form.get('commodity')} at {market_name} ({region_name})", "success")
         return redirect(url_for('zim_market_data_manager'))
         
     items = rtdb.reference('market_data').get() or {}
@@ -888,7 +919,7 @@ def zim_market_data_manager():
             v['id'] = k
             market_list.append(v)
         
-    return render_template('zim_market_data_manager.html', market_items=list(reversed(market_list)))
+    return render_template('zim_market_data_manager.html', market_items=list(reversed(market_list)), regions=ZIM_REGIONS_MARKETS)
 
 @app.route('/admin/delete-zim-market-data/<item_id>', methods=['POST'])
 @admin_required
@@ -3370,26 +3401,124 @@ def zim_bot_webhook():
             reply_text = "My expertise is strictly dedicated to agricultural market intelligence and supply chain data. I cannot assist with non-agricultural topics. Would you like to check today's market reports instead?"
 
         else:
-            # Rule 5: Missing Data & Zero-Hallucination Protocol
+            # --- HYPER-LOCAL INTELLIGENCE ENGINE ---
             market_ref = rtdb.reference('market_data')
             all_market = market_ref.get() or {}
             zim_items = [item for item in all_market.values() if item.get('country') == 'Zimbabwe']
             
-            found_item = None
-            for item in zim_items:
-                commodity = item.get('commodity', '').lower()
-                if commodity in msg_low or msg_low in commodity:
-                    found_item = item; break
+            def find_best_intelligence(query):
+                query_low = query.lower()
+                
+                # Identify if a Region (Town) or specific Market is mentioned
+                detected_region = None
+                detected_market = None
+                
+                # Check for Regions/Towns
+                for region in ZIM_REGIONS_MARKETS.keys():
+                    if region.lower() in query_low:
+                        detected_region = region
+                        break
+                
+                # Check for specific Markets
+                for region, markets in ZIM_REGIONS_MARKETS.items():
+                    for m in markets:
+                        if m.lower() in query_low:
+                            detected_market = m
+                            detected_region = region
+                            break
+                    if detected_market: break
 
-            if found_item:
+                # --- Scenario: "All markets in [Region]" ---
+                if ("all market" in query_low or "list market" in query_low) and detected_region:
+                    regional_data = [item for item in zim_items if item.get('region') == detected_region]
+                    if regional_data:
+                        return {"type": "region_aggregate", "data": regional_data, "region": detected_region}
+
+                # --- Scenario: Commodity + Location ---
+                # Find matching commodity first
+                target_commodity = None
+                for item in zim_items:
+                    comm = item.get('commodity', '').lower()
+                    if comm in query_low:
+                        target_commodity = item.get('commodity')
+                        break
+
+                if target_commodity:
+                    # 1. Exact Market Match (e.g. Maize in Mbare)
+                    if detected_market:
+                        for item in zim_items:
+                            if item.get('commodity') == target_commodity and item.get('market') == detected_market:
+                                return {"type": "exact_market", "data": item}
+                    
+                    # 2. Regional Match (e.g. Maize in Harare)
+                    if detected_region:
+                        for item in zim_items:
+                            if item.get('commodity') == target_commodity and item.get('region') == detected_region:
+                                return {"type": "exact_region", "data": item}
+
+                    # 3. Global Zimbabwe Match (Generic)
+                    for item in zim_items:
+                        if item.get('commodity') == target_commodity:
+                            return {"type": "exact_commodity", "data": item}
+
+                # --- Scenario: Location Only (Show general activity) ---
+                if detected_market:
+                    for item in zim_items:
+                        if item.get('market') == detected_market:
+                            return {"type": "market_proxy", "data": item}
+                
+                if detected_region:
+                    for item in zim_items:
+                        if item.get('region') == detected_region:
+                            return {"type": "geo_proxy", "data": item}
+
+                # STEP 4: Commodity Taxonomy Proxy (Check Category)
+                categories = ['grains', 'vegetables', 'tubers', 'fruits', 'cash crops']
+                for cat in categories:
+                    if cat in query_low:
+                        for item in zim_items:
+                            if item.get('category', '').lower() == cat:
+                                return {"type": "commodity_proxy", "data": item}
+
+                return {"type": "void", "data": None}
+
+            intel = find_best_intelligence(msg_low)
+            match_type = intel['type']
+
+            if match_type == "region_aggregate":
+                region = intel['region']
+                reply_text = f"{persona_intro}📍 *Intelligence Summary: {region} Network*\n\n"
+                reply_text += f"I have analyzed {len(intel['data'])} active mass markets in {region}:\n\n"
+                for item in intel['data']:
+                    trend_icon = "▲" if item.get('trend') == 'up' else "▼" if item.get('trend') == 'down' else "▬"
+                    reply_text += f"• *{item['commodity']}* ({item['market']}): {item['currency']} {item['price']} {trend_icon}\n"
+                reply_text += f"\nStrategy: Diversify supply across these hubs to mitigate localized price dips."
+            
+            elif intel['data']:
+                found_item = intel['data']
                 commodity_name = found_item['commodity']
                 trend = found_item.get('trend', 'stable')
-                reply_text = f"{persona_intro}*Intelligence Report: {commodity_name}*\n\n"
-                reply_text += f"📍 *Market:* {found_item.get('region', 'Zimbabwe Hubs')}\n"
+                market_name = found_item.get('market', 'General Hub')
+                region_name = found_item.get('region', 'Zimbabwe')
+                
+                # Header based on proxy type
+                header = f"*Intelligence Report: {commodity_name}*"
+                if match_type == "exact_market": header = f"🎯 *Targeted Intelligence: {market_name}*"
+                elif match_type == "exact_region": header = f"📍 *Regional Intelligence: {region_name}*"
+                elif match_type == "time_proxy": header = "⚠️ *Historical Proxy Intelligence*"
+                elif match_type == "commodity_proxy": header = "🌳 *Category Intelligence Proxy*"
+
+                reply_text = f"{persona_intro}{header}\n\n"
+                reply_text += f"📦 *Commodity:* {commodity_name}\n"
+                reply_text += f"🏪 *Market:* {market_name}\n"
+                reply_text += f"📍 *Town:* {region_name}\n"
                 reply_text += f"💰 *Price:* {found_item.get('currency')} {found_item['price']:,.2f} per {found_item['unit']}\n"
                 reply_text += f"📊 *Trend:* {'Rising ▲' if trend == 'up' else 'Dropping ▼' if trend == 'down' else 'Stable ▬'}\n"
                 reply_text += f"📅 *As of:* {found_item.get('updated_at', '')[:10]}\n\n"
                 
+                if match_type not in ["exact_market", "exact_region", "exact_commodity"]:
+                    reply_text += "_Note: Providing closest high-confidence data proxy._\n\n"
+
                 # Strategic Advice
                 if trend == 'up':
                     reply_text += "📈 *Action:* Prices are rising. Sell in batches to capitalize on demand peaks while hedging against sudden supply shifts."
@@ -3398,7 +3527,7 @@ def zim_bot_webhook():
                 else:
                     reply_text += "⚖️ *Action:* Stable market. Proceed with standard supply contracts."
             else:
-                # GRACEFUL FALLBACK (Missing Data)
+                # STEP 5: Complete Data Void
                 reply_text = f"I do not have today's spot price for '{incoming_msg}' in the Zimbabwe database. "
                 reply_text += "However, I can provide latest data for *Maize* or *Tobacco*, or check the national average for cash crops. Would either help your analysis? "
                 reply_text += "I have logged this request for our data team to source in future updates."

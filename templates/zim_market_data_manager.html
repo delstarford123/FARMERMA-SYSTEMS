@@ -157,8 +157,20 @@
                             </div>
                             
                             <div class="mb-3">
-                                <label class="form-label fw-bold text-muted small text-uppercase">Market / Region</label>
-                                <input type="text" name="region" class="form-control bg-light border-0 shadow-sm" placeholder="e.g., Mbare Musika, Harare" required>
+                                <label class="form-label fw-bold text-muted small text-uppercase">Town / Region</label>
+                                <select name="region" id="regionSelect" class="form-select bg-light border-0 shadow-sm" required>
+                                    <option value="" selected disabled>Select Town</option>
+                                    {% for region in regions.keys() | sort %}
+                                        <option value="{{ region }}">{{ region }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small text-uppercase">Mass Market</label>
+                                <select name="market" id="marketSelect" class="form-select bg-light border-0 shadow-sm" required>
+                                    <option value="" selected disabled>Select Region First</option>
+                                </select>
                             </div>
                             
                             <div class="row mb-3 g-2">
@@ -235,8 +247,8 @@
                                             <div class="small text-muted"><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 fw-normal">{{ item.category }}</span></div>
                                         </td>
                                         <td>
-                                            <div class="text-dark fw-medium text-clamp-1" title="{{ item.region }}">{{ item.region }}</div>
-                                            <div class="small text-muted" style="font-size: 0.75rem;">{{ item.updated_at[:10] }}</div>
+                                            <div class="text-dark fw-bold text-clamp-1" title="{{ item.market }}">{{ item.market }}</div>
+                                            <div class="small text-muted" style="font-size: 0.75rem;">{{ item.region }} • {{ item.updated_at[:10] }}</div>
                                         </td>
                                         <td>
                                             <div class="fw-bold fs-5" style="color: var(--plant-green);">
@@ -470,6 +482,29 @@
             filterTable();
         });
     });
+
+// --- 4. Dependent Dropdowns for Regions/Markets ---
+const regionSelect = document.getElementById('regionSelect');
+const marketSelect = document.getElementById('marketSelect');
+const regionsData = {{ regions | tojson | safe }};
+
+if(regionSelect && marketSelect) {
+    regionSelect.addEventListener('change', function() {
+        const selectedRegion = this.value;
+        const markets = regionsData[selectedRegion] || [];
+
+        // Clear current options
+        marketSelect.innerHTML = '<option value="" selected disabled>Select Market</option>';
+
+        // Add new options
+        markets.forEach(market => {
+            const option = document.createElement('option');
+            option.value = market;
+            option.textContent = market;
+            marketSelect.appendChild(option);
+        });
+    });
+}
 
 </script>
 {% endblock %}
