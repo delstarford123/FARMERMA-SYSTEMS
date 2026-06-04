@@ -3064,87 +3064,99 @@ def api_request_withdrawal():
 
 @app.route("/webhook/twilio/zim-bot", methods=['POST'])
 def zim_bot_webhook():
-    incoming_msg = request.values.get('Body', '').strip()
+    incoming_msg = request.values.get('Body', '').strip().lower()
     user_phone = request.values.get('From', '')
 
-    # Initialize Gemini Client
-    # Ensure GOOGLE_API_KEY is set in your environment or .env
-    client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
+    # --- PERSONA & LOGIC DEFINITIONS ---
+    GREETINGS = ['hi', 'hello', 'mhoroi', 'sanibonani', 'hey', 'start', 'tora', 'nzou']
+    
+    persona_intro = "🇿🇼 *ZimBot: Your AI Agricultural Advisor*\n\n"
+    standard_help = "I can help you track live market prices across Zimbabwe, analyze trends, and provide strategic trading advice. Just send me the name of a crop (e.g., 'Maize', 'Tobacco') to get started."
 
     try:
-        # 1. Fetch Latest Zimbabwe Market Data for Context
+        # 1. Fetch Latest Zimbabwe Market Data
         market_ref = rtdb.reference('market_data')
         all_data = market_ref.get() or {}
         zim_items = [item for item in all_data.values() if item.get('country') == 'Zimbabwe']
         
-        # Format market data into a readable string for Gemini context
-        market_context = ""
-        if zim_items:
-            market_context = "CURRENT ZIMBABWE MARKET DATA:\n"
-            for item in zim_items:
-                trend_desc = "Rising ▲" if item.get('trend') == 'up' else "Dropping ▼" if item.get('trend') == 'down' else "Stable ▬"
-                market_context += f"- {item.get('commodity')}: {item.get('currency')} {item.get('price')} per {item.get('unit')} ({item.get('region')}). Trend: {trend_desc}. Last Updated: {item.get('updated_at')}\n"
+        # 2. Check for Greetings
+        if any(greet in incoming_msg for greet in GREETINGS):
+            reply_text = f"{persona_intro}Mhoroi! I am ZimBot, your dedicated agricultural assistant.\n\n{standard_help}"
+        
         else:
-            market_context = "No real-time market data available for Zimbabwe at the moment."
+            # 3. Search for a matching commodity in the message
+            found_item = None
+            for item in zim_items:
+                commodity = item.get('commodity', '').lower()
+                # Match if commodity is in message or vice-versa
+                if commodity in incoming_msg or incoming_msg in commodity:
+                    found_item = item
+                    break
 
-        # 2. System Instruction / Persona
-        system_instruction = f"""
-        You are ZimBot, an advanced, professional AI Agricultural Agent dedicated to empowering farmers, traders, and agribusinesses across Zimbabwe.
-        Your goal is to provide warm interactions, deep market insights, and highly actionable business advice.
+            if found_item:
+                commodity_name = found_item['commodity']
+                price = found_item['price']
+                currency = found_item['currency']
+                unit = found_item['unit']
+                trend = found_item.get('trend', 'stable')
+                region = found_item.get('region', 'Zimbabwe Hubs')
+                date = found_item.get('updated_at', '')[:10]
 
-        PERSONA:
-        - Professional & Grounded: Seasoned agricultural economist and trusted local advisor.
-        - Empathetic & Supportive: Understand the hard work in Zimbabwean farming.
-        - Clear & Concise: Use direct language suitable for WhatsApp.
+                # --- APPLY STRATEGIC ADVICE LOGIC ---
+                advice = ""
+                if trend == 'up':
+                    trend_icon = "Rising ▲"
+                    advice = f"📈 *Strategic Advice:* {commodity_name} prices are currently on a strong upward trend due to high demand. If you have mature stock ready, this is an excellent window to sell and maximize your profit margins."
+                elif trend == 'down':
+                    trend_icon = "Dropping ▼"
+                    advice = f"📉 *Strategic Advice:* The price of {commodity_name} is currently falling. I advise caution; avoid selling right now if you can hold your stock. Approaching the market during this dip may minimize your returns."
+                else:
+                    trend_icon = "Stable ▬"
+                    advice = f"⚖️ *Strategic Advice:* The market for {commodity_name} is currently stable. This is a safe window for standard trading and consistent supply planning."
 
-        CORE CAPABILITIES:
-        - Greetings: Respond warmly (Mhoroi, Sanibonani, Hello) and state how you can help.
-        - Strategic Advice: 
-            * If prices are FALLING (Dropping ▼): Advise caution. Suggest holding stock if possible.
-            * If prices are HIGH/RISING (Rising ▲): Advise capitalizing on peaks to maximize profit.
-        - Localization: Focus on Zimbabwe hubs (Mbare Musika, etc.). Use local units (buckets, 50kg bags).
-        
-        {market_context}
-        
-        If you lack specific data for a crop, offer general seasonal advice or historical trends. Never fabricate prices.
-        """
+                reply_text = f"{persona_intro}*Live Market Data for {commodity_name}*\n\n"
+                reply_text += f"📍 *Market:* {region}\n"
+                reply_text += f"💰 *Price:* {currency} {price:,.2f} per {unit}\n"
+                reply_text += f"📊 *Trend:* {trend_icon}\n"
+                reply_text += f"📅 *As of:* {date}\n\n"
+                reply_text += f"{advice}\n\n"
+                reply_text += "_Reply with another crop name for more insights._"
 
-        # 3. Generate Response using Gemini
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction
-            ),
-            contents=[incoming_msg]
-        )
-        
-        reply_text = response.text.strip()
+            else:
+                # 4. Fallback if no crop found
+                reply_text = f"{persona_intro}I couldn't find a price for '{incoming_msg}' in my current Zimbabwe bulletin.\n\n"
+                reply_text += "Please ensure the name is correct or try a major commodity like 'Maize' or 'Tobacco'. I am constantly updating my records from hubs like Mbare Musika."
 
     except Exception as e:
-        print(f"Zim Bot Error: {e}")
-        reply_text = "🇿🇼 *Zim Bot Notice*\n\nI'm currently recalibrating my market insights. Please try again in a few moments or contact support if the issue persists."
+        print(f"Zim Bot Logic Error: {e}")
+        reply_text = "🇿🇼 *ZimBot System Notice*\n\nI'm currently recalibrating my market insights. Please try again in a few moments."
 
     resp = MessagingResponse()
     resp.message(reply_text)
     return str(resp)
 
-# Helper function for Proactive Broadcasts (can be called by a cron job or admin action)
+# Rule-Based Broadcast Generator
 def generate_zim_market_alert(affected_crops_info):
     """
-    affected_crops_info: list of dicts with {'commodity': '...', 'trend': '...', 'advice_context': '...'}
+    affected_crops_info: list of dicts with {'commodity': '...', 'trend': '...', 'price': '...'}
     """
-    client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
+    alert_text = "⚠️ *ALERT: ZIMBOT MARKET UPDATE* ⚠️\n\n"
+    alert_text += "Significant price shifts detected in the Zimbabwe agricultural network:\n\n"
     
-    prompt = f"Generate an urgent yet professional WhatsApp broadcast alert for these changes: {affected_crops_info}. Include the ⚠️ ALERT: MARKET UPDATE header and strategic advice."
-    
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=[prompt]
-        )
-        return response.text.strip()
-    except:
-        return "⚠️ ALERT: MARKET UPDATE\nSignificant price shifts detected in the market. Check the dashboard for details."
+    for crop in affected_crops_info:
+        trend = crop.get('trend', 'stable')
+        commodity = crop.get('commodity')
+        price = crop.get('price')
+        
+        if trend == 'up':
+            alert_text += f"🚀 *{commodity}:* Prices are RISING! Now at {price}. Sell now to maximize profit.\n"
+        elif trend == 'down':
+            alert_text += f"📉 *{commodity}:* Prices are DROPPING! Now at {price}. Hold your stock if possible.\n"
+        else:
+            alert_text += f"⚖️ *{commodity}:* Prices are STABLE at {price}.\n"
+            
+    alert_text += "\n*Action:* Review your trading strategy immediately based on these insights.\n\n_Stay informed with ZimBot._"
+    return alert_text
 
 @app.errorhandler(404)
 def page_not_found(e):
