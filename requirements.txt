@@ -23,14 +23,12 @@ Flask-Mail
 requests
 
 # Data & Utils
-numpy
-pandas
 pillow
 python-dotenv
-scikit-learn
-scipy
 
 # Zim Bot Integration
 twilio
 google-genai
 python-docx
+cachetools
+paynow

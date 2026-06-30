@@ -1,0 +1,8 @@
+PyMuPDF
+requests
+pandas
+openpyxl
+pymupdf
+flask
+flask_sqlalchemy
+firebase_admin

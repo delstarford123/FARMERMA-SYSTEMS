@@ -46,7 +46,7 @@
             </div>
         </div>
 
-        <div class="card border-0 shadow-sm management-table-card">
+        <div class="card border-0 shadow-sm management-table-card mb-5">
             <div class="card-header bg-white py-3 border-0">
                 <div class="row align-items-center">
                     <div class="col-md-5 mb-2 mb-md-0">
@@ -140,6 +140,41 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm rounded-4 whitelist-card">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-bold"><i class="bi bi-whatsapp text-success me-2"></i>WhatsApp Free Access Whitelist</h5>
+                        <p class="text-muted small mb-0 mt-1">Numbers here can use Zimbot questions without paying.</p>
+                    </div>
+                    <div class="card-body">
+                        <form action="/admin/add-whitelist" method="POST" class="mb-4 d-flex gap-2">
+                            <input type="text" name="phone_number" class="form-control" placeholder="e.g. 263771234567" required>
+                            <button type="submit" class="btn btn-success px-4">Add</button>
+                        </form>
+                        
+                        <div class="list-group list-group-flush rounded-3 border">
+                            {% for item in whitelist %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                <div>
+                                    <div class="fw-bold"><i class="bi bi-phone me-2 text-muted"></i>{{ item.phone }}</div>
+                                    {% if item.added_at %}<div class="small text-muted">Added: {{ item.added_at }}</div>{% endif %}
+                                </div>
+                                <form action="/admin/delete-whitelist/{{ item.id }}" method="POST" onsubmit="return confirm('Remove {{ item.phone }} from whitelist?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash3"></i> Remove</button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <div class="list-group-item text-center text-muted py-4">
+                                No numbers currently whitelisted.
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -46,51 +46,85 @@
                 </div>
                 {% endif %}
 
-                <div class="card shadow-sm border-0 mb-4 market-card">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h4 class="fw-bold m-0" style="color: #5D4037;">Live Market Snapshot</h4>
-                            <span class="badge" style="background-color: #E8F5E9; color: #2E7D32;">Live Feeds</span>
+                <div class="card shadow-sm border-0 mb-4 market-card" style="border-radius: 16px; overflow: hidden; background: linear-gradient(145deg, #ffffff, #f9fdfa);">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h4 class="fw-bold m-0" style="color: #2E7D32;">Intelligent Market Feeds</h4>
+                                <p class="text-muted small mt-1 mb-0">Live categorized pricing from major Zimbabwean markets.</p>
+                            </div>
+                            <span class="badge rounded-pill shadow-sm py-2 px-3" style="background-color: #E8F5E9; color: #1B5E20; border: 1px solid #C8E6C9;"><i class="bi bi-broadcast me-1"></i> Live</span>
                         </div>
-                        <p class="text-muted">Direct data feeds from regional Kakamega and nationwide markets.</p>
                         
-                        <div class="table-responsive">
-                            <table class="table table-hover mt-3 align-middle">
-                                <thead style="background-color: #f8f9fa;">
-                                    <tr>
-                                        <th>Commodity</th>
-                                        <th>Region</th>
-                                        <th>Price (KES)</th>
-                                        <th>Trend</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% if market_items %}
-                                        {% for item in market_items[:5] %} 
-                                        <tr class="market-row">
-                                            <td class="fw-bold" style="color: #2E7D32;">{{ item.commodity }}</td>
-                                            <td>{{ item.region }}</td>
-                                            <td class="fw-bold">KES {{ "{:,.0f}".format(item.price) }}</td>
-                                            <td>
-                                                {% if item.trend == 'up' %}
-                                                    <span class="text-success fw-bold"><i class="bi bi-arrow-up-right-circle-fill"></i> Rising</span>
-                                                {% elif item.trend == 'down' %}
-                                                    <span class="text-danger fw-bold"><i class="bi bi-arrow-down-right-circle-fill"></i> Falling</span>
-                                                {% else %}
-                                                    <span class="text-muted"><i class="bi bi-dash-circle-fill"></i> Stable</span>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    {% else %}
-                                        <tr>
-                                            <td colspan="4" class="text-center py-4 text-muted">No market data currently available.</td>
-                                        </tr>
-                                    {% endif %}
-                                </tbody>
-                            </table>
+                        {% if market_items_by_category %}
+                            <!-- Category Tabs -->
+                            <ul class="nav nav-pills mb-4" id="marketTabs" role="tablist">
+                                {% for category in market_items_by_category.keys() %}
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link fw-bold px-4 py-2 me-2 mb-2 rounded-pill shadow-sm {% if loop.first %}active{% endif %}" 
+                                                id="tab-{{ loop.index }}" data-bs-toggle="pill" data-bs-target="#content-{{ loop.index }}" 
+                                                type="button" role="tab" style="transition: all 0.3s ease;">
+                                            {{ category }}
+                                        </button>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            
+                            <!-- Tab Content -->
+                            <div class="tab-content" id="marketTabsContent">
+                                {% for category, items in market_items_by_category.items() %}
+                                    <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="content-{{ loop.index }}" role="tabpanel">
+                                        <div class="table-responsive bg-white rounded-4 shadow-sm border" style="max-height: 400px; overflow-y: auto;">
+                                            <table class="table table-hover align-middle m-0 table-borderless">
+                                                <thead style="background-color: #f1f8f3; position: sticky; top: 0; z-index: 1;">
+                                                    <tr>
+                                                        <th class="py-3 px-4 text-secondary small text-uppercase fw-bold">Commodity</th>
+                                                        <th class="py-3 px-4 text-secondary small text-uppercase fw-bold">Price</th>
+                                                        <th class="py-3 px-4 text-secondary small text-uppercase fw-bold">Location</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for item in items %}
+                                                    <tr class="market-row border-bottom">
+                                                        <td class="py-3 px-4">
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                                    <i class="bi bi-box-seam text-success"></i>
+                                                                </div>
+                                                                <span class="fw-bold text-dark">{{ item.commodity }}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td class="py-3 px-4">
+                                                            <div class="fw-bold fs-5 text-success">{{ item.currency }} {{ item.price }}</div>
+                                                            <div class="text-muted small">{{ item.unit }}</div>
+                                                        </td>
+                                                        <td class="py-3 px-4">
+                                                            <span class="badge rounded-pill bg-secondary bg-opacity-10 text-dark border px-3 py-2">
+                                                                <i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ item.region }}
+                                                            </span>
+                                                            <div class="text-muted small mt-1 ms-2"><i class="bi bi-shop"></i> {{ item.market }}</div>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5 bg-white rounded-4 shadow-sm border border-light">
+                                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="fw-bold mt-3 text-muted">Awaiting Market Sync</h5>
+                                <p class="text-muted">Live data will appear here once the system synchronizes.</p>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mt-4 text-end">
+                            <a href="/live-market-prices" class="btn btn-success rounded-pill px-4 shadow-sm fw-bold view-all-btn">
+                                Open Full Dashboard <i class="bi bi-arrow-right ms-2"></i>
+                            </a>
                         </div>
-                        <a href="/live-market-prices" class="btn btn-outline-success mt-2 view-all-btn" style="color: #2E7D32; border-color: #2E7D32;">View All Commodities</a>
                     </div>
                 </div>
             </div>
@@ -113,6 +147,17 @@
     }
     @keyframes blink { 50% { opacity: 0; } }
     .sidebar-nav, .status-alert, .market-card, .market-row { opacity: 0; }
+    
+    /* Custom Pill Styles */
+    .nav-pills .nav-link { color: #555; background-color: #fff; border: 1px solid #dee2e6; }
+    .nav-pills .nav-link:hover { background-color: #f8f9fa; }
+    .nav-pills .nav-link.active { background-color: var(--primary-green); color: white; border-color: var(--primary-green); }
+    
+    /* Table Scrollbar Customization */
+    .table-responsive::-webkit-scrollbar { width: 6px; }
+    .table-responsive::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    .table-responsive::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+    .table-responsive::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
 </style>
 {% endblock %}
 
@@ -130,10 +175,21 @@
         ease: "none"
     });
 
-    // 2. Animations (rest remains the same)
+    // 2. Animations
     gsap.to(".sidebar-nav", { x: 0, opacity: 1, duration: 0.8, delay: 0.5, ease: "back.out(1.4)" });
     gsap.to(".status-alert", { y: 0, opacity: 1, duration: 1.2, delay: 0.8, ease: "elastic.out(1, 0.3)" });
     gsap.to(".market-card", { z: 0, opacity: 1, duration: 1, delay: 1, ease: "power3.out" });
-    gsap.from(".market-row", { x: -30, opacity: 0, stagger: 0.1, duration: 0.5, delay: 1.5 });
+    
+    // Animate rows in the active tab on load
+    gsap.from(".tab-pane.active .market-row", { x: -30, opacity: 0, stagger: 0.05, duration: 0.4, delay: 1.5 });
+    
+    // Animate rows when tabs are switched
+    const tabs = document.querySelectorAll('button[data-bs-toggle="pill"]');
+    tabs.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function (event) {
+            const targetId = event.target.getAttribute('data-bs-target');
+            gsap.fromTo(`${targetId} .market-row`, { x: -30, opacity: 0 }, { x: 0, opacity: 1, stagger: 0.05, duration: 0.4 });
+        });
+    });
 </script>
 {% endblock %}

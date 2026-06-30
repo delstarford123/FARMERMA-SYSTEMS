@@ -1,6 +1,3 @@
-from gevent import monkey
-monkey.patch_all()
-
 import os
 from flask import Flask
 from flask_socketio import SocketIO
@@ -25,6 +22,7 @@ from logic import analyze_weather_and_generate_alerts, update_firebase_alerts
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, flash, send_from_directory, abort
 from flask_mail import Mail, Message
 from flask_socketio import SocketIO, emit, join_room, leave_room
+from apscheduler.schedulers.background import BackgroundScheduler
 
 # Twilio & Google GenAI Imports
 from twilio.twiml.messaging_response import MessagingResponse
@@ -33,32 +31,20 @@ from google.genai import types
 from docx import Document
 from io import BytesIO
 
-# Firebase Imports
-import firebase_admin
-from firebase_admin import credentials, auth, db as firebase_db, storage # <-- Essential: Added 'storage'
-
-# Internal Project Imports
-from models import db as sqlalchemy_db, User, MarketData, Transaction 
-from ai_logic.ai_engine import generate_price_forecast
-from mpesa import initiate_stk_push
-from pesapal_helper import get_pesapal_token, register_pesapal_ipn, submit_pesapal_order, get_pesapal_transaction_status
-
-# APScheduler Setup
-from apscheduler.schedulers.background import BackgroundScheduler
-
 # ==========================================
 # 1. INITIALIZATION & APP CONFIGURATION
 # ==========================================
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = 'delstarford_works_secret_key' 
+app.secret_key = 'delstarford_works_secret_key'
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400 # 24 hours
 
 # Flask-Mail Configuration
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'mail.farmermansystems.co.ke')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 465))
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'False') == 'True'
+app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'True') == 'True'
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = ('Farmerman Systems', os.environ.get('MAIL_USERNAME'))
@@ -69,32 +55,79 @@ mail = Mail(app)
 scheduler = BackgroundScheduler()
 scheduler.start()
 
+# ... rest of your code ...
+
+# Firebase Imports
+import firebase_admin
+from firebase_admin import credentials, auth, db as firebase_db, storage # <-- Essential: Added 'storage'
+
+# Internal Project Imports
+from models import db as sqlalchemy_db, User, MarketData, Transaction
+from ai_logic.ai_engine import generate_price_forecast
+from mpesa import initiate_stk_push
+from zimbot import handle_zimbot_request, ZIM_REGIONS_MARKETS
+from pesapal_helper import get_pesapal_token, register_pesapal_ipn, submit_pesapal_order, get_pesapal_transaction_status
+
 # ==========================================
 # SUBSCRIPTION RENEWAL REMINDERS
 # ==========================================
 def check_subscription_expirations():
-    """Daily task to send payment reminders 3 days before expiry."""
+    """Daily task to send payment reminders 3 days before expiry using SQLAlchemy models."""
     with app.app_context():
         try:
+            from models import Subscription, User
             eat_tz = timezone(timedelta(hours=3))
             now = datetime.now(eat_tz)
-            reminder_date = (now + timedelta(days=3)).strftime("%Y-%m-%d")
             
+            # Find subscriptions expiring in exactly 3 days
+            target_start = now + timedelta(days=3)
+            target_end = target_start + timedelta(days=1)
+            
+            expiring_subs = Subscription.query.filter(
+                Subscription.status == 'active',
+                Subscription.reminder_sent == False,
+                Subscription.expiry_date >= target_start,
+                Subscription.expiry_date < target_end
+            ).all()
+            
+            for sub in expiring_subs:
+                user = User.query.get(sub.user_id)
+                if user and user.email:
+                    plan = sub.package_tier.capitalize()
+                    
+                    # Generate dynamic checkout link for Pesapal
+                    checkout_url = f"{request.host_url}api/pesapal/checkout?plan={sub.package_tier}&uid={user.id}"
+                    
+                    msg = Message(f"⚠️ Your ZIMBOT {plan} Package expires soon!", recipients=[user.email])
+                    msg.body = (f"Hello {user.full_name},\n\n"
+                                f"Your ZIMBOT {plan} subscription will expire on {sub.expiry_date.strftime('%Y-%m-%d')}. "
+                                f"Because mobile money requires user-initiated payments, we won't auto-deduct your account.\n\n"
+                                f"To maintain uninterrupted access to your market intelligence, please click the link below to generate a new secure Pesapal checkout:\n"
+                                f"{checkout_url}\n\n"
+                                f"Best regards,\nZimBot Team")
+                    mail.send(msg)
+                    
+                    # Mark reminder as sent
+                    sub.reminder_sent = True
+                    print(f"Pesapal renewal reminder sent to {user.email}")
+            
+            sqlalchemy_db.session.commit()
+            
+            # Also check Firebase legacy users for fallback
+            reminder_date_str = target_start.strftime("%Y-%m-%d")
             all_users = rtdb.reference('users').get() or {}
             for uid, data in all_users.items():
                 expiry_str = data.get('subscription_expiry')
-                if expiry_str:
-                    # Check if the date matches our 3-day window
-                    if expiry_str.startswith(reminder_date):
-                        email = data.get('email')
-                        name = data.get('full_name', 'Valued Farmer')
+                if expiry_str and expiry_str.startswith(reminder_date_str):
+                    email = data.get('email')
+                    if email:
                         plan = data.get('subscription_tier', 'Seed').capitalize()
-                        
-                        # Send Renewal Email
                         msg = Message(f"⚠️ Your ZIMBOT {plan} Package expires soon!", recipients=[email])
-                        msg.body = f"Hello {name},\n\nYour {plan} subscription will expire in 3 days. Please visit your dashboard to renew and maintain uninterrupted access to market intelligence.\n\nRenew here: {request.host_url}pricing\n\nBest regards,\nZimBot Team"
-                        mail.send(msg)
-                        print(f"Renewal reminder sent to {email}")
+                        msg.body = f"Hello {data.get('full_name', 'Farmer')},\n\nYour {plan} subscription will expire in 3 days. Please visit your dashboard to renew.\n\nRenew here: {request.host_url}pricing\n\nZimBot Team"
+                        try:
+                            mail.send(msg)
+                        except: pass
+                        
         except Exception as e:
             print(f"Reminder Job Error: {e}")
 
@@ -214,7 +247,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 sqlalchemy_db.init_app(app)
 
 # Initialize SocketIO for real-time chat
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # Dictionary to track who is currently online { 'user_id': 'socket_id' }
 online_users = {}
@@ -228,33 +261,7 @@ os.makedirs(CHAT_MEDIA_FOLDER, exist_ok=True)
 # ==========================================
 FIREBASE_WEB_API_KEY = "AIzaSyDy41jUJ8h7zYE9Ocj7pPNGGXCq5RRbN-s"
 
-# --- ZIMBABWE MARKET HIERARCHY ---
-ZIM_REGIONS_MARKETS = {
-    "Beitbridge": ["Mashavire Bulk Market"],
-    "Bindura": ["Chipadze Market"],
-    "Bulawayo": ["5th Avenue Market", "Shasha Market"],
-    "Chimanimani": ["Nhedziwa Farmers Market"],
-    "Chinhoyi": ["Gadzema Market", "Makonde Horticulture Market"],
-    "Chitungwiza": ["Guzha - Chikwanha Market"],
-    "Gokwe": ["Craft Centre Market"],
-    "Gokwe North": ["Nembudziya - Mutora Market"],
-    "Gwanda": ["Jahunda Market"],
-    "Gweru": ["Mutapa Market"],
-    "Harare": ["Mbare Market", "Coca Cola Market", "BAC Market"],
-    "Highfield": ["Lusaka Market"],
-    "Kadoma": ["Rimuka Market", "City Market"],
-    "Kariba": ["Nyamhunga Market"],
-    "Kwekwe": ["Kwekwe Market"],
-    "Lupane": ["Lupane Market"],
-    "Marondera": ["Dombotombo Market"],
-    "Masvingo": ["Garikayi Market"],
-    "Mutare": ["Sakubva Market", "Chikanga Market"],
-    "Nyanga": ["Nyamanda Market"],
-    "Rusape": ["Rusape Market", "Evergreen Market"],
-    "Ruwa": ["George Market"],
-    "Zvishavane": ["Mandava Market"]
-}
-
+# --- ZIMBABWE MARKET HIERARCHY MOVED TO zimbot.py ---
 ALLOWED_TRAINING_EXTENSIONS = {'mp4', 'pdf', 'png', 'jpg', 'jpeg', 'docx', 'mp3', 'wav', 'avi', 'webp'}
 PREMIUM_CONTENT_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'premium_content')
 os.makedirs(PREMIUM_CONTENT_FOLDER, exist_ok=True) 
@@ -277,16 +284,17 @@ try:
             'databaseURL': 'https://farmerman-systems-default-rtdb.firebaseio.com/',
             'storageBucket': 'farmerman-systems.firebasestorage.app'
         })
-    
-    rtdb = firebase_db 
-    print(f"Firebase securely initialized using: {cert_path}")
+        
+        print(f"Firebase securely initialized using: {cert_path}")
 
-    # CONNECTION TEST
-    test_fetch = rtdb.reference('users').get()
-    if test_fetch:
-        print(f"Connection Verified: Found {len(test_fetch)} records in 'users' node.")
-    else:
-        print("Warning: Connection successful but 'users' node appears empty.")
+        # CONNECTION TEST (Only run once on initialization)
+        test_fetch = firebase_db.reference('users').get()
+        if test_fetch:
+            print(f"Connection Verified: Found {len(test_fetch)} records in 'users' node.")
+        else:
+            print("Warning: Connection successful but 'users' node appears empty.")
+            
+    rtdb = firebase_db
 
 except Exception as e:
     print(f"Firebase Initialization Error: {e}")
@@ -666,9 +674,23 @@ def dashboard():
     try:
         profile = rtdb.reference(f'users/{uid}').get() or {}
         if 'full_name' not in profile: profile['full_name'] = 'Valued Farmer'
-        return render_template('dashboard.html', profile=profile)
+        
+        # Fetch live market data and group by category
+        market_ref = rtdb.reference('market_data')
+        all_data = market_ref.get() or {}
+        
+        market_items_by_category = {}
+        for key, item in all_data.items():
+            cat = item.get('category', 'General')
+            if cat not in market_items_by_category:
+                market_items_by_category[cat] = []
+            market_items_by_category[cat].append(item)
+            
+        return render_template('dashboard.html', profile=profile, market_items_by_category=market_items_by_category)
     except Exception as e:
-        return render_template('dashboard.html', profile={'full_name': 'User'})
+        print(f"Dashboard Load Error: {e}")
+        return render_template('dashboard.html', profile={'full_name': 'User'}, market_items_by_category={})
+
 
 @app.route('/billing')
 @login_required
@@ -955,11 +977,46 @@ def subscriber_management():
     try:
         all_users = rtdb.reference('users').get()
         subscribers_list = [{'uid': uid, **data} for uid, data in all_users.items()] if all_users else []
-        return render_template('subscriber management.html', subscribers=subscribers_list)
+        
+        # Fetch WhatsApp Whitelist
+        whitelist_data = rtdb.reference('whatsapp_whitelist').get() or {}
+        whitelist = [{'id': k, 'phone': v} if isinstance(v, str) else {'id': k, **v} for k, v in whitelist_data.items()]
+        
+        return render_template('subscriber management.html', subscribers=subscribers_list, whitelist=whitelist)
     except Exception as e:
         flash("Could not load the subscribers list.", "danger")
         return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/add-whitelist', methods=['POST'])
+@admin_required
+def add_whitelist_number():
+    phone = request.form.get('phone_number', '').strip().replace(' ', '').replace('+', '')
+    if not phone:
+        flash("Phone number is required.", "warning")
+        return redirect(url_for('subscriber_management'))
     
+    try:
+        rtdb.reference('whatsapp_whitelist').push({
+            'phone': phone,
+            'added_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        flash(f"Phone number {phone} added to free access whitelist.", "success")
+    except Exception as e:
+        flash(f"Error adding to whitelist: {e}", "danger")
+    
+    return redirect(url_for('subscriber_management'))
+
+@app.route('/admin/delete-whitelist/<item_id>', methods=['POST'])
+@admin_required
+def delete_whitelist_number(item_id):
+    try:
+        rtdb.reference(f'whatsapp_whitelist/{item_id}').delete()
+        flash("Number removed from whitelist.", "info")
+    except Exception as e:
+        flash(f"Error removing from whitelist: {e}", "danger")
+    
+    return redirect(url_for('subscriber_management'))
+
 @app.route('/admin/update-role', methods=['POST'])
 @admin_required
 def update_user_role():
@@ -1614,6 +1671,127 @@ def record_successful_transaction(user_id, plan_id, amount, gateway, receipt_num
     except Exception as e:
         print(f"CRITICAL: Transaction Sync Error: {e}")
         return False
+
+# --- PESAPAL V3 LOGIC ---
+from pesapal import submit_order_request, get_transaction_status
+
+@app.route('/api/pesapal/checkout', methods=['POST'])
+def pesapal_checkout():
+    """Generates a Pesapal V3 redirect URL for subscriptions."""
+    try:
+        data = request.json or {}
+        user_id = data.get('user_id', 'guest')
+        plan_id = data.get('plan_id', 'seed')
+        
+        # Get pricing
+        plan_info = get_plan_price(plan_id)
+        amount = plan_info['usd']
+        
+        reference = f"zbot_{user_id}_{int(datetime.now().timestamp())}"
+        
+        # In a real app, generate/register IPN URL securely. We'll use a dummy ID for now or fetch from DB.
+        # Ensure you have registered the IPN URL on Pesapal dashboard to point to /api/pesapal/ipn
+        ipn_id = os.environ.get("PESAPAL_IPN_ID", "dummy_ipn_id")
+        
+        # Use dynamic ngrok or production domain
+        base_domain = request.host_url.rstrip('/')
+        callback_url = f"{base_domain}/payment-success?ref={reference}"
+        
+        # Submit to Pesapal
+        result = submit_order_request(
+            amount=amount,
+            currency="USD",
+            email=data.get('email', 'farmer@zimbot.co.zw'),
+            phone=data.get('phone', '0700000000'),
+            first_name=data.get('first_name', 'Zimbot'),
+            last_name=data.get('last_name', 'Farmer'),
+            reference=reference,
+            description=f"Zimbot {plan_id.capitalize()} Subscription",
+            callback_url=callback_url,
+            ipn_id=ipn_id
+        )
+        
+        # Save pending state
+        rtdb.reference(f'pending_transactions/{reference}').set({
+            'user_id': user_id, 
+            'amount': amount, 
+            'plan_id': plan_id, 
+            'status': 'awaiting_pesapal',
+            'order_tracking_id': result.get('order_tracking_id'),
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        
+        return jsonify({
+            "status": "success", 
+            "redirect_url": result.get('redirect_url'),
+            "order_tracking_id": result.get('order_tracking_id')
+        }), 200
+
+    except Exception as e:
+        print(f"Pesapal Checkout Error: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route('/api/pesapal/ipn', methods=['GET', 'POST'])
+def pesapal_ipn():
+    """Receives async confirmation from Pesapal."""
+    try:
+        order_tracking_id = request.args.get('OrderTrackingId') or request.json.get('OrderTrackingId')
+        order_merchant_reference = request.args.get('OrderMerchantReference') or request.json.get('OrderMerchantReference')
+        
+        if not order_tracking_id:
+            return jsonify({"error": "No OrderTrackingId provided"}), 400
+            
+        # Verify status
+        status_data = get_transaction_status(order_tracking_id)
+        payment_status = status_data.get('payment_status_description', '').upper()
+        
+        if payment_status == 'COMPLETED':
+            # 1. Update Firebase
+            pending_ref = rtdb.reference(f'pending_transactions/{order_merchant_reference}')
+            pending_data = pending_ref.get()
+            
+            if pending_data and pending_data.get('status') != 'completed':
+                pending_ref.update({'status': 'completed'})
+                record_successful_transaction(
+                    pending_data.get('user_id'),
+                    pending_data.get('plan_id'),
+                    pending_data.get('amount'),
+                    'Pesapal',
+                    order_tracking_id
+                )
+                
+                # 2. Update SQLAlchemy Subscription Model
+                try:
+                    uid = pending_data.get('user_id')
+                    if uid and uid != 'guest':
+                        # uid might be int if SQLAlchemy user, string if firebase only
+                        # Check logic carefully
+                        local_user = sqlalchemy_db.session.get(User, uid) if isinstance(uid, int) else User.query.filter_by(email=uid).first()
+                        if local_user:
+                            # Add subscription record
+                            from models import Subscription
+                            new_sub = Subscription(
+                                user_id=local_user.id,
+                                package_tier=pending_data.get('plan_id'),
+                                status='active',
+                                expiry_date=datetime.utcnow() + timedelta(days=30)
+                            )
+                            sqlalchemy_db.session.add(new_sub)
+                            sqlalchemy_db.session.commit()
+                except Exception as db_err:
+                    print(f"Failed to save SQLAlchemy subscription: {db_err}")
+                    
+        return jsonify({
+            "orderNotificationType": "IPN",
+            "orderTrackingId": order_tracking_id,
+            "orderMerchantReference": order_merchant_reference,
+            "status": 200
+        }), 200
+        
+    except Exception as e:
+        print(f"Pesapal IPN Error: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # --- 1. M-PESA LOGIC ---
 @app.route('/process-mpesa', methods=['POST'])
@@ -3182,10 +3360,6 @@ def api_request_loan():
 # ==========================================
 
 
-
-
-
-
 @app.route('/api/banking/withdraw', methods=['POST'])
 @token_required 
 def api_request_withdrawal():
@@ -3231,337 +3405,70 @@ def api_request_withdrawal():
     except Exception as e:
         print(f"API Withdrawal Error: {e}")
         return jsonify({"error": "Failed to process withdrawal"}), 500
+    
+    
         
-        
-        
-        
-        
-        
-        
-        
-# ==========================================
-# ZIM BOT (WHATSAPP AGRICULTURAL ASSISTANT)
-# ==========================================
-
-
+# --- ZIMBOT LOGIC DELEGATED TO zimbot.py ---
 @app.route("/webhook/twilio/zim-bot", methods=['POST'])
 def zim_bot_webhook():
     incoming_msg = request.values.get('Body', '').strip()
-    raw_phone = request.values.get('From', '') # e.g. "whatsapp:+263771234567"
-    
-    # Clean the phone number to match database format
-    user_phone = raw_phone.replace('whatsapp:', '').replace('+', '').strip()
+    raw_phone = request.values.get('From', '')
 
-    # --- ELITE PERSONA DEFINITIONS ---
-    persona_intro = "🇿🇼 *ZIMBOT: Agricultural Market Intelligence Engine*\n\n"
-    
-    # 3-Part Greeting Structure
-    ELITE_GREETING = (
-        f"{persona_intro}Greetings. I am ZIMBOT, your professional market intelligence engine. "
-        "I provide actionable data on crop prices, regional trends, and supply chain logistics to optimize your revenue. "
-        "Are you looking to analyze today's crop prices, check regional shortages, or review your subscription package?"
+    # Pass raw_phone to zimbot.py so it can detect 'whatsapp:' vs standard SMS
+    return handle_zimbot_request(
+        incoming_msg, 
+        raw_phone, 
+        rtdb, 
+        initiate_stk_push, 
+        SYSTEM_PRICING
     )
 
-    # Small Talk Pivot
-    SMALL_TALK_KEYWORDS = ['how are you', 'how r u', 'weather', 'whats up', 'sup', 'habari']
-    
-    # Out-of-Domain Detection (Basic)
-    NON_AGRI_KEYWORDS = ['coding', 'history', 'movie', 'song', 'joke', 'politics']
-
-    # Package Descriptions
-    PRICING_MENU = (
-        "Professional Packages:\n\n"
-        "1️⃣ *Seed Package ($3/mo)*\n"
-        "• Weekly Market Intelligence (Friday Summary)\n"
-        "• Basic Price Tracking\n\n"
-        "2️⃣ *Growth Package ($5/mo)*\n"
-        "• Bi-weekly Intelligence (Monday & Friday)\n"
-        "• Trend Analysis & Priority Alerts\n\n"
-        "3️⃣ *Harvest Package ($10/mo)*\n"
-        "• Full Intelligence (Mon, Wed, Fri)\n"
-        "• Strategic Action Plans & Deep Market Insights\n"
-        "• Maximize ROI via supply chain optimization\n\n"
-        "Reply with *1*, *2*, or *3* to select."
-    )
-
+@app.route('/webhook/paynow/status', methods=['POST'])
+def paynow_webhook():
+    """
+    Asynchronous Webhook for Paynow.
+    Listens for transaction updates (Paid/Sent/Cancelled).
+    """
     try:
-        # 1. AUTHENTICATION: Identify User
-        user_data = None
-        all_users = rtdb.reference('users').get() or {}
-        for uid, data in all_users.items():
-            db_phone = str(data.get('phone', '')).replace('+', '').strip()
-            if db_phone and (db_phone in user_phone or user_phone in db_phone):
-                user_data = data
-                break
-
-        # 2. REGISTRATION FLOW
-        if not user_data:
-            pending_ref = rtdb.reference(f'pending_registrations/{user_phone}')
-            pending = pending_ref.get()
-
-            if not pending:
-                # Elite Greeting for new users
-                reply_text = f"Greetings. I am ZIMBOT, an elite Agricultural Market Intelligence Assistant. To access our strategic data and supply chain intelligence, please provide your *Full Name*."
-                pending_ref.set({'step': 'ask_name'})
-            
-            elif pending.get('step') == 'ask_name':
-                full_name = incoming_msg.title()
-                pending_ref.update({'full_name': full_name, 'step': 'ask_email'})
-                reply_text = f"Acknowledge, {full_name}. Provide your *Email Address* to finalize your professional intelligence profile."
-            
-            elif pending.get('step') == 'ask_email':
-                email = incoming_msg.strip().lower()
-                if '@' not in email or '.' not in email:
-                    reply_text = "Standard email format required (e.g., intelligence@agri.com). Please resubmit."
-                else:
-                    full_name = pending.get('full_name')
-                    new_uid = f"wa_{user_phone}"
-                    rtdb.reference(f'users/{new_uid}').set({
-                        'uid': new_uid, 'full_name': full_name, 'email': email, 'phone': user_phone,
-                        'role': 'buyer', 'subscription_tier': 'free', 'subscription_status': 'inactive',
-                        'created_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    })
-                    pending_ref.delete()
-                    rtdb.reference(f'pending_payments/{user_phone}').set({'step': 'select_package'})
-                    reply_text = f"Registration finalized. Welcome to the network, {full_name}.\n\nTo unlock intelligence access, {PRICING_MENU}"
-            
-            resp = MessagingResponse(); resp.message(reply_text); return str(resp)
-
-        # 3. SUBSCRIPTION GATE
-        user_status = user_data.get('subscription_status', 'inactive')
-        user_tier = user_data.get('subscription_tier', 'free')
-        pay_ref = rtdb.reference(f'pending_payments/{user_phone}')
-        pay_state = pay_ref.get()
-
-        if user_status != 'active':
-            if not pay_state:
-                pay_ref.set({'step': 'select_package'})
-                reply_text = f"{persona_intro}Subscription required for intelligence access. Select a plan:\n\n{PRICING_MENU}"
-            else:
-                step = pay_state.get('step')
-                if step == 'select_package':
-                    selection = incoming_msg.strip()
-                    plans = {'1': 'seed', '2': 'growth', '3': 'harvest'}
-                    if selection in plans:
-                        plan_id = plans[selection]
-                        pay_ref.update({'step': 'select_method', 'plan_id': plan_id})
-                        reply_text = f"Package selected: *{plan_id.capitalize()}*.\n\nChoose payment method:\n*A* for M-Pesa (STK Push)\n*B* for PesaPal (Card/Online)"
-                    else:
-                        reply_text = f"Invalid selection. Choose a professional plan:\n\n{PRICING_MENU}"
-                
-                elif step == 'select_method':
-                    choice = incoming_msg.strip().upper()
-                    plan_id = pay_state.get('plan_id')
-                    if choice == 'A':
-                        price_kes = SYSTEM_PRICING[plan_id]['kes']
-                        pay_ref.update({'step': 'confirm_phone', 'amount': price_kes})
-                        reply_text = f"Confirmed: *{plan_id.capitalize()} via M-Pesa*. Provide your **M-Pesa Number** (e.g., 0712345678) to initiate secure STK Push."
-                    elif choice == 'B':
-                        checkout_url = f"http://farmermansystems.co.ke/checkout?plan={plan_id}"
-                        reply_text = f"Confirmed: *{plan_id.capitalize()} via PesaPal*. Complete your transaction here: {checkout_url}\n\nAccess granted immediately post-payment."
-                        pay_ref.delete()
-                    else:
-                        reply_text = "Invalid choice. Reply *A* or *B*."
-                
-                elif step == 'confirm_phone':
-                    target_phone = incoming_msg.strip().replace(' ', '').replace('+', '')
-                    if len(target_phone) < 10:
-                        reply_text = "Valid phone number required."
-                    else:
-                        plan_id = pay_state.get('plan_id'); amount = pay_state.get('amount')
-                        try:
-                            res = initiate_stk_push(target_phone, int(amount))
-                            if res and res.get('ResponseCode') == '0':
-                                checkout_id = res.get("CheckoutRequestID")
-                                rtdb.reference(f'pending_transactions/{checkout_id}').set({
-                                    'user_id': f"wa_{user_phone}", 'amount': amount, 'plan_id': plan_id,
-                                    'status': 'awaiting_payment', 'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                                })
-                                reply_text = f"🔄 *Secure M-Pesa Gateway Initialized.* Enter PIN on your device. {plan_id.capitalize()} access will be unlocked instantly."
-                                pay_ref.delete()
-                            else:
-                                reply_text = "Gateway error. Type 'Upgrade' to retry."
-                                pay_ref.delete()
-                        except:
-                            reply_text = "System busy. Retry shortly."; pay_ref.delete()
-            
-            resp = MessagingResponse(); resp.message(reply_text); return str(resp)
-
-        # 4. ACTIVE ELITE LOGIC (Subscribers Only)
-        msg_low = incoming_msg.lower()
-
-        # Rule 1 & 2: Greetings & Small Talk (The Pivot)
-        if any(greet in msg_low for greet in ['hi', 'hello', 'mhoroi', 'hey', 'start', 'menu']):
-            reply_text = ELITE_GREETING
-        elif any(small in msg_low for small in SMALL_TALK_KEYWORDS):
-            reply_text = f"I am operating at peak efficiency, thank you. Let's get down to business—which crop market are we analyzing today?"
+        # Paynow sends data as URL Encoded POST
+        data = request.form.to_dict()
+        reference = data.get('reference')
+        paynow_reference = data.get('paynowreference')
+        status = data.get('status', '').lower()
         
-        # Rule 3: Out-of-Domain Queries
-        elif any(out in msg_low for out in NON_AGRI_KEYWORDS):
-            reply_text = "My expertise is strictly dedicated to agricultural market intelligence and supply chain data. I cannot assist with non-agricultural topics. Would you like to check today's market reports instead?"
-
-        else:
-            # --- HYPER-LOCAL INTELLIGENCE ENGINE ---
-            market_ref = rtdb.reference('market_data')
-            all_market = market_ref.get() or {}
-            zim_items = [item for item in all_market.values() if item.get('country') == 'Zimbabwe']
+        # In a strict environment, verify the hash with the Integration Key here.
+        if reference and status in ['paid', 'awaiting delivery', 'delivered']:
+            # Fetch the pending transaction from Firebase
+            pending_ref = rtdb.reference(f'pending_transactions/{reference}')
+            tx_data = pending_ref.get()
             
-            def find_best_intelligence(query):
-                query_low = query.lower()
+            if tx_data:
+                user_id = tx_data.get('user_id')
+                plan_id = tx_data.get('plan_id', 'seed')
                 
-                # Identify if a Region (Town) or specific Market is mentioned
-                detected_region = None
-                detected_market = None
+                from datetime import datetime, timedelta, timezone
+                eat_tz = timezone(timedelta(hours=3))
+                expiry_date = (datetime.now(eat_tz) + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
                 
-                # Check for Regions/Towns
-                for region in ZIM_REGIONS_MARKETS.keys():
-                    if region.lower() in query_low:
-                        detected_region = region
-                        break
+                # Activate the user
+                rtdb.reference(f'users/{user_id}').update({
+                    'subscription_tier': plan_id,
+                    'subscription_status': 'active',
+                    'subscription_expiry': expiry_date
+                })
                 
-                # Check for specific Markets
-                for region, markets in ZIM_REGIONS_MARKETS.items():
-                    for m in markets:
-                        if m.lower() in query_low:
-                            detected_market = m
-                            detected_region = region
-                            break
-                    if detected_market: break
-
-                # --- Scenario: "All markets in [Region]" ---
-                if ("all market" in query_low or "list market" in query_low) and detected_region:
-                    regional_data = [item for item in zim_items if item.get('region') == detected_region]
-                    if regional_data:
-                        return {"type": "region_aggregate", "data": regional_data, "region": detected_region}
-
-                # --- Scenario: Commodity + Location ---
-                # Find matching commodity first
-                target_commodity = None
-                for item in zim_items:
-                    comm = item.get('commodity', '').lower()
-                    if comm in query_low:
-                        target_commodity = item.get('commodity')
-                        break
-
-                if target_commodity:
-                    # 1. Exact Market Match (e.g. Maize in Mbare)
-                    if detected_market:
-                        for item in zim_items:
-                            if item.get('commodity') == target_commodity and item.get('market') == detected_market:
-                                return {"type": "exact_market", "data": item}
-                    
-                    # 2. Regional Match (e.g. Maize in Harare)
-                    if detected_region:
-                        for item in zim_items:
-                            if item.get('commodity') == target_commodity and item.get('region') == detected_region:
-                                return {"type": "exact_region", "data": item}
-
-                    # 3. Global Zimbabwe Match (Generic)
-                    for item in zim_items:
-                        if item.get('commodity') == target_commodity:
-                            return {"type": "exact_commodity", "data": item}
-
-                # --- Scenario: Location Only (Show general activity) ---
-                if detected_market:
-                    for item in zim_items:
-                        if item.get('market') == detected_market:
-                            return {"type": "market_proxy", "data": item}
+                # Update transaction status
+                pending_ref.update({
+                    'status': 'paid',
+                    'paynow_reference': paynow_reference
+                })
                 
-                if detected_region:
-                    for item in zim_items:
-                        if item.get('region') == detected_region:
-                            return {"type": "geo_proxy", "data": item}
-
-                # STEP 4: Commodity Taxonomy Proxy (Check Category)
-                categories = ['grains', 'vegetables', 'tubers', 'fruits', 'cash crops']
-                for cat in categories:
-                    if cat in query_low:
-                        for item in zim_items:
-                            if item.get('category', '').lower() == cat:
-                                return {"type": "commodity_proxy", "data": item}
-
-                return {"type": "void", "data": None}
-
-            intel = find_best_intelligence(msg_low)
-            match_type = intel['type']
-
-            if match_type == "region_aggregate":
-                region = intel['region']
-                reply_text = f"{persona_intro}📍 *Intelligence Summary: {region} Network*\n\n"
-                reply_text += f"I have analyzed {len(intel['data'])} active mass markets in {region}:\n\n"
-                for item in intel['data']:
-                    trend_icon = "▲" if item.get('trend') == 'up' else "▼" if item.get('trend') == 'down' else "▬"
-                    reply_text += f"• *{item['commodity']}* ({item['market']}): {item['currency']} {item['price']} {trend_icon}\n"
-                reply_text += f"\nStrategy: Diversify supply across these hubs to mitigate localized price dips."
-            
-            elif intel['data']:
-                found_item = intel['data']
-                commodity_name = found_item['commodity']
-                trend = found_item.get('trend', 'stable')
-                market_name = found_item.get('market', 'General Hub')
-                region_name = found_item.get('region', 'Zimbabwe')
-                
-                # Header based on proxy type
-                header = f"*Intelligence Report: {commodity_name}*"
-                if match_type == "exact_market": header = f"🎯 *Targeted Intelligence: {market_name}*"
-                elif match_type == "exact_region": header = f"📍 *Regional Intelligence: {region_name}*"
-                elif match_type == "time_proxy": header = "⚠️ *Historical Proxy Intelligence*"
-                elif match_type == "commodity_proxy": header = "🌳 *Category Intelligence Proxy*"
-
-                reply_text = f"{persona_intro}{header}\n\n"
-                reply_text += f"📦 *Commodity:* {commodity_name}\n"
-                reply_text += f"🏪 *Market:* {market_name}\n"
-                reply_text += f"📍 *Town:* {region_name}\n"
-                reply_text += f"💰 *Price:* {found_item.get('currency')} {found_item['price']:,.2f} per {found_item['unit']}\n"
-                reply_text += f"📊 *Trend:* {'Rising ▲' if trend == 'up' else 'Dropping ▼' if trend == 'down' else 'Stable ▬'}\n"
-                reply_text += f"📅 *As of:* {found_item.get('updated_at', '')[:10]}\n\n"
-                
-                if match_type not in ["exact_market", "exact_region", "exact_commodity"]:
-                    reply_text += "_Note: Providing closest high-confidence data proxy._\n\n"
-
-                # Strategic Advice
-                if trend == 'up':
-                    reply_text += "📈 *Action:* Prices are rising. Sell in batches to capitalize on demand peaks while hedging against sudden supply shifts."
-                elif trend == 'down':
-                    reply_text += "📉 *Action:* Market glut detected. Hold stock and explore value-add processing to avoid selling at a loss."
-                else:
-                    reply_text += "⚖️ *Action:* Stable market. Proceed with standard supply contracts."
-            else:
-                # STEP 5: Complete Data Void
-                reply_text = f"I do not have today's spot price for '{incoming_msg}' in the Zimbabwe database. "
-                reply_text += "However, I can provide latest data for *Maize* or *Tobacco*, or check the national average for cash crops. Would either help your analysis? "
-                reply_text += "I have logged this request for our data team to source in future updates."
-
+                return "OK", 200
+        
+        return "Acknowledged", 200
     except Exception as e:
-        print(f"Zim Bot Elite Error: {e}")
-        reply_text = f"{persona_intro}Notice: System recalibrating market feeds. Please try again shortly."
-
-    resp = MessagingResponse()
-    resp.message(reply_text)
-    return str(resp)
-
-# Rule-Based Broadcast Generator
-def generate_zim_market_alert(affected_crops_info):
-    """
-    affected_crops_info: list of dicts with {'commodity': '...', 'trend': '...', 'price': '...'}
-    """
-    alert_text = "⚠️ *ALERT: ZIMBOT MARKET UPDATE* ⚠️\n\n"
-    alert_text += "Significant price shifts detected in the Zimbabwe agricultural network:\n\n"
-    
-    for crop in affected_crops_info:
-        trend = crop.get('trend', 'stable')
-        commodity = crop.get('commodity')
-        price = crop.get('price')
-        
-        if trend == 'up':
-            alert_text += f"🚀 *{commodity}:* Prices are RISING! Now at {price}. Sell now to maximize profit.\n"
-        elif trend == 'down':
-            alert_text += f"📉 *{commodity}:* Prices are DROPPING! Now at {price}. Hold your stock if possible.\n"
-        else:
-            alert_text += f"⚖️ *{commodity}:* Prices are STABLE at {price}.\n"
-            
-    alert_text += "\n*Action:* Review your trading strategy immediately based on these insights.\n\n_Stay informed with ZimBot._"
-    return alert_text
+        print(f"Paynow webhook error: {e}")
+        return "Internal Error", 500
 
 @app.errorhandler(404)
 def page_not_found(e):

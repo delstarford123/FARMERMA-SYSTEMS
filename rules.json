@@ -1,124 +1,208 @@
 {
   "rules": {
+    // 0. GLOBAL SECURITY: Deny by default
+    ".read": false,
+    ".write": false,
+
+    // ==========================================
+    // 1. CORE AGRICULTURAL SYSTEM (ZIMBOT)
+    // ==========================================
+    
     "users": {
-      // 1. Admin & Tutor Hub: Admins and Tutors can read the user list to manage students
       ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor')",
-      
+      ".indexOn": ["email", "phone", "role", "subscription_tier", "created_at", "is_online"],
       "$uid": {
-        // Users can read their own profile
         ".read": "auth != null && $uid === auth.uid",
-        
-        // 2. Security Lock: 
-        // Admins can write anything. 
-        // Users can write to their own profile, BUT cannot hack their 'role' or 'subscription_tier'.
         ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || ($uid === auth.uid && (!newData.hasChild('role') || newData.child('role').val() === data.child('role').val()) && (!newData.hasChild('subscription_tier') || newData.child('subscription_tier').val() === data.child('subscription_tier').val())))"
       }
     },
 
-    "academy_courses": {
-      // 3. Academy Courses: Paid Tiers and Educators can view
-      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'pro' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'premium' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'enterprise' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'harvest' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'growth')",
-      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor')"
-    },
-
-    "training_content": {
-      // 4. Legacy/Admin Academy Content
-      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'pro' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'premium' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'enterprise' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'harvest')",
-      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor')"
-    },
-
-    "user_progress": {
-      // 5. Student Progress Tracking
-      "$uid": {
-        ".read": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor')",
-        ".write": "auth != null && $uid === auth.uid"
-      }
-    },
-
     "market_data": {
-      // 6. Live Markets Data Lock
-      // ZimBot specific tiers (Seed/Growth/Harvest) added here
       ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'pro' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'premium' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'harvest' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'growth' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'seed')",
-      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      ".indexOn": ["commodity", "region", "market", "timestamp", "country"]
     },
 
-    "banking_accounts": {
-      // 7. Personal Banking Details
+    "whatsapp_whitelist": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      ".indexOn": ["phone", "added_at"]
+    },
+
+    "academy_courses": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'pro' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'premium' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'harvest')",
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor')",
+      ".indexOn": ["category", "difficulty", "tutor_id"]
+    },
+
+    "completed_transactions": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      ".indexOn": ["user_id", "timestamp", "plan_id"],
       "$uid": {
         ".read": "auth != null && $uid === auth.uid",
-        ".write": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')"
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
       }
     },
 
-    "banking_loans": {
-      // 8. Loan Management
+    "pending_transactions": {
+      ".write": "auth != null",
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      ".indexOn": ["user_id", "status", "timestamp"]
+    },
+
+    "climate_alerts": {
+      ".indexOn": ["region", "timestamp", "severity"],
       "$uid": {
         ".read": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
         ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
       }
     },
 
-    "banking_groups": {
-      // 9. Public Group Discovery
-      ".read": "auth != null",
-      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    // ==========================================
+    // 2. PROFESSIONAL FEATURES & SOCIAL HUB
+    // ==========================================
+
+    "merchant_alerts": {
+      "$restaurant_id": {
+        ".read": true, 
+        "$alert_id": {
+          "status": {
+            ".write": "newData.val() === 'read'"
+          }
+        }
+      }
     },
 
+    "party_participants": {
+      ".read": true,
+      "$user_id": {
+        ".write": "auth != null && auth.uid === $user_id",
+        ".indexOn": ["joined_at", "shape_seed"]
+      },
+      ".indexOn": ["joined_at"]
+    },
+
+    "profiles": {
+      ".read": "auth != null",
+      ".indexOn": [
+        "email", "phone", "referral_code", "wingman_code", "is_paid", 
+        "is_online", "gender", "daily_streak", "class_code", 
+        "created_at", "institution_name", "institution_type", "crush_votes"
+      ]
+    },
+    
+    "notifications": {
+      "$user_id": {
+        ".indexOn": ["status", "timestamp"]
+      }
+    },
+    
+    "schedules": {
+      ".indexOn": ["user_id"]
+    },
+    
+    "swipes": {
+      ".indexOn": ["user_id", "target_id", "timestamp"]
+    },
+    
+    "bookings": {
+      ".indexOn": ["restaurant_id", "user_a_id", "user_b_id", "status", "timestamp"]
+    },
+    
+    "restaurants": {
+      ".indexOn": ["subscription_active", "email"]
+    },
+    
+    "matches": {
+      ".indexOn": ["users"]
+    },
+
+    "messages": {
+      "$match_id": {
+        ".indexOn": ["timestamp"]
+      }
+    },
+
+    "chats": {
+      "$room_id": {
+        ".indexOn": ["timestamp"]
+      }
+    },
+
+    "confessions": {
+      ".indexOn": ["timestamp", "score"]
+    },
+
+    "missed_connections": {
+      ".indexOn": ["timestamp", "upvotes"]
+    },
+
+    "gossip": {
+      ".indexOn": ["timestamp", "upvotes"]
+    },
+
+    "secret_crushes": {
+      ".indexOn": ["status", "timestamp"]
+    },
+
+    "daily_prompts": {
+      ".indexOn": ["date"]
+    },
+
+    "prompt_answers": {
+      ".indexOn": ["timestamp"]
+    },
+
+    "admin_alerts": {
+      ".indexOn": ["timestamp"]
+    },
+    
+    "call_requests": {
+      ".indexOn": ["timestamp", "status"]
+    },
+    
+    "feedbacks": {
+      ".indexOn": ["timestamp", "type"]
+    },
+
+    "call_reviews": {
+      ".indexOn": ["timestamp", "quality"]
+    },
+
+    "admin_audit_logs": {
+      ".indexOn": ["timestamp"]
+    },
+
+    "active_ads": {
+      ".indexOn": ["status"]
+    },
+
+    "party_chat": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": ["timestamp_ms"]
+    },
+
+    "party_typing": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+
+    // ==========================================
+    // 3. SYSTEM UTILITIES
+    // ==========================================
+
     "site_content": {
-      // 10. CMS Content
       ".read": true,
       ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
     },
 
-    "completed_transactions": {
-      // 11. Billing History
-      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
-      "$uid": {
-        ".read": "auth != null && $uid === auth.uid",
-        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
-      }
-    },
-
-    "pending_registrations": {
-      // 12. WhatsApp Onboarding
-      ".write": true,
-      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
-    },
-
-    "pending_payments": {
-      // 13. WhatsApp Payment Flow
-      ".write": true,
-      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
-    },
-
-    "pending_transactions": {
-      // 14. Checkout Handshake
-      ".write": "auth != null",
-      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
-    },
-
-    "contact_inquiries": {
-      // 15. Support Inbox
-      ".write": true,
-      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
-    },
-
-    "climate_alerts": {
-      // 16. Localized Alerts
-      "$uid": {
-        ".read": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
-        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
-      }
-    },
-
     "pesapal_ipns": {
-      // 17. System IPN Cache
       ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
       ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
     },
 
     "diagnostic_history": {
-      // 18. AI Scans
       ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
       "$uid": {
         ".read": "auth != null && $uid === auth.uid",

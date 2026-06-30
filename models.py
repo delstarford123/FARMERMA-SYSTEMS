@@ -33,6 +33,7 @@ class User(db.Model):
     # Relationships (Links a user to their transactions and posted data)
     transactions = db.relationship('Transaction', backref='user', lazy=True)
     market_data_posted = db.relationship('MarketData', backref='admin', lazy=True)
+    subscriptions = db.relationship('Subscription', backref='user', lazy=True)
 
     def __repr__(self):
         return f"<User {self.email} - {self.subscription_tier}>"
@@ -87,4 +88,28 @@ class Transaction(db.Model):
 
     def __repr__(self):
         return f"<Transaction {self.transaction_reference} - {self.status}>"
+
+# ==========================================
+# 4. SUBSCRIPTION TRACKING MODEL
+# ==========================================
+class Subscription(db.Model):
+    __tablename__ = 'subscriptions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
+    # Package Info
+    package_tier = db.Column(db.String(50), nullable=False) # 'seed', 'growth', 'harvest'
+    
+    # Status
+    status = db.Column(db.String(20), default='pending') # 'active', 'expired', 'pending'
+    
+    # Timeline
+    start_date = db.Column(db.DateTime, default=datetime.utcnow)
+    expiry_date = db.Column(db.DateTime, nullable=True)
+    
+    # Auto-Renew / Reminder Tracking
+    reminder_sent = db.Column(db.Boolean, default=False)
+
+    def __repr__(self):
+        return f"<Subscription {self.package_tier} for User {self.user_id} - {self.status}>"

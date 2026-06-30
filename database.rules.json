@@ -1,93 +1,210 @@
 {
   "rules": {
+    // 0. GLOBAL SECURITY: Deny by default
+    ".read": false,
+    ".write": false,
+
+    // ==========================================
+    // 1. CORE AGRICULTURAL SYSTEM (ZIMBOT)
+    // ==========================================
+    
     "users": {
-      // 1. Admin & Tutor Hub: Admins and Tutors can read the user list to manage students
       ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor')",
-      
+      ".indexOn": ["email", "phone", "role", "subscription_tier", "created_at", "is_online"],
       "$uid": {
-        // Users can read their own profile
         ".read": "auth != null && $uid === auth.uid",
-        
-        // 2. Security Lock: 
-        // Admins can write anything. 
-        // Users can write to their own profile, BUT cannot hack their 'role' or 'subscription_tier'.
         ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || ($uid === auth.uid && (!newData.hasChild('role') || newData.child('role').val() === data.child('role').val()) && (!newData.hasChild('subscription_tier') || newData.child('subscription_tier').val() === data.child('subscription_tier').val())))"
       }
     },
 
-    "training_content": {
-      // 3. Academy Content: Tutors, Admins, and Paid Tiers (Pro/Premium/Enterprise) can view
-      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'pro' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'premium' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'enterprise')",
-      
-      // 4. Content Creation: Both Admins and Tutors can upload new courses
-      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor')"
-    },
-
-    "academy_submissions": {
-      // 5. NEW: Student Work & Grading
-      // Admins and Tutors can see all submitted work to grade it
-      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor')",
-      
-      "$uid": {
-        // Students can only see their own grades and submissions
-        ".read": "auth != null && $uid === auth.uid",
-        // Students submit to their own folder; Tutors/Admins can write grades to any folder
-        ".write": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor')"
-      }
-    },
-
     "market_data": {
-      // 6. Live Markets Data Lock
-      // Direct frontend reads are locked to Premium/Tutors/Admins. 
-      // (Your Python backend bypasses this rule to show the 3 "Preview" items to the public)
-      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'pro' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'premium' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'enterprise')",
-      
-      // Only admins update the master prices
-      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'pro' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'premium' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'harvest' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'growth' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'seed')",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      ".indexOn": ["commodity", "region", "market", "timestamp", "country"]
     },
 
-    "site_content": {
-      // 7. CMS Content: Publicly readable so the website loads for visitors
-      ".read": true,
-      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
-    },
-
-    "content_history": {
-      // 8. CMS Logs: Private to admins
+    "whatsapp_whitelist": {
       ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
-      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      ".indexOn": ["phone", "added_at"]
+    },
+
+    "academy_courses": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'pro' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'premium' || root.child('users').child(auth.uid).child('subscription_tier').val() === 'harvest')",
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'tutor')",
+      ".indexOn": ["category", "difficulty", "tutor_id"]
     },
 
     "completed_transactions": {
-      // 9. Billing: Admins can see all revenue across all users
       ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
-      
+      ".indexOn": ["user_id", "timestamp", "plan_id"],
       "$uid": {
-        // Users can only see their own billing history
         ".read": "auth != null && $uid === auth.uid",
         ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
       }
     },
 
     "pending_transactions": {
-      // 10. M-Pesa Handshake: Any authenticated user's checkout process can write here
       ".write": "auth != null",
-      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      ".indexOn": ["user_id", "status", "timestamp"]
     },
 
-    "contact_inquiries": {
-      // 11. Support: Anyone (even unauthenticated visitors) can send a contact message
-      ".write": true,
-      // Only admins read the inbox
-      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    "climate_alerts": {
+      ".indexOn": ["region", "timestamp", "severity"],
+      "$uid": {
+        ".read": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+      }
+    },
+
+    // ==========================================
+    // 2. PROFESSIONAL FEATURES & SOCIAL HUB
+    // ==========================================
+
+    "merchant_alerts": {
+      "$restaurant_id": {
+        ".read": true, 
+        "$alert_id": {
+          "status": {
+            ".write": "newData.val() === 'read'"
+          }
+        }
+      }
+    },
+
+    "party_participants": {
+      ".read": true,
+      "$user_id": {
+        ".write": "auth != null && auth.uid === $user_id",
+        ".indexOn": ["joined_at", "shape_seed"]
+      },
+      ".indexOn": ["joined_at"]
+    },
+
+    "profiles": {
+      ".read": "auth != null",
+      ".indexOn": [
+        "email", "phone", "referral_code", "wingman_code", "is_paid", 
+        "is_online", "gender", "daily_streak", "class_code", 
+        "created_at", "institution_name", "institution_type", "crush_votes"
+      ]
+    },
+    
+    "notifications": {
+      "$user_id": {
+        ".indexOn": ["status", "timestamp"]
+      }
+    },
+    
+    "schedules": {
+      ".indexOn": ["user_id"]
+    },
+    
+    "swipes": {
+      ".indexOn": ["user_id", "target_id", "timestamp"]
+    },
+    
+    "bookings": {
+      ".indexOn": ["restaurant_id", "user_a_id", "user_b_id", "status", "timestamp"]
+    },
+    
+    "restaurants": {
+      ".indexOn": ["subscription_active", "email"]
+    },
+    
+    "matches": {
+      ".indexOn": ["users"]
+    },
+
+    "messages": {
+      "$match_id": {
+        ".indexOn": ["timestamp"]
+      }
+    },
+
+    "chats": {
+      "$room_id": {
+        ".indexOn": ["timestamp"]
+      }
+    },
+
+    "confessions": {
+      ".indexOn": ["timestamp", "score"]
+    },
+
+    "missed_connections": {
+      ".indexOn": ["timestamp", "upvotes"]
+    },
+
+    "gossip": {
+      ".indexOn": ["timestamp", "upvotes"]
+    },
+
+    "secret_crushes": {
+      ".indexOn": ["status", "timestamp"]
+    },
+
+    "daily_prompts": {
+      ".indexOn": ["date"]
+    },
+
+    "prompt_answers": {
+      ".indexOn": ["timestamp"]
+    },
+
+    "admin_alerts": {
+      ".indexOn": ["timestamp"]
+    },
+    
+    "call_requests": {
+      ".indexOn": ["timestamp", "status"]
+    },
+    
+    "feedbacks": {
+      ".indexOn": ["timestamp", "type"]
+    },
+
+    "call_reviews": {
+      ".indexOn": ["timestamp", "quality"]
+    },
+
+    "admin_audit_logs": {
+      ".indexOn": ["timestamp"]
+    },
+
+    "active_ads": {
+      ".indexOn": ["status"]
+    },
+
+    "party_chat": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": ["timestamp_ms"]
+    },
+
+    "party_typing": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+
+    // ==========================================
+    // 3. SYSTEM UTILITIES
+    // ==========================================
+
+    "site_content": {
+      ".read": true,
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
+
+    "pesapal_ipns": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
     },
 
     "diagnostic_history": {
-      // 12. AI Scans: Admins can view all global diagnostic trends
       ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
-      
       "$uid": {
-        // Users can read/write their own AI scan logs
         ".read": "auth != null && $uid === auth.uid",
         ".write": "auth != null && $uid === auth.uid"
       }
